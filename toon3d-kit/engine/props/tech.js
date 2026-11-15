@@ -58,3 +58,47 @@ register('ai-core', {
   },
 });
 
+register('gauge', { tags: ['ui', 'meter', 'data', 'speed'], aliases: ['meter', 'dial'], desc: 'Round dial on a post with needle. value 0..1 (red to green).', opts: { value: '0..1', label: 'text', post: 'true/false' },
+  build: ({ value = .5, label = 'POWER', post = true } = {}) => { const g = g0(), y = post ? 1.0 : .3; if (post) put(g, G.cyl(.04, .04, y, 10), toon(0x3a3f55), { y: y / 2 });
+    put(g, G.cyl(.32, .32, .08, 40), toon(0x3a3f55), { y, rx: Math.PI / 2 });
+    const t = ctex(512, 512, (x) => { x.fillStyle = '#f4f2ea'; x.beginPath(); x.arc(256, 256, 250, 0, 7); x.fill(); x.lineWidth = 34; [['#e2463b', 0], ['#f5c84a', .33], ['#7bd88f', .66]].forEach(([c, s]) => { x.strokeStyle = c; x.beginPath(); x.arc(256, 280, 180, Math.PI * (1 + s * .9 + .05), Math.PI * (1 + (s + .33) * .9 + .05)); x.stroke(); });
+      x.fillStyle = '#555'; x.font = 'bold 54px Helvetica'; x.textAlign = 'center'; x.fillText(label, 256, 420); x.fillStyle = '#e2463b'; x.font = 'bold 40px Helvetica'; x.fillText('E', 110, 330); x.fillStyle = '#3a9a5a'; x.fillText('F', 402, 330); }, { key: 'gauge' + label });
+    put(g, G.plane(.56, .56), toon(0xffffff, { map: t }), { y, z: .045, noInk: true });
+    const nd = group(g, { y: y - .02, z: .055, rz: Math.PI / 2 - value * Math.PI * .9 - .05 }); put(nd, G.box(.02, .22, .01), toon(PAL.red), { y: .11 }); put(g, G.cyl(.03, .03, .03, 12), toon(0x333333), { y: y - .02, z: .06, rx: Math.PI / 2 });
+    g.userData.needle = nd; return g; } });
+
+register('robot-bot', { tags: ['tech', 'ai', 'robot'], aliases: ['robot', 'bot'], desc: 'Small robot: cube head with a screen face, stick body. Sits on a pedestal.', opts: { face: 'text/symbol on screen', pedestal: 'true/false' },
+  build: ({ face = '◉ ◉', pedestal = true } = {}) => { const g = g0(), b = pedestal ? .45 : 0; if (pedestal) put(g, G.rbox(.6, .45, .6, .03), toon(0x4a4f66), { y: .225 });
+    put(g, G.cap(.14, .2), toon(PAL.offwhite), { y: b + .45 }); for (const s of [-1, 1]) put(g, G.cyl(.025, .025, .3, 8), toon(PAL.black), { x: s * .07, y: b + .15 });
+    const h = put(g, G.rbox(.5, .42, .42, .06), toon(PAL.black), { y: b + .85 }); put(h, G.plane(.38, .28), glow(0xffffff, { map: textTex(face, { w: 256, h: 192, bg: '#0e1424', fg: '#8ff0ff', font: 'bold 80px Helvetica', key: 'bot' + face }) }), { z: .215, noInk: true });
+    put(g, G.cyl(.01, .01, .2, 6), toon(PAL.black), { y: b + 1.15 }); put(g, G.sph(.04), glow(PAL.cyan), { y: b + 1.26, noInk: true }); return g; } });
+
+register('phone-big', { tags: ['tech', 'phone', 'social', 'ui'], aliases: ['smartphone', 'giant-phone'], desc: 'Phone as a set piece (stand up, screen content). lines: [...] draws a portrait list of rows ("JADE $14"), name left and amount right.', opts: { screen: 'chat|dashboard|chart|code|logo:TEXT', h: 'height (1.6)', lines: 'array of row strings, e.g. ["JADE $14", "MAX $96"] (overrides screen)' },
+  build: ({ screen = 'chat', h = 1.6, lines = null } = {}) => { const g = g0(), w = h * .5;
+    const tex = lines ? ctex(400, 1200, (x, W, H) => { x.fillStyle = '#16193f'; x.fillRect(0, 0, W, H); const rh = Math.min(260, (H - 80) / lines.length); const C = ['#c8b8ff', '#ffb066', '#ffffff'];
+      lines.forEach((ln, i) => { const k = ln.lastIndexOf(' '), name = ln.slice(0, k), amt = ln.slice(k + 1), y = 60 + i * rh; x.fillStyle = '#242a66'; x.beginPath(); x.roundRect(24, y, W - 48, rh - 24, 28); x.fill();
+        x.fillStyle = C[i % 3]; x.font = '900 70px Helvetica, Arial'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(name, W / 2, y + (rh - 24) * .3); x.fillStyle = '#ffffff'; x.font = '900 120px Helvetica, Arial'; x.fillText(amt, W / 2, y + (rh - 24) * .7); }); }, { key: 'phone:' + lines.join('|') }) : screenTex(screen, 5);
+    put(g, G.rbox(w, h, .08, .08), toon(PAL.black), { y: h / 2 }); put(g, G.plane(w * .88, h * .9), glow(0xffffff, { map: tex }), { y: h / 2, z: .042, noInk: true }); return g; } });
+
+register('counter-board', {
+  tags: ['ui', 'sign', 'number', 'stat', 'time'], aliases: ['big-number', 'scoreboard', 'stat-board'], desc: 'Big hanging board with a label and a big number (DAY 118, 4 MONTHS, $60B).',
+  opts: { label: 'small top text', value: 'big text', color: 'board color hex string', w: 'width (2.4)' },
+  build: ({ label = 'DAY', value = '118', color = '#e2463b', fg = '#f6d36a', w = 2.4 } = {}) => {
+    const g = g0(), h = w * .5; const t = ctex(1024, 512, (x, W, H) => { x.fillStyle = color; x.fillRect(0, 0, W, H); x.fillStyle = '#fff'; x.font = 'bold 80px Helvetica'; x.textAlign = 'center'; x.fillText(label, W / 2, 110); x.fillStyle = fg; x.font = 'bold 260px Helvetica'; x.fillText(value, W / 2, 390); }, { key: 'cb' + label + value + color });
+    put(g, G.box(w + .08, h + .08, .06), toon(0x2a2a38), {}); put(g, G.plane(w, h), glow(0xffffff, { map: t }), { z: .035, noInk: true }); return g;
+  },
+});
+
+register('chip', { tags: ['tech', 'ai', 'gpu', 'hardware'], aliases: ['gpu', 'cpu', 'microchip'], desc: 'Computer chip with pins (GPU/CPU stand-in). Scale it up as a hero object.', opts: { label: 'text on die' },
+  build: ({ label = 'GPU' } = {}) => { const g = g0(); put(g, G.rbox(.5, .06, .5, .015), toon(0x2c6e4a), { y: .03 }); const d = put(g, G.rbox(.3, .05, .3, .01), toon(0x2a2a33), { y: .08 });
+    put(d, G.plane(.24, .24), glow(0xffffff, { map: textTex(label, { w: 256, h: 256, fg: '#e6c25a', font: 'bold 90px Helvetica', bg: '#22222b', key: 'chip' + label }) }), { y: .026, rx: -Math.PI / 2, noInk: true });
+    for (let i = 0; i < 8; i++) for (const s of [-1, 1]) { put(g, G.box(.025, .02, .06), toon(PAL.gold), { x: -.21 + i * .06, y: .02, z: s * .27, noInk: true }); put(g, G.box(.06, .02, .025), toon(PAL.gold), { x: s * .27, y: .02, z: -.21 + i * .06, noInk: true }); } return g; } });
+
+register('satellite', { tags: ['space', 'tech', 'orbit'], desc: 'Satellite with solar panels.', opts: {},
+  build: () => { const g = g0(); put(g, G.rbox(.4, .4, .5, .03), toon(PAL.gold), {}); for (const s of [-1, 1]) { put(g, G.cyl(.02, .02, .4, 8), toon(PAL.steel), { x: s * .38, rz: Math.PI / 2 }); put(g, G.box(.8, .02, .4), toon(0x2b4aa8), { x: s * .98 }); } put(g, G.cone(.15, .15, 16), toon(PAL.offwhite), { z: .32, rx: -Math.PI / 2 }); return g; } });
+
+register('rocket', { tags: ['space', 'launch', 'vehicle'], desc: 'Cartoon rocket on fins.', opts: { color: 'body color' },
+  build: ({ color = PAL.offwhite } = {}) => { const g = g0(); put(g, G.cap(.35, 2.2), toon(color), { y: 1.6 }); put(g, G.cone(.36, .7, 24), toon(PAL.red), { y: 3.25 });
+    put(g, G.cyl(.15, .15, .05, 20), glow(PAL.cyan), { y: 2.1, z: .34, rx: Math.PI / 2, noInk: true }); for (let i = 0; i < 3; i++) { const a = i / 3 * Math.PI * 2; put(g, G.box(.04, .6, .45), toon(PAL.red), { x: Math.cos(a) * .4, y: .55, z: Math.sin(a) * .4, ry: -a + Math.PI / 2 }); } return g; } });
+
+
