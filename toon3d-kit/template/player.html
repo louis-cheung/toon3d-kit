@@ -1,0 +1,12 @@
+<!doctype html><html><head><meta charset="utf-8"><style>body{margin:0;background:#111}canvas{display:none}</style>
+<script type="importmap">{"imports":{"three":"../lib/three.module.js","three/addons/":"../lib/addons/"}}</script></head>
+<body><canvas id="gl"></canvas><canvas id="out"></canvas>
+<script type="module">
+import { loadEpisode, makePlayer } from './player.js';
+const q = new URLSearchParams(location.search); const ep = await loadEpisode(q.get('ep'));
+const sc = parseFloat(q.get('scale') || '1'); ep.meta.w = Math.round(1080 * sc / 2) * 2; ep.meta.h = Math.round(1920 * sc / 2) * 2;
+const P = makePlayer(ep, document.getElementById('gl'), document.getElementById('out'));
+window.info = { total: P.total, fps: ep.meta.fps, w: ep.meta.w, h: ep.meta.h, shots: ep.shots.map(s => ({ start: s.start, n: s.n, set: s.set })) };
+window.frame = (f) => P.renderFrame(f).toDataURL('image/jpeg', .92);
+window.ready = true;
+</script></body></html>
