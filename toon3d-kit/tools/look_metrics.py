@@ -41,3 +41,28 @@ def hsv_sat(rgb):
     s = np.where(mx > 0, (mx - mn) / np.where(mx == 0, 1, mx), 0)
     return s, mx
 
+def measure_folder(paths):
+    ys, sats, lcs, vigs, rgbs = [], [], [], [], []
+    for p in paths:
+        rgb = load(p)
+        y = luma(rgb)
+        ys.append(y.ravel())
+        s, v = hsv_sat(rgb)
+        sats.append(s[v > 0.15].ravel())
+        lcs.append(local_contrast(y))
+        vigs.append(vignette_ratio(y))
+        rgbs.append(rgb.reshape(-1, 3))
+    Y = np.concatenate(ys)
+    S = np.concatenate(sats)
+    RGB = np.concatenate(rgbs)
+    Yr = RGB[:, 0] * 0.2126 + RGB[:, 1] * 0.7152 + RGB[:, 2] * 0.0722
+    ink = Yr < 0.12
+    non_ink = Yr[~ink]
+    order = np.argsort(Yr)
+    n_dark = max(1, int(0.005 * len(order)))
+    black_pt = RGB[order[:n_dark]].mean(axis=0) * 255
+    n_light = max(1, int(0.005 * len(order)))
+    white_pt = RGB[order[-n_light:]].mean(axis=0) * 255
+    pct = lambda a, p: float(np.percentile(a, p))
+    return {
+        'frames': len(paths),
