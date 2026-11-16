@@ -62,3 +62,6 @@ def main():
         out = A.out or str(pathlib.Path(A.render_dir) / f'sheet_{A.start:.1f}-{A.start + len(chunk)/A.fps:.1f}.jpg')
         sheet.save(out, quality=88)
         print(f'{len(chunk)} frames ({A.start:.1f}s-{A.start + len(chunk)/A.fps:.1f}s) -> {out}')
+
+if __name__ == '__main__':
+    main()
