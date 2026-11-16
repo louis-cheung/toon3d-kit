@@ -23,3 +23,20 @@ with sync_playwright() as p:
     pg.goto(f'http://127.0.0.1:{srv.server_address[1]}/template/player.html?ep={rel}&scale=1&faces=1')
     pg.wait_for_function('window.ready===true', timeout=90000); info = pg.evaluate('info')
     worst = {}
+    for i in [int(x) for x in A.shots.split(',')]:
+        s = info['shots'][i]; rows = []
+        for fr in pts:
+            f = s['start'] + min(s['n'] - 1, int(fr * (s['n'] - 1)))
+            im = np.asarray(Image.open(io.BytesIO(base64.b64decode(pg.evaluate(f'frame({f})').split(',')[1]))).convert('RGB')).astype(int)
+            res = []
+            for k, c in enumerate(COL):
+                m = (np.abs(im - np.array(c)).max(axis=-1) < 40)
+                m[1240:1420] = False   # caption band is white text on dark, never face colors, but be safe
+                if m.sum() < 30: res.append((names[k], 0, 0)); continue
+                xs = np.where(m.any(axis=0))[0]; ys = np.where(m.any(axis=1))[0]; res.append((names[k], int(xs.max() - xs.min() + 1), int(ys.max() - ys.min() + 1)))
+            rows.append((fr, res))
+        for fr, res in rows:
+            print(f'shot {i:02d} at {fr:.2f}: ' + '  '.join(f'{n} {w}x{h}' for n, w, h in res) + f'   smallest face width {min(w for _, w, _ in res)} px')
+        worst[i] = min(min(w for _, w, _ in res) for _, res in rows)
+    print('smallest visible face width per shot (px at 1080):', worst)
+    b.close()
