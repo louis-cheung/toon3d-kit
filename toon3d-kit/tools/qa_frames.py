@@ -45,3 +45,23 @@ def main():
         print(f'no frames found under {A.render_dir}/frames/'); sys.exit(1)
     print(f'scanning {len(paths)} frames ...')
 
+    frames_small = [load_small(p) for p in paths]
+    ys = np.array([luma(f).mean() for f in frames_small])
+
+    issues = []
+    for i, y in enumerate(ys):
+        if y < 0.02: issues.append((i, 'black frame', f'luma {y:.3f}'))
+        elif y > 0.98: issues.append((i, 'white frame', f'luma {y:.3f}'))
+
+    # per-pixel RGB diff (not just mean luma) so a blink or a small head/camera move still counts as motion
+    diffs = np.array([np.abs(frames_small[i + 1] - frames_small[i]).mean() for i in range(len(frames_small) - 1)])
+    run_start = None
+    for i in range(len(diffs)):
+        still = diffs[i] < A.frozen_thresh
+        if still and run_start is None: run_start = i
+        if (not still or i == len(diffs) - 1) and run_start is not None:
+            run_len = i - run_start + (0 if still else 0) + 1
+            if run_len >= A.frozen_frames:
+                issues.append((run_start, 'frozen span', f'{run_len} frames (~{run_len / A.fps:.1f}s) with no motion'))
+            run_start = None
+
