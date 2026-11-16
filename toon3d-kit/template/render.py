@@ -23,3 +23,25 @@ with sync_playwright() as p:
     except Exception: print('\n'.join(errs)); raise
     info = pg.evaluate('info'); print(f"{info['total']} frames, {info['total']/info['fps']:.1f}s, {len(info['shots'])} shots, {info['w']}x{info['h']}")
     if A.stills:
+        picks = [s['start'] + s['n'] // 2 for s in info['shots']]
+        for i, f in enumerate(picks): save(pg.evaluate(f'frame({f})'), out / f'still_{i:02d}.jpg')
+        from PIL import Image
+        ims = [Image.open(out / f'still_{i:02d}.jpg') for i in range(len(picks))]; w, h = 270, 480
+        sheet = Image.new('RGB', (w * len(ims), h)); [sheet.paste(im.resize((w, h)), (i * w, 0)) for i, im in enumerate(ims)]; sheet.save(out / 'stills_sheet.jpg', quality=88)
+        print('stills ->', out / 'stills_sheet.jpg')
+    else:
+        lo, hi = (map(int, A.frames.split('-')) if A.frames else (0, info['total'] - 1)); t0 = time.time()
+        for f in range(lo, hi + 1):
+            fp = out / 'frames' / f'f{f:05d}.jpg'
+            if A.resume and fp.exists(): continue
+            save(pg.evaluate(f'frame({f})'), fp)
+            if f % 30 == 0: print(f'frame {f}/{hi}  {(time.time()-t0)/(f-lo+1):.2f}s/frame', flush=True)
+        if A.frames:
+            print(f'frames {lo}-{hi} -> {out / "frames"}')
+        else:
+            cmd = ['ffmpeg', '-y', '-loglevel', 'error', '-framerate', str(info['fps']), '-i', str(out / 'frames' / 'f%05d.jpg')]
+            if A.audio: cmd += ['-i', A.audio, '-c:a', 'aac', '-b:a', '192k', '-shortest']
+            cmd += ['-frames:v', str(info['total']), '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '18', '-pix_fmt', 'yuv420p', '-colorspace', 'bt709', '-movflags', '+faststart', str(out / 'out.mp4')]
+            subprocess.run(cmd, check=True); print('video ->', out / 'out.mp4')
+    if errs: print('ERRORS:\n' + '\n'.join(errs[:10]))
+    b.close()
