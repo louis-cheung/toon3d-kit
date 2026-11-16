@@ -65,3 +65,33 @@ def main():
                 issues.append((run_start, 'frozen span', f'{run_len} frames (~{run_len / A.fps:.1f}s) with no motion'))
             run_start = None
 
+    # A real pop/glitch frame differs from both neighbours, but ITS neighbours look like a continuous
+    # sequence without it (skip-diff small) -- this is what tells it apart from an intentional whip/cut,
+    # where the frames before and after the cut are genuinely different from each other too.
+    for i in range(1, len(diffs)):
+        d_prev, d_next = diffs[i - 1], diffs[i]
+        d_skip = np.abs(frames_small[i + 1] - frames_small[i - 1]).mean()
+        if d_prev > A.pop_thresh and d_next > A.pop_thresh and d_skip < A.pop_thresh * 0.5:
+            issues.append((i, 'pop frame', f'diff {d_prev:.3f} / {d_next:.3f} from neighbours, skip-diff {d_skip:.3f}'))
+
+    if A.audio:
+        import soundfile as sf
+        wav, sr = sf.read(A.audio)
+        mono = wav.mean(axis=1) if wav.ndim > 1 else wav
+        peak = float(np.abs(mono).max())
+        rms = float(np.sqrt(np.mean(mono ** 2)))
+        if peak >= 0.999: issues.append(('audio', 'clipped', f'peak {peak:.3f}'))
+        if rms < 0.02: issues.append(('audio', 'too quiet', f'rms {rms:.4f}'))
+        print(f'audio: peak {peak:.3f}, rms {rms:.4f}' + (f' ({20*np.log10(rms):.1f} dBFS)' if rms > 0 else ''))
+
+    if not issues:
+        print(f'clean: {len(paths)} frames, no black/white/frozen/pop frames flagged.')
+        return
+    print(f'{len(issues)} issue(s):')
+    for frame, kind, detail in issues:
+        where = f'frame {frame:05d}' if isinstance(frame, int) else frame
+        print(f'  {where:<16} {kind:<14} {detail}')
+    sys.exit(1)
+
+if __name__ == '__main__':
+    main()
