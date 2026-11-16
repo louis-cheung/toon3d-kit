@@ -66,3 +66,37 @@ def measure_folder(paths):
     pct = lambda a, p: float(np.percentile(a, p))
     return {
         'frames': len(paths),
+        "Y' p1": pct(Y, 1), "Y' p5": pct(Y, 5), "Y' p25": pct(Y, 25), "Y' p50": pct(Y, 50),
+        "Y' p75": pct(Y, 75), "Y' p95": pct(Y, 95), "Y' p99": pct(Y, 99),
+        "Y' mean": float(Y.mean()), "Y' std": float(Y.std()),
+        'non-ink Y\' p5': float(np.percentile(non_ink, 5)) if len(non_ink) else float('nan'),
+        'ink fraction': float(ink.mean()),
+        'HSV S mean': float(S.mean()), 'HSV S p50': pct(S, 50), 'HSV S p90': pct(S, 90),
+        'local contrast': float(np.mean(lcs)),
+        'vignette corner/centre': float(np.mean(vigs)),
+        'black point RGB': tuple(round(x, 1) for x in black_pt),
+        'white point RGB': tuple(round(x, 1) for x in white_pt),
+    }
+
+def main():
+    a = argparse.ArgumentParser()
+    a.add_argument('folders', nargs='+')
+    a.add_argument('--label', action='append', default=[])
+    A = a.parse_args()
+    labels = A.label + [f'set{i}' for i in range(len(A.label), len(A.folders))]
+    results = {}
+    for folder, label in zip(A.folders, labels):
+        paths = sorted(glob.glob(folder.rstrip('/') + '/*.png') + glob.glob(folder.rstrip('/') + '/*.jpg'))
+        if not paths:
+            print(f'{label}: no images found in {folder}', file=sys.stderr); continue
+        results[label] = measure_folder(paths)
+    keys = list(next(iter(results.values())).keys())
+    width = max(len(k) for k in keys)
+    header = ' '.join(f'{l:>22}' for l in results)
+    print(f'{"metric":<{width}} {header}')
+    for k in keys:
+        row = ' '.join(f'{str(results[l][k]):>22}' for l in results)
+        print(f'{k:<{width}} {row}')
+
+if __name__ == '__main__':
+    main()
