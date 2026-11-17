@@ -40,3 +40,27 @@ def rain():
     out = x[:L].copy(); out[:fade] = x[:fade] * k + x[L:] * (1 - k)   # seamless loop
     return out
 
+def crunch():
+    t = T(1.4); r = rng(2)
+    hit = r.uniform(-1, 1, len(t)) * env(t, .002, 18)
+    body = lp(r.uniform(-1, 1, len(t)), .08) * env(t, .003, 7) * 2
+    scrape = hp(r.uniform(-1, 1, len(t)), .3) * (1 + .8 * np.sin(2 * np.pi * 31 * t)) * np.exp(-((t - .35) / .3) ** 2) * .9
+    ring = sum(np.sin(2 * np.pi * f * t) * np.exp(-t * d) for f, d in ((523, 6), (1187, 8), (1830, 10), (2770, 12))) * .25
+    rattle = np.zeros_like(t)
+    for k in range(7):
+        p = int((.55 + k * .09 + r.uniform(0, .04)) * SR); tt = np.arange(3000) / SR
+        if p + 3000 < len(t): rattle[p:p + 3000] += np.sin(2 * np.pi * r.uniform(900, 2500) * tt) * np.exp(-tt * 60) * (.5 - k * .06)
+    return np.tanh(1.6 * (hit + body + scrape + ring * env(t, .001, 2) + rattle))
+
+def car_alarm():
+    t = T(3.0); f = 900 + 500 * (np.sin(2 * np.pi * 2.0 * t) > 0)   # two-tone, 4 switches a second
+    f = f + 120 * np.sin(2 * np.pi * 9 * t)
+    s = np.sign(np.sin(2 * np.pi * np.cumsum(f) / SR)); x = lp(s, .25) * np.minimum(1, t / .02) * np.minimum(1, (3 - t) / .05)
+    return x
+
+def engine_roar():
+    t = T(2.0); r = rng(3); rev = 38 + 55 * (1 - np.exp(-t * 1.6))
+    x = sum(np.sin(2 * np.pi * np.cumsum(rev * k) / SR) / k for k in (1, 2, 3, 4, 6))
+    x = np.tanh(2.2 * x) + lp(r.uniform(-1, 1, len(t)), .05) * 1.5 * (.4 + .6 * t / 2)
+    return lp(x, .2) * np.minimum(1, t / .08) * np.minimum(1, (2 - t) / .15)
+
