@@ -23,3 +23,46 @@ register('lobster-plate', { inkWidth: INK_W,
     for (const s of [-1, 1]) {
       put(L, G.cyl(.012, .012, .09, 8), red, { x: s * .07, z: .1, rz: Math.PI / 2, ry: -s * .9 });        // arm
       put(L, G.sph(.04, 14, 10), red, { x: s * .105, z: .15, s: [.7, .5, 1.25], ry: -s * .25 });           // big pincer
+      put(L, G.sph(.022, 10, 8), dark, { x: s * .078, z: .165, s: [.6, .45, 1.3], ry: s * .2 });           // small pincer
+      for (let k = 0; k < 3; k++) put(L, G.cyl(.006, .006, .07, 6), dark, { x: s * .06, z: .04 - k * .03, y: -.014, rz: s * 1.1, noInk: true }); // legs
+      put(L, G.sph(.011, 8, 6), toon(PAL.ink), { x: s * .022, y: .04, z: .108, noInk: true });              // eyes
+      put(L, G.cyl(.003, .003, .16, 5), dark, { x: s * .05, y: .04, z: .17, rx: Math.PI / 2 - .35, rz: -s * .35, noInk: true }); // antennae
+    }
+    if (plate) put(g, G.sph(.036, 12, 8), toon(C.lemon), { x: .12, y: .035, z: -.06, s: [1, .55, .6], ry: .6 });
+    return g;
+  },
+});
+
+register('salad-bowl', { inkWidth: INK_W,
+  tags: ['food', 'restaurant', 'dinner', 'cheap', 'healthy'], aliases: ['salad'], desc: 'Small bowl of salad. The cheap order.', opts: { seed: 'leaf layout' },
+  build: ({ seed = 2 } = {}) => {
+    const g = g0(), r = rng(seed); put(g, G.cyl(.105, .06, .065, 28), toon(PAL.white), { y: .0325 });
+    for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2 + r(), d = .02 + r() * .045; put(g, new THREE.IcosahedronGeometry(.034, 1), toon(i % 3 ? C.lettuce : C.lettuceDark), { x: Math.cos(a) * d, z: Math.sin(a) * d, y: .068 + r() * .014, s: [1.25, .5, 1], ry: a, noInk: true }); }
+    for (let i = 0; i < 3; i++) { const a = i * 2.1 + .4; put(g, G.sph(.017, 10, 8), toon(C.tomato), { x: Math.cos(a) * .05, z: Math.sin(a) * .05, y: .084, noInk: true }); }
+    return g;
+  },
+});
+
+register('fries', { inkWidth: INK_W,
+  tags: ['food', 'restaurant', 'fast-food', 'snack', 'share'], aliases: ['french-fries', 'chips'], desc: 'Red carton of fries. "For the table."', opts: { n: 'how many fries (12)' },
+  build: ({ n = 12, seed = 4 } = {}) => {
+    const g = g0(), r = rng(seed); put(g, G.cyl(.062, .042, .1, 4), toon(C.carton), { y: .05, ry: Math.PI / 4, s: [1, 1, .62] });
+    for (let i = 0; i < n; i++) put(g, G.box(.013, .1, .013), toon(C.fry), { x: (r() - .5) * .07, z: (r() - .5) * .03, y: .12 + r() * .025, rz: (r() - .5) * .5, rx: (r() - .5) * .3, noInk: true });
+    return g;
+  },
+});
+
+register('loose-fries', { inkWidth: INK_W,
+  tags: ['food', 'restaurant', 'fries'], desc: 'Countable fries on a plate or in a hand.',
+  opts: { n: 'number of fries', plate: 'false for a handful' },
+  build: ({ n = 4, plate = true } = {}) => {
+    const g = g0();
+    if (plate) g.add(raw('plate', { r: .12 }));
+    for (let i = 0; i < n; i++) {
+      put(g, G.box(.017, .016, .115), toon(C.fry),
+        { x: (i - (n - 1) / 2) * .033, y: plate ? .034 : .005, ry: (i - 1.5) * .1 });
+    }
+    return g;
+  },
+});
+
