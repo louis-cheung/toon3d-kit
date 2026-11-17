@@ -6,6 +6,7 @@
 //   sec        length in seconds (aim 2 to 4)
 //   set        set name; setOpts passes options to it
 //   cam        camera name from the set ('main', 'wide', ...) or {from, to, ease, drift, roll}; from/to are names or {pos, look, fov}
+//              or a library move: cam('follow-behind', { on: 'ETHAN' }) from engine/shots.js (names in CAMERA.md, RULES K3; use these first)
 //   enter      'cut' (default) | 'whip' | 'flash' | 'black'
 //   shake      true = small impact shake at the start
 //   cast       [{asset, at (spot name or [x,y,z]), ry, expression, expressionTo, exprAt, pose, poseTo, poseAt:[t0,t1], walkTo, walkAt, turn, hop, ...bean options}]

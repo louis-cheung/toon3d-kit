@@ -64,3 +64,36 @@ def engine_roar():
     x = np.tanh(2.2 * x) + lp(r.uniform(-1, 1, len(t)), .05) * 1.5 * (.4 + .6 * t / 2)
     return lp(x, .2) * np.minimum(1, t / .08) * np.minimum(1, (2 - t) / .15)
 
+def brake_hiss():
+    t = T(1.3); r = rng(4); x = hp(r.uniform(-1, 1, len(t)), .15)
+    return x * np.minimum(1, t / .015) * np.exp(-t * 2.4) * (1 + .3 * np.sin(2 * np.pi * 7 * t)) + np.sin(2 * np.pi * 70 * t) * env(t, .002, 30) * .5
+
+def jingle():
+    notes = [(523.3, .0, .16), (659.3, .16, .16), (784.0, .32, .16), (1046.5, .48, .3), (880.0, .82, .14), (1046.5, .98, .14), (1318.5, 1.14, .62)]
+    x = np.zeros(int(2.0 * SR))
+    for f, st, d in notes:
+        tt = np.arange(int((d + .25) * SR)) / SR; v = (np.sign(np.sin(2 * np.pi * f * tt)) * .45 + np.sin(2 * np.pi * f * 2 * tt) * .3 + np.sin(2 * np.pi * f * tt * 1.007) * .5)
+        v *= np.minimum(1, tt / .005) * np.exp(-tt * (5 if d > .5 else 9)) * (1 + .15 * np.sin(2 * np.pi * 6 * tt))
+        p = int(st * SR); x[p:p + len(v)] += v[:len(x) - p]
+    return lp(x, .4)
+
+def ding():
+    t = T(.9); return sum(np.sin(2 * np.pi * f * t) * np.exp(-t * d) * a for f, d, a in ((1568, 5, 1), (2093, 6, .6), (3136, 9, .25))) * np.minimum(1, t / .003)
+
+def door_creak():
+    t = T(1.6); f = 180 + 140 * np.sin(np.pi * t / 1.6) + 30 * np.sin(2 * np.pi * 1.3 * t)
+    pulses = (np.sin(2 * np.pi * np.cumsum(f) / SR) > .93).astype(float)   # stick-slip: a buzzy train of clicks
+    x = lp(pulses - pulses.mean(), .5) + .3 * lp(rng(5).uniform(-1, 1, len(t)), .1)
+    return x * np.sin(np.pi * np.minimum(1, t / 1.6)) ** .6
+
+def ka_ching():
+    t = T(1.3); r = rng(6)
+    ka = lp(r.uniform(-1, 1, len(t)), .6) * env(t, .001, 70) + np.sin(2 * np.pi * 140 * t) * env(t, .001, 40) * .6   # drawer clunk
+    p = int(.12 * SR); tt = t[:len(t) - p]
+    bell = sum(np.sin(2 * np.pi * f * tt) * np.exp(-tt * d) * a for f, d, a in ((2637, 3.2, 1), (3951, 4, .55), (5274, 6, .3), (2660, 3.2, .5)))
+    x = ka.copy(); x[p:] += bell * .9
+    return x
+
+os.makedirs(OUT, exist_ok=True)
+for name, fn in [('rain', rain), ('crunch', crunch), ('car-alarm', car_alarm), ('engine-roar', engine_roar), ('brake-hiss', brake_hiss), ('jingle', jingle), ('ding', ding), ('door-creak', door_creak), ('ka-ching', ka_ching)]:
+    write(name, fn())
