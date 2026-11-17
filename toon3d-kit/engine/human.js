@@ -73,3 +73,28 @@ function drawHumanFace(x, e, blink, fo) {
     if (e.eyes !== 'blank') {
     const ix = cx + (kind === 'side' ? s * .06 : 0), iy = kind === 'wide' ? cy + (hu * 2.1 - hl * hlk * 2) / 4 : cy - .03, ir = (fem ? .14 : .122) * (e.eyes === 'shock' ? .42 : kind === 'wide' ? .7 : 1);
     const ir_px = ir * 651.9;
+    const grd = x.createLinearGradient(0, PY(iy) - ir_px * 1.15, 0, PY(iy) + ir_px * 1.15); grd.addColorStop(0, shade(fo.iris, .55)); grd.addColorStop(.45, css(fo.iris)); grd.addColorStop(1, shade(fo.iris, 1.25));
+    x.fillStyle = grd; x.beginPath(); x.ellipse(PX(ix), PY(iy), ir_px, ir_px * 1.12, 0, 0, 7); x.fill();
+    x.strokeStyle = shade(fo.iris, .4); x.lineWidth = 6; x.beginPath(); x.ellipse(PX(ix), PY(iy), ir_px * .97, ir_px * 1.09, 0, 0, 7); x.stroke();
+    x.fillStyle = shade(fo.iris, .3); x.beginPath(); x.ellipse(PX(ix), PY(iy), ir_px * .48, ir_px * .54, 0, 0, 7); x.fill();
+    x.fillStyle = '#fff'; x.beginPath(); x.ellipse(PX(ix - .035), PY(iy + .04), ir_px * .34, ir_px * .3, -.4, 0, 7); x.fill();
+    x.globalAlpha = .8; x.beginPath(); x.arc(PX(ix + .03), PY(iy - .035), ir_px * .13, 0, 7); x.fill(); x.globalAlpha = 1;
+    }
+    if (e.eyes === 'teary') { x.fillStyle = 'rgba(175,225,255,.6)'; x.beginPath(); M(inX, cy - hl * .2); for (let k = 1; k <= 6; k++) L(inX + (outX - inX) * k / 6, cy - hl * .2 + (k % 2 ? .025 : -.01)); L(outX, cy - hl * 3); L(inX, cy - hl * 3); x.closePath(); x.fill();
+      x.fillStyle = '#fff'; for (const [dx, dy, r] of [[-.05, -.02, 9], [.04, -.05, 6], [.09, -.01, 5]]) { x.beginPath(); x.arc(PX(cx + dx), PY(cy + dy), r, 0, 7); x.fill(); } }
+    // the upper lid casts a shadow band on the eye
+    x.fillStyle = 'rgba(60,30,50,.22)'; x.beginPath(); M(inX - .05, cy + .2); L(outX + s * .05, cy + .2); L(outX + s * .05, cy + tilt + hu * .9); Q(cx, cy + hu * 1.2, inX - .05, cy + hu * .5); x.closePath(); x.fill();
+    x.restore();
+    // upper lid: a thick tapered lash line, heavier at the outer corner, with a flick for her
+    x.fillStyle = ink; x.beginPath(); M(inX - s * .005, cy - .005); Q(cx - s * a * .15, cy + hu * 2.15, outX + s * (fem ? .035 : .015), cy + tilt + (fem ? .02 : 0));
+    if (fem) L(outX + s * .06, cy + tilt + .04);
+    Q(cx - s * a * .1, cy + hu * 2.15 + (fem ? .15 : .11), inX - s * .005, cy + .02); x.closePath(); x.fill();
+    if (fem) { x.strokeStyle = ink; x.lineWidth = 6; for (let k = 0; k < 2; k++) { const bx = outX - s * (.03 + k * .05), byy = cy + tilt + hu * 1.4 - k * .01; x.beginPath(); M(bx, byy); Q(bx + s * .03, byy + .05, bx + s * .06, byy + .06); x.stroke(); } }
+    // crease above the lid
+    if (fem && kind !== 'lid') { x.strokeStyle = shade(fo.skin, .78); x.lineWidth = 4; x.beginPath(); M(cx - s * a * .55, cy + hu * 2.1 + .045); Q(cx, cy + hu * 2.3 + .06, outX - s * .01, cy + tilt + .06); x.stroke(); }
+    // lower lash for wide eyes only (ink, short, outer half): sells the round shocked eye
+    if (kind === 'wide') { x.strokeStyle = ink; x.lineWidth = fem ? 5 : 4; x.beginPath(); M(cx + s * a * .1, cy - hl * hlk * 1.75); Q(cx + s * a * .7, cy - hl * hlk * 1.5, outX, cy + tilt * .3); x.stroke(); }
+  }
+  // brows: nearly straight, thick at the inner end, tapering out. They rise and fall with the upper lid (wide eyes lift them, a narrowed lid lowers them).
+  const browLift = kind === 'wide' ? (fem ? .06 : .09) : kind === 'lid' ? -.035 : 0;   // small: her fringe sits just above the brows
+  for (const s of [-1, 1]) {
