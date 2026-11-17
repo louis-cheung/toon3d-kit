@@ -66,3 +66,33 @@ register('loose-fries', { inkWidth: INK_W,
   },
 });
 
+register('water-glass', { inkWidth: INK_W, tags: ['food', 'drink', 'restaurant', 'cheap', 'tap-water'], aliases: ['glass', 'water'], desc: 'Glass of tap water.', opts: { fill: '0 to 1 (0.7)' },
+  build: ({ fill = .7 } = {}) => { const g = g0(); put(g, G.cyl(.036, .03, .12, 20), toon(0xe8f6ff, { transparent: true, opacity: .45 }), { y: .06 });
+    put(g, G.cyl(.032, .028, .11 * fill, 20), toon(C.water, { transparent: true, opacity: .8 }), { y: .008 + .055 * fill, noInk: true }); return g; } });
+
+register('receipt', { inkWidth: INK_W,
+  tags: ['money', 'restaurant', 'bill', 'check', 'paper'], aliases: ['bill', 'check'], desc: 'Restaurant bill: a paper slip with item lines and a total. Lies flat; rotate it up for a close-up.',
+  opts: { total: "text on the total line ('$330')", lines: 'number of item lines (6)' },
+  build: ({ total = '$330', lines = 6 } = {}) => {
+    const g = g0(), w = .11, d = .2;
+    const tex = ctex(256, 464, (x) => { x.fillStyle = '#fbf9f2'; x.fillRect(0, 0, 256, 464); x.fillStyle = '#2b2230'; x.font = 'bold 30px Helvetica'; x.textAlign = 'center'; x.fillText('THE CHECK', 128, 48);
+      x.fillStyle = '#9a96a6'; for (let i = 0; i < lines; i++) { x.fillRect(28, 84 + i * 40, 120, 12); x.fillRect(186, 84 + i * 40, 42, 12); }
+      x.fillStyle = '#2b2230'; x.fillRect(28, 330, 200, 5); x.font = 'bold 30px Helvetica'; x.textAlign = 'left'; x.fillText('TOTAL', 28, 372); x.textAlign = 'center'; x.fillStyle = '#e2463b'; x.font = 'bold 84px Helvetica'; x.fillText(total, 128, 442); }, { key: 'receipt2:' + total + lines });
+    put(g, G.box(w + .024, .006, d + .024), toon(0x3a2438), { y: .003 });   // dark check holder under the slip, so it reads on a white tablecloth
+    put(g, G.box(w, .004, d), toon(0xfbf9f2), { y: .008 });
+    put(g, G.plane(w * .98, d * .98), new THREE.MeshBasicMaterial({ map: tex, toneMapped: false }), { y: .0105, rx: -Math.PI / 2, noInk: true, shadow: false });
+    return g;
+  },
+});
+
+register('bread-loaf', { inkWidth: INK_W, tags: ['food', 'restaurant', 'bakery', 'share'], aliases: ['bread'], desc: 'Split-top bread loaf.', opts: {},
+  build: () => { const g = g0(); put(g, G.cap(.06, .13, 14), toon(C.crust), { y: .055, rz: Math.PI / 2, s: [.9, 1, 1] });
+    for (let i = -1; i <= 1; i++) put(g, G.box(.012, .012, .09), toon(C.crumb), { x: i * .05, y: .108, ry: .5, noInk: true }); return g; } });
+
+register('cheese-wedge', { inkWidth: INK_W, tags: ['food', 'restaurant', 'share'], aliases: ['cheese'], desc: 'Wedge of yellow cheese with holes.', opts: {},
+  build: () => { const g = g0(); put(g, new THREE.CylinderGeometry(.11, .11, .06, 3, 1, false, 0, Math.PI * 2), toon(C.cheese), { y: .03, s: [1, 1, .55] });
+    for (const [x, z] of [[.02, .035], [-.03, .028], [.0, .03]]) put(g, G.cyl(.011, .011, .004, 10), toon(0xd9a62e), { x, y: .045 - Math.abs(x) * .4, z: z + .003, rx: Math.PI / 2, noInk: true }); return g; } });
+
+register('turkey-leg', { inkWidth: INK_W, tags: ['food', 'restaurant', 'meat', 'share', 'expensive'], aliases: ['drumstick', 'chicken-leg'], desc: 'Big roasted leg on the bone.', opts: {},
+  build: () => { const g = g0(), L = group(g, { y: .06, rz: .25 }); put(L, G.sph(.065, 16, 12), toon(C.meat), { s: [1.25, .9, .9] });
+    put(L, G.cyl(.014, .018, .11, 10), toon(C.bone), { x: .12, rz: Math.PI / 2 }); for (const s of [-1, 1]) put(L, G.sph(.02, 10, 8), toon(C.bone), { x: .178, z: s * .014 }); return g; } });
