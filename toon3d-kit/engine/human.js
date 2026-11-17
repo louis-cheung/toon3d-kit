@@ -123,3 +123,28 @@ function drawHumanFace(x, e, blink, fo) {
     if (fem) { x.fillStyle = css(lp); hole(.022); x.fill(); x.fillStyle = shade(lp, 1.16); x.beginPath(); x.ellipse(PX(0), PY(bot - .02), rx * .5 * 693, 6, 0, 0, 7); x.fill(); }   // her lips, a lower-lip shine
     x.fillStyle = '#3a1522'; hole(); x.fill();
     x.save(); hole(); x.clip();
+    x.fillStyle = '#c4566a'; x.beginPath(); x.ellipse(PX(0), PY(bot + .02), rx * .8 * 693, (top - bot) * .3 * 377, 0, 0, 7); x.fill();   // tongue
+    x.fillStyle = '#fbf6f0'; x.fillRect(PX(-rx * 1.1), PY(top + .04), rx * 2.2 * 693, (.04 + (top - bot) * .18) * 377);   // upper teeth
+    x.restore();
+    x.strokeStyle = INKC; x.lineWidth = fem ? 4 : 5; hole(); x.stroke();
+  }
+  else if (m === 'grit') { const rx = .12, t = my + .035, b = my - .07; x.fillStyle = '#fbf6f0'; x.beginPath(); M(-rx, t); Q(0, t + .015, rx, t); Q(rx * 1.08, (t + b) / 2, rx * .9, b); Q(0, b - .015, -rx * .9, b); Q(-rx * 1.08, (t + b) / 2, -rx, t); x.closePath(); x.fill();
+    x.strokeStyle = INKC; x.lineWidth = 3; x.beginPath(); M(-rx * .95, (t + b) / 2); L(rx * .95, (t + b) / 2); for (const tx of [-.06, 0, .06]) { M(tx, t); L(tx + .004, b); } x.stroke(); x.lineWidth = 5; x.beginPath(); M(-rx, t); Q(0, t + .015, rx, t); Q(rx * 1.08, (t + b) / 2, rx * .9, b); Q(0, b - .015, -rx * .9, b); Q(-rx * 1.08, (t + b) / 2, -rx, t); x.closePath(); x.stroke(); }
+  else if (m === 'tri') { x.fillStyle = '#e98a90'; x.beginPath(); M(0, my + .07); Q(.02, my + .06, .1, my - .17); Q(0, my - .19, -.1, my - .17); Q(-.02, my + .06, 0, my + .07); x.closePath(); x.fill(); x.strokeStyle = INKC; x.lineWidth = 5; x.stroke(); }
+  else if (m === 'nervous') { const rx = .15, t = my + .03, b = my - .16; const sh = () => { x.beginPath(); M(-rx, t + .02); Q(0, t - .02, rx, t + .02); Q(rx * .7, b + .02, 0, b); Q(-rx * .7, b + .02, -rx, t + .02); x.closePath(); };
+    x.fillStyle = '#3a1522'; sh(); x.fill(); x.save(); sh(); x.clip(); x.fillStyle = '#fbf6f0'; x.fillRect(PX(-rx), PY(t + .03), rx * 2 * 693, .05 * 377); x.fillStyle = '#c4566a'; x.beginPath(); x.ellipse(PX(0), PY(b + .02), rx * .55 * 693, 18, 0, 0, 7); x.fill(); x.restore();
+    x.strokeStyle = INKC; x.lineWidth = 5; sh(); x.stroke(); }
+  else if (['open', 'laugh', 'grin', 'grinWavy', 'talk2', 'talk3'].includes(m)) { const d = m === 'talk2' ? .05 : m === 'talk3' ? .08 : .1; x.fillStyle = '#4a1f2e'; x.beginPath(); M(-mw, my + .01); Q(0, my - .015, mw, my + .01); Q(0, my - d * 1.6, -mw, my + .01); x.fill(); if (m === 'grin' || m === 'laugh') { x.fillStyle = '#fff'; x.beginPath(); M(-mw * .8, my); Q(0, my - .02, mw * .8, my); Q(0, my - .035, -mw * .8, my); x.fill(); } }
+  else if (m === 'talk1') { lips(0); x.fillStyle = '#4a1f2e'; x.beginPath(); x.ellipse(PX(0), PY(my - .01), 26, 9, 0, 0, 7); x.fill(); }
+  else {
+    lips(0);
+    const up = m === 'smile' ? .035 : m === 'small' ? .018 : m === 'frown' ? -.03 : 0;
+    x.beginPath();
+    if (m === 'smirk' || m === 'side') { M(-mw * .8, my); Q(mw * .2, my - .02, mw * 1.05, my + .035); }
+    else if (m === 'wavy') { M(-mw, my); for (let k = 1; k <= 4; k++) Q(-mw + (k - .5) * mw / 2, my + (k % 2 ? .02 : -.02), -mw + k * mw / 2, my); }
+    else { const w = m === 'tiny' ? mw * .5 : mw; M(-w, my + up); Q(0, my - up * 1.2, w, my + up); }
+    x.stroke();
+  }
+  for (const ex of e.extra || []) {
+    if (ex === 'sweat') { x.fillStyle = '#bfe6ff'; x.strokeStyle = '#5a8fc0'; x.lineWidth = 3; for (const [sx0, sy0, k] of [[.66, -.02, 1], [-.7, .05, .7], [.56, -.3, .6]]) { x.beginPath(); M(sx0, sy0 + .1 * k); Q(sx0 + .05 * k, sy0 - .02 * k, sx0, sy0 - .06 * k); Q(sx0 - .05 * k, sy0 - .02 * k, sx0, sy0 + .1 * k); x.fill(); x.stroke(); } }
+    if (ex === 'tears' || e.eyes === 'teary') { x.strokeStyle = 'rgba(150,210,255,.85)'; x.lineWidth = 7; for (const s of [-1, 1]) { x.beginPath(); M(s * .5, -.16); Q(s * .53, -.32, s * .5, -.48); x.stroke(); } }
