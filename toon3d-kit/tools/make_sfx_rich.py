@@ -23,3 +23,20 @@ def write(name, x, peak=.89):
         w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR); w.writeframes((x * 32767).astype('<i2').tobytes())
     print('wrote', name, f'{len(x) / SR:.2f}s')
 
+def lp(x, a):   # one-pole low-pass, a in (0, 1]: bigger = brighter
+    y = np.empty_like(x); s = 0.0
+    for i, v in enumerate(x): s += a * (v - s); y[i] = s
+    return y
+def hp(x, a): return x - lp(x, a)
+def env(t, att, dec): return np.minimum(1, t / max(att, 1e-4)) * np.exp(-t * dec)
+def tone(f, t, ph=0): return np.sin(2 * np.pi * np.cumsum(np.broadcast_to(f, t.shape)) / SR + ph)
+
+def rain():
+    n = int(4.3 * SR); r = rng(1); x = hp(lp(r.uniform(-1, 1, n), .35), .02) * .35   # steady wash
+    for _ in range(1400):   # drops: tiny clicky pings at random times
+        p = r.integers(0, n - 2000); f = r.uniform(1800, 5200); tt = np.arange(1500) / SR
+        x[p:p + 1500] += np.sin(2 * np.pi * f * tt) * np.exp(-tt * r.uniform(250, 600)) * r.uniform(.05, .35)
+    L = int(4 * SR); fade = n - L; k = np.linspace(0, 1, fade)
+    out = x[:L].copy(); out[:fade] = x[:fade] * k + x[L:] * (1 - k)   # seamless loop
+    return out
+
