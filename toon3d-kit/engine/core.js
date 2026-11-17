@@ -18,3 +18,21 @@ export const hex = (c) => (typeof c === 'string' ? new THREE.Color(c).getHex() :
 // ---------- seeded random ----------
 export function rng(seed = 1) { let s = (seed * 9301 + 49297) % 233280 || 1; return () => (s = (s * 16807) % 2147483647) / 2147483647; }
 
+// ---------- materials ----------
+function gradMap(steps) {
+  const d = new Uint8Array(steps * 4);
+  for (let i = 0; i < steps; i++) { const v = Math.round(95 + 160 * i / (steps - 1)); d.set([v, v, v, 255], i * 4); }
+  const t = new THREE.DataTexture(d, steps, 1); t.minFilter = t.magFilter = THREE.NearestFilter; t.needsUpdate = true; return t;
+}
+const G3 = gradMap(3);
+const matCache = new Map();
+/** Cel-shaded material (3 tones). Same color returns the same material. */
+export function toon(color, opts = {}) {
+  const key = hex(color) + JSON.stringify(opts, (k, v) => (v && v.isTexture ? v.uuid : v));
+  if (!opts.map && matCache.has(key)) return matCache.get(key);
+  const m = new THREE.MeshToonMaterial({ color: hex(color), gradientMap: G3, ...opts });
+  if (!opts.map) matCache.set(key, m); return m;
+}
+/** Unlit material for screens, signs, glowing strips, skyline windows. */
+export function glow(color, opts = {}) { return new THREE.MeshBasicMaterial({ color: hex(color), toneMapped: false, ...opts }); }
+
