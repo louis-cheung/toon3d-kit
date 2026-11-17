@@ -98,3 +98,28 @@ function drawHumanFace(x, e, blink, fo) {
   // brows: nearly straight, thick at the inner end, tapering out. They rise and fall with the upper lid (wide eyes lift them, a narrowed lid lowers them).
   const browLift = kind === 'wide' ? (fem ? .06 : .09) : kind === 'lid' ? -.035 : 0;   // small: her fringe sits just above the brows
   for (const s of [-1, 1]) {
+    const i = s < 0 ? 0 : 1, ang = e.brows[i] * .8, dy = -by[i] * .0045 + browLift;
+    const x0 = s * .15, x1 = s * (fem ? .56 : .56), y0 = (fem ? .25 : .17) + dy;
+    const rot = (px, py) => { const dx = px - x0, dyy = py - y0, c = Math.cos(-s * ang), sn = Math.sin(-s * ang); return [x0 + dx * c - dyy * sn, y0 + dx * sn + dyy * c]; };
+    const tw = fem ? .025 : .036, arch = fem ? .018 : .01;
+    const pts = [rot(x0, y0 + tw), rot((x0 + x1) / 2, y0 + tw * .55 + arch), rot(x1, y0 + tw * .15), rot((x0 + x1) / 2, y0 + arch - tw * .3), rot(x0, y0 - tw * .6)];
+    x.fillStyle = fo.browColor || ink; x.beginPath(); M(...pts[0]); Q(...pts[1], ...pts[2]); Q(...pts[3], ...pts[4]); x.closePath(); x.fill();
+  }
+  // nose
+  x.strokeStyle = shade(fo.skin, .6); x.lineWidth = fem ? 4 : 5;
+  x.beginPath(); M(-.01, -.405); Q(.02, -.418, .045, -.4); x.stroke();
+  // mouth
+  const my = fem ? -.66 : -.68, mw = fem ? .11 : .11; x.strokeStyle = ink; x.lineWidth = 8;
+  const lips = (open) => { if (!fem) return; const lp = fo.lip || 0xd9707c;
+    x.fillStyle = shade(lp, 1.18); x.beginPath(); M(-mw * .8, my - .005); Q(0, my - (open ? .12 : .09), mw * .8, my - .005); Q(0, my - .015, -mw * .8, my - .005); x.fill();   // lower lip, lighter
+    x.fillStyle = shade(lp, .82); x.beginPath(); M(-mw * .95, my + .008); Q(-mw * .35, my + .05, 0, my + .03); Q(mw * .35, my + .05, mw * .95, my + .008); Q(0, my - .01, -mw * .95, my + .008); x.fill(); };   // upper lip, darker, with a bow
+  const m = e.mouth;
+  if (['o', 'drop'].includes(m)) {
+    const lp = fo.lip || 0xd9707c, cyM = my - (m === 'o' ? .05 : .1);
+    // 'o': a small oval. 'drop': wide AND open (anime shock), a gently arched top and a round bottom.
+    const rx = m === 'o' ? .06 : .135, top = cyM + (m === 'o' ? .1 : .13), bot = cyM - (m === 'o' ? .1 : .17);
+    const cd = m === 'o' ? 0 : .045;   // shock: the corners pull down, the top arches up (reads as alarm, not a grin)
+    const hole = (g = 0) => { x.beginPath(); M(-rx - g, top - cd + g * .8); Q(0, top + .03 + cd + g, rx + g, top - cd + g * .8); Q(rx * (m === 'o' ? 1.15 : .98) + g, bot + (top - bot) * .15, 0, bot - g * 1.4); Q(-rx * (m === 'o' ? 1.15 : .98) - g, bot + (top - bot) * .15, -rx - g, top - cd + g * .8); x.closePath(); };
+    if (fem) { x.fillStyle = css(lp); hole(.022); x.fill(); x.fillStyle = shade(lp, 1.16); x.beginPath(); x.ellipse(PX(0), PY(bot - .02), rx * .5 * 693, 6, 0, 0, 7); x.fill(); }   // her lips, a lower-lip shine
+    x.fillStyle = '#3a1522'; hole(); x.fill();
+    x.save(); hole(); x.clip();
