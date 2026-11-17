@@ -13,3 +13,8 @@ export function insert(target, o = {}) {
 
 /** One acting beat for shot.acts (see engine/acting.js VERBS): verb('shove', { by: 1, to: 0, at: .8 }). */
 export function verb(name, o = {}) { return { verb: name, by: 0, at: 0, ...o }; }
+
+/** A named camera move from the library (engine/camera.js, names in toon3d-kit/CAMERA.md, RULES K3).
+ *  cam('follow-behind', { on: 'ETHAN' }), cam('ots', { with: 'MIA', on: 'MAX' }), cam('drone-drop', { on: 0, at: [0, 1.4] }).
+ *  Use it as a shot's cam or a cut's cam. A bare string (cam: 'orbit') works too when the set has no camera of that name. */
+export function cam(name, o = {}) { return { lib: name, ...o }; }
