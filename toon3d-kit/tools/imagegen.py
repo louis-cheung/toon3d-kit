@@ -41,3 +41,39 @@ from google.genai import types
 from PIL import Image
 client = genai.Client(api_key=os.environ['GEMINI_API_KEY'])
 
+def run(j):
+    refs = [(base / r).resolve() for r in J.get('refs', []) + j.get('refs', [])]
+    prompt = j['prompt'] + ('\n\n' + J['style'] if J.get('style') else '')
+    take = j.get('take', A.take)
+    key = hashlib.md5('|'.join([model, prompt, take, j.get('aspect', '')] +
+                               [hashlib.md5(r.read_bytes()).hexdigest() for r in refs]).encode()).hexdigest()[:10]
+    dst = out / f"{j['name']}{'-t' + take if take else ''}.png"
+    stamp = out / f".{j['name']}{'-t' + take if take else ''}.key"
+    if dst.exists() and stamp.exists() and stamp.read_text() == key:
+        return j['name'], 'cached', 0.0
+    if not A.allow_paid:
+        return j['name'], 'SKIPPED (needs --allow-paid)', 0.0
+    contents = [Image.open(r) for r in refs] + [prompt]
+    cfg = types.GenerateContentConfig(response_modalities=['IMAGE'],
+                                      image_config=types.ImageConfig(aspect_ratio=j.get('aspect', '1:1')))
+    for attempt in range(3):
+        try:
+            r = client.models.generate_content(model=model, contents=contents, config=cfg)
+            for p in r.candidates[0].content.parts:
+                if getattr(p, 'inline_data', None) and p.inline_data.data:
+                    dst.write_bytes(p.inline_data.data); stamp.write_text(key)
+                    return j['name'], 'ok', PRICE.get(model, 0.134)
+            return j['name'], 'NO IMAGE: ' + str(r.candidates[0].finish_reason), 0.0
+        except Exception as e:
+            print(f'  {j["name"]} retry ({type(e).__name__}: {str(e)[:120]})'); time.sleep(5 * (attempt + 1))
+    return j['name'], 'FAILED', 0.0
+
+with ThreadPoolExecutor(4) as ex:
+    res = list(ex.map(run, jobs))
+cf = out / 'cost.json'
+cost = json.loads(cf.read_text()) if cf.exists() else {'calls': []}
+for n, s, usd in res:
+    print(f'{n}: {s}')
+    if usd: cost['calls'].append({'name': n, 'model': model, 'usd': usd, 'at': time.strftime('%Y-%m-%d %H:%M')})
+cf.write_text(json.dumps(cost, indent=1))
+print(f"est ${sum(u for *_, u in res):.2f} this run, ${sum(c['usd'] for c in cost['calls']):.2f} total in {out.name}")
