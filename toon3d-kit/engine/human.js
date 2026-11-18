@@ -198,3 +198,53 @@ function hairTexH(color, strands, ring, ringColor) {
 const HAIR = {
   // Ethan: messy layered fringe of pointed locks down to the brows, side locks over the ears, tufts at the nape
   ethan: () => ({
+    line: (u) => { let t = baseLine(.74, 1.5, 2.2)(u); let k = 0;
+      for (const [c, Lh, wl, wr, p] of [[-.98, .55, .36, .16, 2.0], [-.6, .82, .4, .14, 2.1], [-.22, .66, .32, .12, 2.0], [.06, .95, .36, .12, 2.2], [.4, .74, .36, .14, 2.0], [.78, .6, .36, .16, 1.9],
+        [-1.2, .2, .24, .12, 1.4], [1.18, .2, .2, .16, 1.4], [-1.48, .16, .2, .16, 1.3], [1.48, .16, .2, .16, 1.3], [-2.1, .3, .28, .22, 1.3], [2.1, .3, .22, .28, 1.3], [-2.6, .34, .28, .22, 1.3], [2.6, .34, .22, .28, 1.3], [Math.PI, .34, .26, .26, 1.3]])
+        k = Math.max(k, tooth(u, c, Lh, wl, wr, p)); return t + k; },
+    bump: (d, th, u) => lump([[[-.45, .85, .25], .11, .55], [[.4, .88, .1], .1, .55], [[0, .9, -.4], .13, .6], [[-.85, .45, -.1], .09, .5], [[.85, .45, -.1], .09, .5], [[0, .3, -.9], .08, .7], [[-.3, .7, .6], .07, .4], [[.25, .7, .62], .06, .4], [[.12, 1, -.05], .04, .35]])(d) + (Math.cos(u) > .4 && th < 1.0 ? .03 * Math.cos(u) : 0), scale: 1.02,
+    strands: [[-.8, .3, .85, .12, 6], [-.35, .28, .88, .1, 6], [.15, .3, .9, .1, 6], [.6, .3, .85, .12, 6], [-.6, .5, .95, .06, 4], [-.1, .5, .97, .05, 4], [.35, .5, .96, .06, 4], [.8, .5, .95, .05, 4], [-1.0, .45, .95, .02, 4], [1.3, .35, .9, .05, 5], [-1.3, .35, .9, -.05, 5], [2.2, .3, .85, .1, 5], [-2.2, .3, .85, -.1, 5]],
+  }),
+  // Madison: black, centre-ish part, curtain fringe swept to the sides, long face-framing locks, the rest pulled back
+  madison: () => ({
+    line: (u) => { let t = baseLine(.66, 1.5, 1.95)(u); let k = 0;
+      for (const [c, Lh, wl, wr, p] of [[-.4, .66, .34, .36, .65], [.36, .64, .36, .3, .65], [-.06, .56, .12, .1, .8], [.1, .5, .1, .09, .8], [-.8, 1.0, .13, .09, .6], [.78, .96, .09, .13, .6]])
+        k = Math.max(k, tooth(u, c, Lh, wl, wr, p)); return t + k; },
+    bump: lump([[[0, .75, -.66], .07, .7], [[-.5, .8, .2], .05, .5], [[.5, .8, .2], .05, .5], [[-.85, .3, .2], .05, .5], [[.85, .3, .2], .05, .5]]), flare: .15, scale: 1.03,
+    strands: [[-.6, .25, .95, .2, 5], [.55, .25, .95, -.2, 5], [-1.6, .25, .9, .0, 4], [1.6, .25, .9, 0, 4], [-2.4, .25, .9, .1, 4], [2.4, .25, .9, -.1, 4], [Math.PI - .05, .2, .9, 0, 4]],
+  }),
+  // Bob (Madison, from the 2026-11-12 model sheet): a jaw-length bob with a side-swept fringe that stops above the brows,
+  // hanging straight at the sides (past HANG) and framing the cheeks, slightly shorter at the back.
+  bob: () => ({
+    line: (u) => { const a = Math.abs(wrapU(u)), ss = (x) => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
+      let t = 1.17 + 1.31 * ss((a - .66) / .36) - .12 * ss((a - 1.9) / 1.0);
+      let k = 0; for (const [c, Lh, wl, wr, p] of [[-.5, .2, .2, .12, 1.5], [-.3, .24, .14, .12, 1.6], [-.1, .2, .13, .12, 1.6], [.1, .23, .13, .12, 1.6], [.3, .2, .12, .14, 1.6], [.5, .16, .12, .2, 1.5]]) k = Math.max(k, tooth(u, c, Lh, wl, wr, p));
+      for (const [c, Lh] of [[-.95, .14], [.95, .14], [-1.25, .1], [1.25, .1], [-1.7, .12], [1.7, .12], [-2.3, .1], [2.3, .1], [Math.PI, .1]]) k = Math.max(k, tooth(u, c, Lh, .14, .14, 1.4));
+      return t + k; },
+    bump: lump([[[0, .92, -.25], .09, .8], [[-.6, .7, -.3], .05, .6], [[.6, .7, -.3], .05, .6], [[0, .45, -.85], .06, .7]]), flare: .22, scale: 1.04,
+    strands: [[-.45, .2, .9, .15, 5], [.1, .2, .92, .2, 5], [.55, .25, .9, .1, 5], [-1.1, .3, .97, 0, 4], [1.1, .3, .97, 0, 4], [-1.7, .3, .97, 0, 4], [1.7, .3, .97, 0, 4], [-2.5, .3, .95, .05, 4], [2.5, .3, .95, -.05, 4], [Math.PI, .3, .95, 0, 4]],
+  }),
+};
+// Tyler: slicked back, no fringe, a little quiff at the front, short at the back and sides
+HAIR.slick = () => ({
+  line: (u) => { const a = Math.abs(wrapU(u)); let t = baseLine(.62, 1.3, 1.95)(u); for (const [c, Lh] of [[-1.25, .08], [1.25, .08], [Math.PI, .12], [-2.4, .1], [2.4, .1]]) t += tooth(u, c, Lh, .25, .25, 1.2); return t + (a < .6 ? .03 * Math.cos(a * 5) : 0); },
+  bump: lump([[[0, .75, .55], .1, .55], [[0, .95, .1], .07, .7], [[.25, .8, .45], .05, .4]]), scale: 1.02,
+  strands: [[-.5, .25, .8, -.25, 5], [-.15, .25, .85, -.2, 5], [.2, .25, .85, -.2, 5], [.55, .25, .8, -.15, 5], [-1.2, .3, .9, -.1, 4], [1.2, .3, .9, .1, 4], [2.3, .3, .85, 0, 4], [-2.3, .3, .85, 0, 4]],
+});
+// short crop with a receding front (the old man, Big Mike under his cap)
+HAIR.short = () => ({
+  line: (u) => baseLine(.5, 1.32, 1.85)(u) + tooth(u, -1.3, .1, .2, .2, 1.2) + tooth(u, 1.3, .1, .2, .2, 1.2),
+  bump: lump([[[0, .9, -.3], .04, .8]]), scale: 1.0,
+  strands: [[-.4, .3, .8, 0, 4], [.4, .3, .8, 0, 4], [-1.4, .3, .9, 0, 4], [1.4, .3, .9, 0, 4], [Math.PI, .3, .9, 0, 4]],
+});
+function humanHair(head, style, color, o) {
+  const make = HAIR[style]; if (!make) return null;
+  const HH = make(), R = H.R, g = group(head); g.scale.set(...H.headS.map((v) => v * (HH.scale || 1)));
+  const { geo, edge } = hairShell(R, HH.line, HH.bump, HH.flare || 0);
+  const shell = put(g, geo, flatMat(0xffffff, { tint: o.tint, map: hairTexH(color, HH.strands, HH.ring, HH.ringColor) }), { noInk: true }); shell.userData.part = 'hair';
+  const hull = put(shell, hairShell(R, HH.line, HH.bump, HH.flare || 0, .0038).geo, flatMat(INK, { side: THREE.BackSide }), { shadow: false }); hull.userData.isInk = true;
+  put(g, new THREE.TubeGeometry(edge, 400, .0016, 5, true), flatMat(INK), { noInk: true, shadow: false });
+  // loose locks: tapered tubes that leave the scalp and curl out and down, breaking the silhouette (two tones)
+  const dk = new THREE.Color(hex(color)).multiplyScalar(.72).getHex(), lt = new THREE.Color(hex(color)).lerp(new THREE.Color(1, .92, .85), .12).getHex();
+  for (const [th, u, len, droop, side, tone, r0] of (HH.locks || [])) {
+    const d = new THREE.Vector3(Math.sin(th) * Math.sin(u), Math.cos(th), Math.sin(th) * Math.cos(u)), down = new THREE.Vector3(0, -1, 0), sv = new THREE.Vector3(Math.cos(u), 0, -Math.sin(u));
