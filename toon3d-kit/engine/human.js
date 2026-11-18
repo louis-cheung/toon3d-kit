@@ -348,3 +348,28 @@ export function makeHuman(o = {}) {
   }
   if (o.top === 'hoodie') {   // the hood, bunched around the back of the neck, open at the front
     const hood = put(hips, G.sph(1, 28, 18), flatMat(new THREE.Color(hex(o.topColor)).multiplyScalar(.9).getHex(), { tint }), { y: .575, z: -.075, rx: -.3, s: [.14, .075, .085], noInk: true }); inkH(hood, .006);
+  }
+  // head
+  const head = group(hips, { y: fem ? .74 : .752 });   // Ethan: a shorter chin and the head a touch lower (ref 28 paintover); Madison unchanged
+  // skull: below the jaw line (same curve as the face texture's) it takes the neck tone, so the jaw reads past the face shell too
+  const skullRaw = new THREE.SphereGeometry(H.R, 160, 120), sp = skullRaw.attributes.position, cols = [];
+  const cSkin = new THREE.Color(hex(o.skin)).multiply(new THREE.Color(hex(o.tint ?? 0xffffff))), cNeck = cSkin.clone().multiplyScalar(.86);
+  const jawY = (xt) => { const a = Math.min(1, Math.abs(xt) / .9); return Math.abs(xt) > .9 ? -.6 : -1.06 + .46 * a ** 1.8; };
+  for (let i = 0; i < sp.count; i++) { const th = Math.acos(Math.max(-1, Math.min(1, sp.getY(i) / H.R))), u = Math.atan2(sp.getX(i), sp.getZ(i));
+    const c = o.jawTone && (Math.PI / 2 - th) * 1.18 < jawY(.94 * u) ? cNeck : cSkin; cols.push(c.r, c.g, c.b); }
+  skullRaw.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
+  const skullGeo = deformHead(skullRaw, fem ? .68 : .62, fem ? 1.02 : .98, fem ? 0 : CHIN_UP);
+  const skull = put(head, skullGeo, new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false }), { s: H.headS, noInk: true }); inkH(skull, .0065);
+  { // jaw line (anime face outline where the face meets the neck): a second, half-opacity outline of the head that is pulled
+    // forward in the depth test, so it shows over the neck right at the jaw/chin edge. The main outline stays solid on the silhouette.
+    const hull = skull.children.find((c) => c.userData.isInk);
+    if (hull) { const m2 = hull.material.clone(); m2.fragmentShader = m2.fragmentShader.replace('vec4(c,1.)', 'vec4(c,.5)'); m2.transparent = true; m2.depthWrite = false;
+      m2.polygonOffset = true; m2.polygonOffsetFactor = -14; m2.polygonOffsetUnits = -6000; m2.uniforms.w.value = fem ? .0045 : .005;
+      // only the lower head (cheeks, jaw, chin): above that it would peek through the hair
+      const hg = hull.geometry, pos = hg.attributes.position, src = hg.index ? hg.index.array : [...Array(pos.count).keys()], keep = [];
+      for (let i = 0; i < src.length; i += 3) { const ys = [src[i], src[i + 1], src[i + 2]].map((v) => pos.getY(v)); if (Math.max(...ys) < -H.R * .25) keep.push(src[i], src[i + 1], src[i + 2]); }
+      const lg = new THREE.BufferGeometry(); for (const k in hg.attributes) lg.setAttribute(k, hg.attributes[k]); lg.setIndex(keep);
+      const jh = new THREE.Mesh(lg, m2); jh.userData.isInk = true; jh.castShadow = false; jh.renderOrder = 2; skull.add(jh); } }
+  { // stencil: the skull marks its own pixels. The jaw line (pulled forward in depth) never draws there, so from far away it can't
+    // spread over the face; for Ethan the neck doesn't either, so the chin's true silhouette is the face/neck edge and the line sits on it.
+    const ref = (HUMAN_REF = HUMAN_REF % 254 + 1);
