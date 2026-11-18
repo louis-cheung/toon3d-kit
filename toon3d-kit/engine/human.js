@@ -373,3 +373,28 @@ export function makeHuman(o = {}) {
   { // stencil: the skull marks its own pixels. The jaw line (pulled forward in depth) never draws there, so from far away it can't
     // spread over the face; for Ethan the neck doesn't either, so the chin's true silhouette is the face/neck edge and the line sits on it.
     const ref = (HUMAN_REF = HUMAN_REF % 254 + 1);
+    Object.assign(skull.material, { stencilWrite: true, stencilRef: ref, stencilFunc: THREE.AlwaysStencilFunc, stencilZPass: THREE.ReplaceStencilOp }); skull.renderOrder = -1;
+    const jh = skull.children.find((c) => c.userData.isInk && c.renderOrder === 2);
+    if (jh) Object.assign(jh.material, { stencilWrite: true, stencilRef: ref, stencilFunc: THREE.NotEqualStencilFunc, stencilFail: THREE.KeepStencilOp, stencilZFail: THREE.KeepStencilOp, stencilZPass: THREE.KeepStencilOp });
+    if (!fem) neck.traverse((m) => { if (!m.isMesh) return; m.material = m.material.clone(); m.renderOrder = 1;
+      Object.assign(m.material, { stencilWrite: true, stencilRef: ref, stencilFunc: THREE.NotEqualStencilFunc, stencilFail: THREE.KeepStencilOp, stencilZFail: THREE.KeepStencilOp, stencilZPass: THREE.KeepStencilOp }); });
+  }
+  const fo = { female: fem, skin: o.skin, iris: o.iris, lip: o.lip, shadowY: fem ? .44 : .33, fringeShadow: false, shades: !!o.shades, jawShadow: !!o.jawShadow, browColor: o.browColor };
+  const faceGeo = deformHead(new THREE.SphereGeometry(H.R * 1.01, 64, 48, Math.PI / 4, Math.PI / 2, FT0, FT1 - FT0), fem ? .68 : .62, fem ? 1.02 : .98, fem ? 0 : CHIN_UP);
+  const faceMat = new THREE.MeshBasicMaterial({ map: humanFaceTex(o.expression, 0, fo), transparent: true, depthWrite: false, toneMapped: false });
+  const face = put(head, faceGeo, faceMat, { s: H.headS, noInk: true, shadow: false }); face.renderOrder = 3;
+  for (const s of [-1, 1]) { if (o.hair !== 'bob') { const ear = put(head, G.sph(1, 16, 12), skinM, { x: s * H.R * .9, y: -.012, z: -.01, s: [.014, .034, .024], noInk: true }); inkH(ear, .004); }
+    if (o.earrings && o.hoops) { const er = put(head, new THREE.TorusGeometry(.012, .0022, 8, 28), flatMat(o.earrings, { tint }), { x: s * H.R * .93, y: -.068, z: -.004, ry: s * .5, noInk: true }); inkH(er, .0015); }
+    else if (o.earrings) { const er = put(head, G.sph(.0075, 12, 8), flatMat(o.earrings, { tint }), { x: s * H.R * .92, y: -.055, z: -.005, noInk: true }); inkH(er, .002); } }
+  humanHair(head, o.hair || (fem ? 'madison' : 'ethan'), o.hairColor ?? (fem ? 0x1c1924 : 0x5a3c28), o);
+  if (o.cap) {   // a driver's peaked cap (Big Mike): crown, band, short brim
+    const cm = flatMat(o.cap, { tint }), cg = group(head, { y: H.R * .5, rx: -.12 });
+    const crown = put(cg, new THREE.SphereGeometry(H.R * 1.1, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), cm, { s: [1, .62, 1.05], noInk: true }); inkH(crown, .004);
+    const band = put(cg, G.cyl(H.R * 1.1, H.R * 1.1, H.R * .32, 32), flatMat(o.capBand ?? 0x1c1a24, { tint }), { y: -H.R * .05, s: [1, 1, 1.05], noInk: true }); inkH(band, .004);
+    const brim = put(cg, new THREE.CylinderGeometry(H.R * .9, H.R * .95, H.R * .08, 32, 1, false, -Math.PI / 2, Math.PI), flatMat(o.capBand ?? 0x1c1a24, { tint }), { y: -H.R * .2, z: H.R * .55, rx: .25, s: [1.05, 1, .75], noInk: true }); inkH(brim, .004);
+    if (o.capBadge) put(cg, G.box(H.R * .4, H.R * .22, H.R * .02), flatMat(o.capBadge, { tint }), { y: H.R * .05, z: H.R * 1.13, noInk: true });
+  }
+  if (o.girth) { hips.scale.x = o.girth; hips.scale.z = 1 + (o.girth - 1) * .8; head.scale.x = 1 / o.girth; head.scale.z = 1 / hips.scale.z; }
+  if (o.hair === 'madison' || (fem && !o.hair)) {   // low ponytail and a ribbon bow
+    const hm = flatMat(o.hairColor ?? 0x1c1924, { tint });
+    const c = new THREE.CatmullRomCurve3([[-.02, -.03, -.085], [-.075, -.1, -.08], [-.12, -.2, -.01], [-.135, -.32, .085], [-.12, -.45, .12]].map((v) => new THREE.Vector3(...v)));
