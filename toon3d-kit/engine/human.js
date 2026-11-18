@@ -448,3 +448,44 @@ export function makeHuman(o = {}) {
     root.userData.setExpression(e, blinkAt(t, seed));
   };
   root.userData.setPose(o.pose);
+  head.rotation.set(o.headTilt || 0, o.headYaw || 0, o.headRoll || 0);
+  if (o.lean) hips.rotation.x = o.lean;
+  const hgt = o.height ?? (fem ? 1.66 : 1.82); root.scale.setScalar(hgt / (fem ? 1.7 : 1.77));
+  return root;
+}
+
+// Rich System Ep 1 v2 poses (2026-11-12). Arms are [out, fwd, elbow, twist]; twist (optional, rad) turns the forearm in across the body.
+// Each has a seated twin (sit_<name>) with the legs bent for the bus seats.
+const RICH_POSES = {
+  armsCrossed: { L: [.22, .62, 1.95, -1.25], R: [.22, .5, 2.15, -1.3] },          // arms folded over the chest
+  fistBump: { L: [.12, 0, .15], R: [.3, 1.35, .25] },                                // right arm straight out at chest height, offering a fist
+  swat: { L: [.12, .15, .4], R: [1.15, .55, 1.7, .35] },                             // hand up by the right ear, about to swipe
+  swatThrough: { L: [.12, .15, .4], R: [.25, 1.25, 1.5, -1.0] },                    // the swipe finished, hand across in front of the face (blend swat -> swatThrough)
+  wipe: { L: [.12, .15, .4], R: [.45, 1.75, 2.15, -1.05] },                             // sleeve across the eyes
+  hold_bag: { L: [.22, .08, .12], R: [.15, .38, 1.65, -.75] },                         // bag hanging from the left hand, phone up at the chest in the right (screen out)
+};
+for (const [k, v] of Object.entries(RICH_POSES)) { if (!POSES[k]) POSES[k] = v; if (!POSES['sit_' + k]) POSES['sit_' + k] = { ...v, legs: POSES.sit.legs }; }
+
+const HUMAN_OPTS = { sex: "'m'|'f'", height: 'metres', hair: 'ethan|madison|bob|slick|short', shades: 'sunglasses pushed down the nose', cap: 'peaked cap colour', capBand: 'cap band and brim colour', girth: 'body width (1.3 = heavy)', jawShadow: 'soft double-chin shade', top: 'hoodie|jacket|plain', topColor: 'colour', innerColor: 'turtleneck colour', legsColor: 'colour', shoes: 'colour',
+  bag: 'delivery backpack colour', ribbon: 'bow colour', earrings: 'colour', hoops: 'bool (rings, not studs)', lip: 'colour', iris: 'colour', expression: Object.keys(EXPRESSIONS).join('|') + ' or {eyes,brows,mouth,browY}', pose: Object.keys(POSES).join('|'), headYaw: 'rad', headTilt: 'rad', tint: 'colour', holdPhone: "'R'|'L' a small phone in that hand", phoneText: "text on that phone's green bar ('+$1K')", phoneTilt: 'rad, tilts the held phone' };
+register('human', { kind: 'character', tags: ['character', 'human', 'realistic'], desc: 'Flat 2D drawn person with real proportions (about 6.5 heads): jawline, neck, clothes, anime-style face and hair. For leads who must read as attractive.', opts: HUMAN_OPTS, build: (o) => makeHuman(o) });
+// Rich System cast. Locks that never change: Ethan = messy brown hair, grey hoodie, orange delivery bag, tallest.
+register('human-ethan', { kind: 'character', tags: ['character', 'cast', 'ethan', 'rich-system'], desc: 'Rich System lead: Ethan. Messy brown anime hair, grey hoodie, orange delivery backpack, jeans, white sneakers.', opts: HUMAN_OPTS,
+  build: (o) => makeHuman({ sex: 'm', hair: 'ethan', hairColor: 0x5a3c28, top: 'hoodie', topColor: 0x7b808c, bag: 0xef7d2a, ...o }) });
+// Madison (model sheet 2026-11-12): black jaw-length bob with a side-swept fringe, violet eyes, gold hoops, black turtleneck under a black coat.
+register('human-madison', { kind: 'character', tags: ['character', 'cast', 'madison', 'rich-system'], desc: 'Rich System: Madison, the ex. Black bob with a fine-pointed fringe, violet eyes, gold hoop earrings, black turtleneck and black coat.', opts: HUMAN_OPTS,
+  build: (o) => makeHuman({ sex: 'f', hair: 'bob', hairColor: 0x18161d, top: 'jacket', topColor: 0x232129, innerColor: 0x141218, earrings: 0xe6c25a, hoops: true, lip: 0xd8646f, iris: 0x6e5aa8, ...o }) });
+
+// Rich System supporting cast (Ep 1). Tyler: dirty-blond slick hair (never black: Madison's is), red jacket to match the red car.
+register('human-tyler', { kind: 'character', tags: ['character', 'cast', 'tyler', 'rich-system'], desc: 'Rich System: Tyler, the guy with the car. Slicked-back dirty-blond hair, red jacket over a white tee, dark jeans.', opts: HUMAN_OPTS,
+  build: (o) => makeHuman({ sex: 'm', hair: 'slick', hairColor: 0xc9a25e, top: 'jacket', topColor: 0xd23a34, innerColor: 0xf4efe6, legsColor: 0x2b2e3c, shoes: 0x1e1b24, iris: 0x4f7a9a, height: 1.78, ...o }) });
+register('human-oldman', { kind: 'character', tags: ['character', 'extra', 'old', 'rich-system'], desc: 'Rich System extra: the old man at the farebox. Small, grey short hair, brown cardigan, grey slacks. Pair with the cane prop.', opts: HUMAN_OPTS,
+  build: (o) => makeHuman({ sex: 'm', hair: 'short', hairColor: 0xc8c6cc, browColor: '#9a98a2', top: 'plain', topColor: 0x9a6f4c, legsColor: 0x6d6a74, shoes: 0x3a2e28, skin: 0xf0d6c4, height: 1.6, lean: .12, ...o }) });
+register('human-mike', { kind: 'character', tags: ['character', 'extra', 'driver', 'bus', 'rich-system'], desc: 'Rich System: Big Mike, the bus driver. Heavy build, navy transit cap with a gold badge, light blue uniform shirt, navy trousers.', opts: HUMAN_OPTS,
+  build: (o) => makeHuman({ sex: 'm', hair: 'short', hairColor: 0x2a2026, top: 'plain', topColor: 0x8fb4dc, legsColor: 0x283456, shoes: 0x1e1b24, skin: 0xd9a77f, iris: 0x4a3020, cap: 0x283456, capBand: 0x1a2038, capBadge: 0xe6c25a, girth: 1.32, jawShadow: true, height: 1.84, ...o }) });
+// Passengers: one preset, many looks by seed (hair colour, top, skin), so a bus fills with different people from one name.
+const PASS = [{ hair: 'short', hairColor: 0x2a2026, topColor: 0x3f8a6a, skin: 0xe8c4a4 }, { sex: 'f', hair: 'bob', hairColor: 0x8a4a2a, top: 'plain', topColor: 0xd8794a, skin: 0xf3d8c6 },
+  { hair: 'ethan', hairColor: 0x1e1a20, top: 'plain', topColor: 0x4f63b8, skin: 0xc68a62 }, { sex: 'f', hair: 'madison', hairColor: 0xe0b45a, top: 'plain', topColor: 0x9a5ab0, skin: 0xf6dfcf },
+  { hair: 'slick', hairColor: 0x6a4630, top: 'plain', topColor: 0xc8b04a, skin: 0xf0cdb4 }, { sex: 'f', hair: 'bob', hairColor: 0x221c26, top: 'plain', topColor: 0x3a9ab0, skin: 0x9a6648 }];
+register('human-passenger', { kind: 'character', tags: ['character', 'extra', 'crowd', 'bus', 'rich-system'], desc: 'A bus passenger. seed 0..5 picks the look (hair, colour, skin). Use with sit_ poses on the bus seats.', opts: { ...HUMAN_OPTS, seed: '0..5' },
+  build: (o = {}) => { const v = PASS[((o.seed ?? 0) % PASS.length + PASS.length) % PASS.length]; return makeHuman({ sex: 'm', top: 'plain', legsColor: 0x3d4c6e, shoes: 0x2a2530, ...v, ...o }); } });
