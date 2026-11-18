@@ -323,3 +323,28 @@ export function makeHuman(o = {}) {
   const root = new THREE.Group(), hips = group(root, { y: fem ? .82 : .87 });
   const TH = fem ? .37 : .4, SH = fem ? .36 : .39;   // thigh and shin
   const W = fem ? .9 : 1;   // width scale
+  // legs
+  const legM = flatMat(0xffffff, { tint, map: plainTex(o.legsColor, .75) }), shoeM = flatMat(o.shoes, { tint });
+  const legs = [];
+  for (const s of [-1, 1]) {
+    const hp = group(hips, { x: s * .09 * W, y: -.02 }); const [tg, tc] = limb(fem ? .07 : .074, .056, TH);
+    put(hp, tg, legM, { noInk: true }); put(hp, tc, legM, { noInk: true });
+    const knee = group(hp, { y: -TH }); const [sg, sc] = limb(.054, fem ? .038 : .045, SH); put(knee, sg, legM, { noInk: true }); put(knee, sc, legM, { noInk: true });
+    const ankle = group(knee, { y: -SH });
+    put(ankle, G.rbox(fem ? .075 : .1, fem ? .1 : .085, fem ? .2 : .26, .035), shoeM, { y: -.02, z: .045, noInk: true });
+    if (!fem) put(ankle, G.box(.104, .02, .262), flatMat(0x2a2530, { tint }), { y: -.06, z: .045, noInk: true });   // sole
+    legs.push({ hp, knee, ankle }); inkH(hp, .006);
+  }
+  // pelvis
+  const pel = put(hips, G.sph(1, 24, 16), legM, { y: .03, s: [.16 * W * (fem ? 1.1 : 1), .1, .095], noInk: true }); inkH(pel, .006);
+  // torso
+  const topMap = o.top === 'hoodie' ? hoodieTex(o.topColor, o.strings) : o.top === 'jacket' ? jacketTex(o.topColor, o.innerColor) : plainTex(o.topColor);
+  const topM = flatMat(0xffffff, { tint, map: topMap });
+  const torso = put(hips, torsoGeo(fem), topM, { y: .3, noInk: true }); inkH(torso, .007);
+    // neck (+ turtleneck)
+  const neckM = o.top === 'jacket' ? flatMat(o.innerColor, { tint }) : skinDkM;
+    const neck = put(hips, G.cyl(fem ? .038 : .046, fem ? .045 : .054, .15, 20), neckM, { y: .6, noInk: true }); inkH(neck, .005);
+  if (o.top === 'jacket') { const col = put(hips, G.cyl(.05, .056, .05, 24), flatMat(o.innerColor, { tint }), { y: .585, noInk: true }); inkH(col, .005);
+  }
+  if (o.top === 'hoodie') {   // the hood, bunched around the back of the neck, open at the front
+    const hood = put(hips, G.sph(1, 28, 18), flatMat(new THREE.Color(hex(o.topColor)).multiplyScalar(.9).getHex(), { tint }), { y: .575, z: -.075, rx: -.3, s: [.14, .075, .085], noInk: true }); inkH(hood, .006);
