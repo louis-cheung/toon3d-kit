@@ -148,3 +148,28 @@ function drawHumanFace(x, e, blink, fo) {
   for (const ex of e.extra || []) {
     if (ex === 'sweat') { x.fillStyle = '#bfe6ff'; x.strokeStyle = '#5a8fc0'; x.lineWidth = 3; for (const [sx0, sy0, k] of [[.66, -.02, 1], [-.7, .05, .7], [.56, -.3, .6]]) { x.beginPath(); M(sx0, sy0 + .1 * k); Q(sx0 + .05 * k, sy0 - .02 * k, sx0, sy0 - .06 * k); Q(sx0 - .05 * k, sy0 - .02 * k, sx0, sy0 + .1 * k); x.fill(); x.stroke(); } }
     if (ex === 'tears' || e.eyes === 'teary') { x.strokeStyle = 'rgba(150,210,255,.85)'; x.lineWidth = 7; for (const s of [-1, 1]) { x.beginPath(); M(s * .5, -.16); Q(s * .53, -.32, s * .5, -.48); x.stroke(); } }
+    if (ex === 'vein') { x.strokeStyle = '#d8283a'; x.lineWidth = 7; x.lineCap = 'round'; const vx = .62, vy = .2; for (const [ax, ay] of [[1, 1], [-1, 1], [1, -1], [-1, -1]]) { x.beginPath(); M(vx + ax * .025, vy + ay * .05); Q(vx + ax * .025, vy + ay * .018, vx + ax * .07, vy + ay * .018); x.stroke(); } }
+  }
+}
+/** Named expressions for the human rig, built from the anime references (references/rich-system-refs/19-26).
+ *  Brows [left, right]: positive = outer end down (worried, sad); negative = outer end up (angry V). */
+export const HEXPR = {
+  calm: { eyes: 'dot', brows: [0, 0], mouth: 'flat' },
+  smile: { eyes: 'dot', brows: [.05, .05], mouth: 'smile' },
+  happy: { eyes: 'happy', brows: [.08, .08], mouth: 'smile', extra: ['blush'] },
+  smirk: { eyes: 'lid', brows: [-.1, .12], mouth: 'smirk' },
+  surprised: { eyes: 'wide', brows: [.12, .12], mouth: 'o' },
+  shock: { eyes: 'shock', brows: [.22, .22], mouth: 'drop' },
+  worried: { eyes: 'dot', brows: [.28, .28], mouth: 'frown' },
+  teary: { eyes: 'teary', brows: [.3, .3], mouth: 'wavy' },
+  angry: { eyes: 'lid', brows: [-.38, -.38], mouth: 'grit', extra: ['vein'] },
+  fuming: { eyes: 'shut', brows: [-.38, -.38], mouth: 'o', extra: ['vein'] },
+  rage: { eyes: 'blank', brows: [-.45, -.45], mouth: 'tri' },
+  gloom: { eyes: 'shock', brows: [.3, .3], mouth: 'nervous', extra: ['gloom', 'sweat'] },
+};
+function humanFaceTex(expr, blink, fo) {
+  const e = typeof expr === 'object' ? expr : HEXPR[expr] || EXPRESSIONS[expr] || EXPRESSIONS.neutral;
+  return ctex(1024, 1024, (x) => { drawHumanFace(x, e, blink, fo); if (fo.shades) drawShades(x, fo); }, { key: 'hface:' + JSON.stringify([e, blink, fo]) });
+}
+// Sunglasses pushed down the nose (Madison's hook shot): two dark lenses under the eyes, the eyes looking over the top.
+function drawShades(x, fo) {
