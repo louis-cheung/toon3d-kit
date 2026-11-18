@@ -248,3 +248,28 @@ function humanHair(head, style, color, o) {
   const dk = new THREE.Color(hex(color)).multiplyScalar(.72).getHex(), lt = new THREE.Color(hex(color)).lerp(new THREE.Color(1, .92, .85), .12).getHex();
   for (const [th, u, len, droop, side, tone, r0] of (HH.locks || [])) {
     const d = new THREE.Vector3(Math.sin(th) * Math.sin(u), Math.cos(th), Math.sin(th) * Math.cos(u)), down = new THREE.Vector3(0, -1, 0), sv = new THREE.Vector3(Math.cos(u), 0, -Math.sin(u));
+    const p0 = d.clone().multiplyScalar(R * .98), p1 = p0.clone().add(d.clone().multiplyScalar(R * .3 * len)).add(down.clone().multiplyScalar(R * .12 * droop)).add(sv.clone().multiplyScalar(R * .08 * side));
+    const p2 = p0.clone().add(d.clone().multiplyScalar(R * .48 * len)).add(down.clone().multiplyScalar(R * .45 * droop)).add(sv.clone().multiplyScalar(R * .2 * side));
+    const lk = put(g, taperTube(new THREE.CatmullRomCurve3([p0, p1, p2]), R * (r0 || .16), R * .01, 24, 10), flatMat(tone ? dk : lt, { tint: o.tint }), { noInk: true }); inkH(lk, .0025);
+  }
+  return g;
+}
+
+/** A tube whose radius tapers from r0 to r1 along a curve (ponytail, locks). */
+function taperTube(curve, r0, r1, seg = 40, rad = 14) {
+  const pos = [], idx = [], frames = curve.computeFrenetFrames(seg, false);
+  for (let i = 0; i <= seg; i++) { const t = i / seg, p = curve.getPointAt(t), r = r0 + (r1 - r0) * t ** 1.3 - (t > .92 ? (t - .92) * 2 * r1 : 0);
+    for (let j = 0; j <= rad; j++) { const a = j / rad * Math.PI * 2, n = frames.normals[i].clone().multiplyScalar(Math.cos(a)).add(frames.binormals[i].clone().multiplyScalar(Math.sin(a))); pos.push(p.x + n.x * r, p.y + n.y * r, p.z + n.z * r); } }
+  for (let i = 0; i < seg; i++) for (let j = 0; j < rad; j++) { const a = i * (rad + 1) + j, b = a + rad + 1; idx.push(a, b, a + 1, b, b + 1, a + 1); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals(); return g;
+}
+
+// ---------- body ----------
+/** Torso: a capsule widened at the shoulders (or bust/hips for her) and flattened front to back. */
+function torsoGeo(fem) {
+  const g = new THREE.CapsuleGeometry(.155, .3, 10, 32), p = g.attributes.position, uv = g.attributes.uv;
+  const sm = (a, b, t) => { const k = Math.max(0, Math.min(1, (t - a) / (b - a))); return k * k * (3 - 2 * k); };
+  for (let i = 0; i < p.count; i++) {
+    const y = p.getY(i), yn = y / .305; let f;
+    if (fem) f = .98 - .16 * Math.exp(-(((yn + .05) / .3) ** 2)) + .06 * sm(.2, .6, yn) - .04 * sm(.75, 1, yn);
+    else f = .94 + .36 * sm(-.7, .62, yn) - .06 * sm(.85, 1, yn);
