@@ -398,3 +398,53 @@ export function makeHuman(o = {}) {
   if (o.hair === 'madison' || (fem && !o.hair)) {   // low ponytail and a ribbon bow
     const hm = flatMat(o.hairColor ?? 0x1c1924, { tint });
     const c = new THREE.CatmullRomCurve3([[-.02, -.03, -.085], [-.075, -.1, -.08], [-.12, -.2, -.01], [-.135, -.32, .085], [-.12, -.45, .12]].map((v) => new THREE.Vector3(...v)));
+    const pony = put(head, taperTube(c, .036, .016), hm, { noInk: true }); inkH(pony, .005);
+    const rb = flatMat(o.ribbon ?? 0xf6f1ea, { tint }), bow = group(head, { x: -.07, y: -.085, z: -.075, ry: -1.1, rx: .2 });
+    for (const s of [-1, 1]) { const lp = put(bow, G.sph(1, 16, 10), rb, { x: s * .032, y: .006, rz: s * .35, s: [.034, .019, .012], noInk: true }); inkH(lp, .003);
+      const tl = put(bow, G.box(.016, .085, .004), rb, { x: s * .014, y: -.045, rz: s * .22, noInk: true }); inkH(tl, .003); }
+    const kn = put(bow, G.sph(.012, 12, 8), rb, { noInk: true }); inkH(kn, .003);
+  }
+  // arms
+  const sleeveM = o.top === 'hoodie' ? flatMat(0xffffff, { tint, map: plainTex(o.topColor, .8) }) : flatMat(0xffffff, { tint, map: plainTex(o.topColor, .7) });
+  const arms = {};
+  for (const [side, s] of [['L', -1], ['R', 1]]) {
+    const sh = group(hips, { x: s * (fem ? .155 : .19), y: fem ? .5 : .52 });
+    put(sh, G.sph(fem ? .036 : .046, 20, 14), sleeveM, { x: -s * .01, noInk: true });
+    const [ug, uc] = limb(fem ? .045 : .056, fem ? .04 : .05, .28); put(sh, ug, sleeveM, { noInk: true });
+    const el = group(sh, { y: -.28 }); put(el, uc.clone(), sleeveM, { noInk: true, s: fem ? .9 : .95 }); const [fg] = limb(fem ? .04 : .05, fem ? .033 : .044, .25); put(el, fg, sleeveM, { noInk: true });
+    if (o.top === 'hoodie') put(el, G.cyl(.046, .046, .04, 18), flatMat(new THREE.Color(hex(o.topColor)).multiplyScalar(.85).getHex(), { tint }), { y: -.24, noInk: true });   // cuff
+    const hand = group(el, { y: -.26 });
+    put(hand, G.sph(1, 16, 12), skinM, { y: -.035, s: [fem ? .028 : .034, fem ? .056 : .066, fem ? .019 : .024], noInk: true });
+    put(hand, G.sph(1, 12, 8), skinM, { x: -s * .02, y: -.015, z: .012, s: [.011, .024, .011], rz: -s * .5, noInk: true });
+    inkH(sh, .0055); arms[side] = { sh, el, hand };
+  }
+  // holdPhone: 'R' | 'L' puts a small phone in that hand, screen out along the palm (Big Mike holding his up)
+  if (o.holdPhone) { const ph = group(arms[o.holdPhone === 'L' ? 'L' : 'R'].hand, { y: -.07, z: .03, rx: o.phoneTilt ?? 0 });
+    put(ph, G.rbox(.074, .148, .014, .006), flatMat(0x30343e, { tint }), { noInk: true });
+    put(ph, G.plane(.062, .128), flatMat(0xeef6ff, { tint, map: ctex(124, 256, (x, w, h) => { x.fillStyle = '#eef6ff'; x.fillRect(0, 0, w, h); x.fillStyle = '#2f9a5a'; x.fillRect(10, 70, w - 20, 70); x.fillStyle = '#fff'; x.font = 'bold 34px Helvetica'; x.textAlign = 'center'; x.fillText(o.phoneText ?? '+$1K', w / 2, 118, w - 14); x.fillStyle = '#c9d2e0'; for (let i = 0; i < 3; i++) x.fillRect(14, 162 + i * 26, w - 28, 12); }, { key: 'mike-phone' + (o.phoneText ?? '') }) }), { z: .0075, noInk: true });
+    inkH(ph, .004); }
+  // delivery backpack (Ethan's lock)
+  if (o.bag) { const bm = flatMat(0xffffff, { tint, map: ctex(256, 256, (x, w, h) => { x.fillStyle = css(o.bag); x.fillRect(0, 0, w, h); x.fillStyle = shade(o.bag, .78); x.fillRect(0, 0, w * .25, h); x.fillStyle = '#fff6e8'; x.font = 'bold 54px Helvetica'; x.textAlign = 'center'; x.fillText('EATS', w * .6, h * .55); x.strokeStyle = shade(o.bag, .6); x.lineWidth = 8; x.strokeRect(14, 14, w - 28, h - 28); }, { key: 'bag' + o.bag }) });
+    const bag = put(hips, G.rbox(.36, .4, .26, .04), bm, { y: .33, z: -.25, noInk: true }); inkH(bag, .007);
+    for (const s of [-1, 1]) { put(hips, G.box(.026, .24, .01), flatMat(0x4a4552, { tint }), { x: s * .13, y: .45, z: .088, rz: s * .14, rx: .12, noInk: true }); } }
+  // ---------- rig ----------
+  const rig = { hips, head, face, arms, legs, torso, L: arms.L, R: arms.R };   // L / R: so a prop can attach {cast, hand} to a human's hand
+  root.userData.rig = rig; root.userData.opts = o;
+  root.userData.setExpression = (e, blink) => { faceMat.map = humanFaceTex(e, o.noBlink ? 0 : blink, fo); faceMat.needsUpdate = true; };
+  const restOut = fem ? .1 : .14;
+  root.userData.setPose = (p, amt = 1, from = POSES.idle) => {
+    const P = typeof p === 'string' ? POSES[p] || POSES.idle : p, F = typeof from === 'string' ? POSES[from] || POSES.idle : from;
+    const mix = (a, b) => a.map((v, i) => v + (b[i] - v) * amt);
+    for (const [side, s] of [['L', -1], ['R', 1]]) { const [out, fwd, elb] = mix(F[side], P[side]), tw = (F[side][3] || 0) + ((P[side][3] || 0) - (F[side][3] || 0)) * amt;   // optional 4th number: twist (negative turns the forearm in across the body)
+      arms[side].sh.rotation.set(-fwd, s * tw, s * Math.max(restOut * .6, out)); arms[side].el.rotation.x = -elb; }
+    const lg = (F.legs || 0) + ((P.legs || 0) - (F.legs || 0)) * amt;   // seated: thighs forward, shins hang down (the bus seats)
+    for (const l of legs) { l.hp.rotation.x = -lg; l.knee.rotation.x = lg * (P.shin === false ? 0 : 1); }
+  };
+  root.userData.setWalk = (phase, amt = 1) => { const a = Math.sin(phase * Math.PI * 2) * .45 * amt; legs[0].hp.rotation.x = a; legs[1].hp.rotation.x = -a; arms.L.sh.rotation.x = -a * .6; arms.R.sh.rotation.x = a * .6; };
+  root.userData.idle = (f, seed = 1, expr = o.expression, talk = 0) => {
+    const t = f / 30 + seed * 7.3;
+    torso.scale.y = 1 + Math.sin(t * 2.4) * .006; head.rotation.z = Math.sin(t * .9) * .02 + (o.headRoll || 0); head.rotation.y = Math.sin(t * .6 + 1) * .03 + (o.headYaw || 0); head.rotation.x = (o.headTilt || 0) + (talk ? .012 * talk : 0);
+    const e = talk ? { ...(typeof expr === 'object' ? expr : EXPRESSIONS[expr] || EXPRESSIONS.neutral), mouth: 'talk' + talk } : expr;
+    root.userData.setExpression(e, blinkAt(t, seed));
+  };
+  root.userData.setPose(o.pose);
