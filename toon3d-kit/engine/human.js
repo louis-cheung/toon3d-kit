@@ -173,3 +173,28 @@ function humanFaceTex(expr, blink, fo) {
 }
 // Sunglasses pushed down the nose (Madison's hook shot): two dark lenses under the eyes, the eyes looking over the top.
 function drawShades(x, fo) {
+  const M = (a, b) => x.moveTo(PX(a), PY(b)), L = (a, b) => x.lineTo(PX(a), PY(b)), Q = (cx, cy, a, b) => x.quadraticCurveTo(PX(cx), PY(cy), PX(a), PY(b));
+  const y0 = fo.female ? -.17 : -.18, hh = .2, ww = .26;
+  const lens = (s) => { const cx = s * .37; x.beginPath(); M(cx - ww, y0); Q(cx, y0 + .025, cx + ww, y0); Q(cx + ww * 1.02, y0 - hh * .7, cx + s * .02, y0 - hh); Q(cx - ww * 1.04, y0 - hh * .8, cx - ww, y0); x.closePath(); };
+  for (const s of [-1, 1]) { x.fillStyle = '#211a2a'; lens(s); x.fill(); x.lineWidth = 7; x.strokeStyle = INKC; x.stroke();
+    x.strokeStyle = 'rgba(255,255,255,.55)'; x.lineWidth = 6; x.beginPath(); M(s * .37 - .12, y0 - .04); L(s * .37 - .03, y0 - .13); x.stroke(); }
+  x.strokeStyle = INKC; x.lineWidth = 7; x.beginPath(); M(-.11, y0 - .02); Q(0, y0 + .03, .11, y0 - .02); x.stroke();
+}
+
+// ---------- hair ----------
+// Anime-style hair on the shared hairShell builder: a hairline with long pointed locks (fringe, side locks,
+// nape), soft volume lumps, strand strokes, and a lighter "ring" highlight band around the crown.
+function hairTexH(color, strands, ring, ringColor) {
+  const c = new THREE.Color(hex(color)), base = '#' + c.getHexString(), dk = '#' + (c.getHSL({}).l < .12 ? c.clone().lerp(new THREE.Color(0x5a6688), .45) : c.clone().multiplyScalar(.62)).getHexString(),
+    lt = ringColor ? css(ringColor) : '#' + c.clone().lerp(new THREE.Color(1, .9, .8), .32).getHexString();
+  return ctex(1024, 512, (x, w, h) => {
+    x.fillStyle = base; x.fillRect(0, 0, w, h);
+    const U = (u) => (u + Math.PI) / (Math.PI * 2) * w;
+    if (ring) { const [t0, t1] = ring; x.fillStyle = lt; x.beginPath(); x.moveTo(0, h * t0); for (let k = 0; k <= 40; k++) x.lineTo(k / 40 * w, h * (t0 + (k % 2 ? .02 : -.01))); for (let k = 40; k >= 0; k--) x.lineTo(k / 40 * w, h * (t1 + (k % 3 === 0 ? .07 : 0))); x.fill(); }
+    x.strokeStyle = dk; x.lineCap = 'round';
+    for (const [u, t0, t1, bend, lw] of strands) { x.lineWidth = (lw || 5) * .6; x.beginPath(); x.moveTo(U(u), h * t0); x.quadraticCurveTo(U(u + bend), h * (t0 + t1) / 2, U(u + bend * 1.5), h * t1); x.stroke(); }
+  }, { key: 'hairH' + base + JSON.stringify([strands, ring, ringColor]) });
+}
+const HAIR = {
+  // Ethan: messy layered fringe of pointed locks down to the brows, side locks over the ears, tufts at the nape
+  ethan: () => ({
