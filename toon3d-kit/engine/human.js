@@ -273,3 +273,53 @@ function torsoGeo(fem) {
     const y = p.getY(i), yn = y / .305; let f;
     if (fem) f = .98 - .16 * Math.exp(-(((yn + .05) / .3) ** 2)) + .06 * sm(.2, .6, yn) - .04 * sm(.75, 1, yn);
     else f = .94 + .36 * sm(-.7, .62, yn) - .06 * sm(.85, 1, yn);
+    p.setX(i, p.getX(i) * f); p.setZ(i, p.getZ(i) * (fem ? .64 : .62) * (fem ? 1 + .1 * Math.exp(-(((yn - .42) / .2) ** 2)) * (p.getZ(i) > 0 ? 1 : 0) : 1));
+    uv.setY(i, (y + .305) / .61);
+  }
+  p.needsUpdate = true; g.computeVertexNormals(); return g;
+}
+/** Draw a front feature centred on the capsule seam (u = 0 and u = 1 are both the front). */
+const front = (x, w, fn) => { for (const ox of [0, w]) { x.save(); x.translate(ox, 0); fn(); x.restore(); } };
+function hoodieTex(c, sh) {
+  return ctex(1024, 512, (x, w, h) => {
+    x.fillStyle = css(c); x.fillRect(0, 0, w, h);
+    x.fillStyle = shade(c, .78); x.beginPath(); x.moveTo(w * .2, 0); x.quadraticCurveTo(w * .23, h * .5, w * .2, h); x.lineTo(w * .5, h); x.lineTo(w * .5, 0); x.fill();   // cel shadow side
+    x.fillStyle = shade(c, .86); x.fillRect(0, h * .92, w, h * .08);   // ribbed hem
+    front(x, w, () => { x.strokeStyle = shade(c, .6); x.lineWidth = 6; x.fillStyle = shade(c, .9);   // kangaroo pocket
+      x.beginPath(); x.moveTo(-90, h * .86); x.lineTo(-70, h * .58); x.lineTo(70, h * .58); x.lineTo(90, h * .86); x.closePath(); x.fill(); x.stroke();
+      x.strokeStyle = css(sh || 0xf3efe6); x.lineWidth = 7; for (const s of [-1, 1]) { x.beginPath(); x.moveTo(s * 22, h * .02); x.quadraticCurveTo(s * 26, h * .16, s * 20, h * .3); x.stroke(); x.fillStyle = css(sh || 0xf3efe6); x.beginPath(); x.arc(s * 20, h * .31, 7, 0, 7); x.fill(); } });
+  }, { key: 'hood' + c });
+}
+function jacketTex(c, inner) {
+  return ctex(1024, 512, (x, w, h) => {
+    x.fillStyle = css(c); x.fillRect(0, 0, w, h);
+    x.fillStyle = shade(c, .7); x.beginPath(); x.moveTo(w * .2, 0); x.quadraticCurveTo(w * .23, h * .5, w * .2, h); x.lineTo(w * .5, h); x.lineTo(w * .5, 0); x.fill();
+    x.fillStyle = 'rgba(255,255,255,.12)'; x.fillRect(w * .87, 0, 26, h); x.fillRect(w * .1, 0, 14, h);   // sheen
+    front(x, w, () => {
+      x.fillStyle = css(inner); x.beginPath(); x.moveTo(-60, 0); x.lineTo(60, 0); x.lineTo(0, h * .62); x.closePath(); x.fill();   // the turtleneck in the V
+      x.fillStyle = shade(c, 1.9); x.strokeStyle = INKC; x.lineWidth = 5;   // lapels
+      for (const s of [-1, 1]) { x.beginPath(); x.moveTo(s * 60, 0); x.lineTo(s * 150, h * .06); x.lineTo(s * 105, h * .3); x.lineTo(s * 120, h * .34); x.lineTo(s * 4, h * .63); x.closePath(); x.fill(); x.stroke(); }
+      x.strokeStyle = shade(c, .55); x.lineWidth = 6; x.beginPath(); x.moveTo(0, h * .63); x.lineTo(0, h); x.stroke();
+      x.fillStyle = shade(c, 2.2); x.beginPath(); x.arc(-16, h * .74, 9, 0, 7); x.fill(); });
+  }, { key: 'jack' + c + inner });
+}
+function plainTex(c, k = .8) {
+  return ctex(512, 256, (x, w, h) => { x.fillStyle = css(c); x.fillRect(0, 0, w, h); x.fillStyle = shade(c, k); x.beginPath(); x.moveTo(w * .2, 0); x.quadraticCurveTo(w * .23, h * .5, w * .2, h); x.lineTo(w * .5, h); x.lineTo(w * .5, 0); x.fill(); }, { key: 'plain' + c + k });
+}
+const limb = (r0, r1, len) => { const g = new THREE.CylinderGeometry(r0, r1, len, 18, 4); g.translate(0, -len / 2, 0); const cap0 = new THREE.SphereGeometry(r0, 18, 10); return [g, cap0]; };
+
+/**
+ * makeHuman(o): options
+ *  sex: 'm'|'f', height (metres, default 1.82 m / 1.66 f), skin, iris, hair: 'ethan'|'madison', hairColor,
+ *  top: 'hoodie'|'jacket', topColor, innerColor (turtleneck), legsColor, shoes, bag (delivery backpack colour),
+ *  ribbon (colour), earrings (colour), lip, expression, pose (POSES name or {L,R}), tint
+ */
+let HUMAN_REF = 0;
+export function makeHuman(o = {}) {
+  const fem = o.sex === 'f';
+  o = { skin: 0xf6dfcf, iris: fem ? 0x7a4430 : 0x8a5a2e, expression: 'neutral', pose: 'idle', top: fem ? 'jacket' : 'hoodie', topColor: fem ? 0x24202c : 0x7b808c,
+    innerColor: 0x19161f, legsColor: fem ? 0x221f2a : 0x3d4c6e, shoes: fem ? 0x17141c : 0xf1ede4, ...o };
+  const tint = o.tint, skinM = flatMat(o.skin, { tint }), skinDkM = flatMat(new THREE.Color(hex(o.skin)).multiplyScalar(.86).getHex(), { tint });
+  const root = new THREE.Group(), hips = group(root, { y: fem ? .82 : .87 });
+  const TH = fem ? .37 : .4, SH = fem ? .36 : .39;   // thigh and shin
+  const W = fem ? .9 : 1;   // width scale
