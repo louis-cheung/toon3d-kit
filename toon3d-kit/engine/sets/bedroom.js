@@ -216,3 +216,28 @@ function leoDecor(g, P, BX, ZB, ZF, soggy, lamp) {
   const dk = raw('desk', { w: 1.2, color: 0x8a5d38 }); dk.position.set(X(2.45), 0, -2.6); dk.rotation.y = -Math.PI / 2 * P.m; g.add(dk);
   const mon = raw('monitor', {}); mon.position.set(X(2.75), .8, -2.6); mon.rotation.y = -Math.PI / 2 * P.m; mon.scale.setScalar(.8); g.add(mon);
   const chr = raw('office-chair', { color: 0xc8341f }); chr.position.set(X(2.0), 0, -2.3); chr.rotation.y = 2.2 * P.m; g.add(chr);
+  put(g, G.sph(.12, 20, 14), toon(0xef8a3c), { x: X(1.55), y: .12, z: -1.2 }); put(g, G.torus(.12, .006, 4, 20), toon(0x241726), { x: X(1.55), y: .12, z: -1.2, rx: .4, noInk: true });
+  poster(g, 'mountain', X(3.17), 1.95, -1.4, .03 * P.m, -Math.PI / 2 * P.m, 1.2);
+  // front of the room (behind the usual cameras): door, desk corner with a closed laptop, chair with clothes, plants
+  const door = raw('door', { number: '', color: 0x4a3566 }); door.position.set(X(-1.6), 0, ZF - .02); door.rotation.y = Math.PI; g.add(door);
+  const desk = raw('desk', { w: 1.5, color: 0x8a5d38 }); desk.position.set(X(1.7), 0, ZF - .55); g.add(desk);
+  put(g, G.rbox(.42, .03, .3, .01), toon(0xb8bcc8), { x: X(1.55), y: .82, z: ZF - .55, ry: .2 }); put(g, G.cyl(.05, .045, .11, 14), toon(0xe2553b), { x: X(2.1), y: .86, z: ZF - .5 });
+  poster(g, 'ball', X(.2), 2.0, ZF - .02, .03, Math.PI, 1.3);
+  const pl = raw('plant', { size: 1.25, pot: 0xc8763f }); pl.position.set(X(-2.55), 0, -.75); g.add(pl); const pl2 = raw('plant', { size: .9, pot: 0x3f8f8a, seed: 5 }); pl2.position.set(X(-2.7), 0, ZB + .4); g.add(pl2);
+  put(g, G.box(.86, .03, .02), glow(0xffc97a), { x: X(-1.6), y: .02, z: ZF - .1, noInk: true, shadow: false });   // hallway light under the door
+}
+function plush(P) {   // a pink bunny with long ears
+  const p = new THREE.Group(), m = toon(0xf7c6d6), d = toon(0x241726);
+  put(p, G.sph(.13, 18, 14), m, { y: .13, s: [1, .95, .9] }); put(p, G.sph(.1, 18, 14), m, { y: .32 });
+  for (const s of [-1, 1]) { put(p, G.cap(.03, .14, 10), m, { x: s * .045, y: .48, rz: -s * .15 }); put(p, G.sph(.04, 10, 8), m, { x: s * .11, y: .04, z: .08 }); put(p, G.sph(.035, 10, 8), m, { x: s * .12, y: .17, z: .04 }); }
+  for (const s of [-1, 1]) put(p, G.sph(.012, 8, 6), d, { x: s * .035, y: .34, z: .09, noInk: true }); put(p, G.sph(.014, 8, 6), toon(0xef4f7a), { y: .31, z: .1, noInk: true });
+  put(p, G.torus(.05, .012, 10), toon(0x4fbfc4), { y: .24, rx: Math.PI / 2 });   // ribbon collar
+  return p;
+}
+function miaDecor(g, P, BX, ZB, ZF, lamp) {
+  const X = (v) => P.m * v, wood = toon(P.wood), woodD = toon(P.woodD);
+  const nt = nightstand(g, P, X(BX - 1.12), ZB + .42, lamp);
+  const mug = raw('mug', { color: 0x4fbfc4 }); mug.position.set(.12 * P.m, .56, .1); mug.scale.setScalar(.8); nt.add(mug);
+  put(g, G.box(.6, .04, .22), wood, { x: X(BX - 1.15), y: 1.42, z: ZB + .12 });   // little shelf over the nightstand with a stack of books
+  for (let i = 0; i < 3; i++) put(g, G.box(.24 - i * .02, .04, .17), toon([0xffd166, 0xb48ae0, 0xef4f7a][i]), { x: X(BX - 1.3), y: 1.46 + i * .04, z: ZB + .12, ry: i * .2 });
+  // mirror with photos stuck round the frame, where Leo has his band poster
