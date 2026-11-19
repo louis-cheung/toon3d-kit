@@ -170,3 +170,24 @@ function nightstand(g, P, x, z, lampOn) {
 function shell(g, P, W, H, ZB, ZF, win) {
   const fl = put(g, G.plane(W, ZF - ZB), toon(0xffffff, { map: boardTex(P.boards, P.seam) }), { rx: -Math.PI / 2, z: (ZB + ZF) / 2, noInk: true, shadow: false }); fl.receiveShadow = true;
   put(g, G.box(W, .1, ZF - ZB), toon(P.ceiling), { y: H + .05, z: (ZB + ZF) / 2, shadow: false });
+  const [x0, x1, y0, y1] = win, wm = toon(0xffffff, { map: wallTex(...P.wall) }), sm = toon(0xffffff, { map: wallTex(...P.side) });
+  put(g, G.box(x0 + W / 2, H, .3), wm, { x: (-W / 2 + x0) / 2, y: H / 2, z: ZB - .15 }); put(g, G.box(W / 2 - x1, H, .3), wm, { x: (x1 + W / 2) / 2, y: H / 2, z: ZB - .15 });
+  put(g, G.box(x1 - x0, y0, .3), toon(P.wall[2]), { x: (x0 + x1) / 2, y: y0 / 2, z: ZB - .15 }); put(g, G.box(x1 - x0, H - y1, .3), toon(P.wall[0]), { x: (x0 + x1) / 2, y: (H + y1) / 2, z: ZB - .15 });
+  for (const s of [-1, 1]) put(g, G.box(.3, H, ZF - ZB), sm, { x: s * (W / 2 + .15), y: H / 2, z: (ZB + ZF) / 2 });
+  put(g, G.box(W, H, .3), sm, { y: H / 2, z: ZF + .15 });
+  const trim = toon(P.trim);   // skirting and crown moulding on every wall
+  put(g, G.box(W, .14, .05), trim, { y: .07, z: ZB + .03 }); put(g, G.box(W, .1, .07), trim, { y: H - .05, z: ZB + .04 });
+  for (const s of [-1, 1]) { put(g, G.box(.05, .14, ZF - ZB), trim, { x: s * (W / 2 - .03), y: .07, z: (ZB + ZF) / 2 }); put(g, G.box(.07, .1, ZF - ZB), trim, { x: s * (W / 2 - .04), y: H - .05, z: (ZB + ZF) / 2 }); }
+  // ceiling detail so it is never a dead flat: a round flush light (off) and a smoke alarm
+  put(g, G.cyl(.26, .3, .06, 28), toon(P.trim), { x: 0, y: H - .03, z: (ZB + ZF) / 2 - .6 }); put(g, G.cyl(.2, .2, .02, 28), toon(0xd8dcf2), { x: 0, y: H - .065, z: (ZB + ZF) / 2 - .6, noInk: true });
+  put(g, G.cyl(.07, .07, .04, 16), toon(0xe7e4ee), { x: W / 2 - .8, y: H - .02, z: ZB + .8 });
+}
+
+// ---------------- the rooms ----------------
+const LEO = { m: 1, view: 'city', wall: ['#2f43a8', '#3a52bc', '#22308a', 'stripe'], side: ['#2a3c9c', '#3449ae', '#1f2c80', 'stripe'], boards: ['#5c4c9a', '#54458e', '#6454a4', '#4e4088'], seam: '#2a2160',
+  ceiling: 0x2a3a96, trim: 0x8a9cf0, frame: 0xd9dcf0, curtain: [0x2c8f98, 0x237a84], wood: 0x6a4a4e, woodD: 0x4a3140, pillow: 0xb8ccff, sheet: 0xf1e7cf, shade: 0xffc070,
+  duvet: () => duvetTex('#f0502e', '#c8341f', '#ffb347') };
+const MIA = { m: -1, view: 'blue', wall: ['#ec5a82', '#ff9cb8', '#c8344e', 'floral'], side: ['#e2507a', '#ff92ae', '#bc2e48', 'floral'], boards: ['#c87850', '#bc6c48', '#d0845a', '#b46444'], seam: '#6a2a3a',
+  ceiling: 0xc8508a, trim: 0xfff1e6, frame: 0xffffff, curtain: [0x4fbfc4, 0x3aa8b0], wood: 0x7fd0c4, woodD: 0x4fa89c, pillow: 0xfff1f4, sheet: 0xfff1dc, shade: 0xffd0e0,
+  duvet: () => quiltTex() };
+
