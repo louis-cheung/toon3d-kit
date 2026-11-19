@@ -48,3 +48,28 @@ const duvetTex = (a, b, c) => ctex(256, 256, (x, w) => { x.fillStyle = a; x.fill
   x.fillStyle = c; for (let i = 0; i < 4; i++) { x.fillRect(0, i * 64 + 44, w, 4); x.fillRect(i * 64 + 44, 0, 4, w); } }, { key: 'bduv' + a + b + c, repeat: [2, 2] });
 /** Patchwork quilt: squares of pink, teal, yellow and cream with stitched seams and little motifs. */
 const quiltTex = () => ctex(512, 512, (x, w) => {
+  const C = ['#f26b8a', '#4fbfc4', '#ffd166', '#fff1dc', '#ef8a5c', '#b48ae0'], r = rng(23), s = w / 4;
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { const col = C[(i * 3 + j * 2) % C.length]; x.fillStyle = col; x.fillRect(i * s, j * s, s, s);
+    const k = (i + j * 4) % 3, cx = i * s + s / 2, cy = j * s + s / 2; x.fillStyle = 'rgba(255,255,255,.55)';
+    if (k === 0) for (let a = 0; a < 3; a++) for (let b = 0; b < 3; b++) { x.beginPath(); x.arc(i * s + 22 + a * 42, j * s + 22 + b * 42, 7, 0, 7); x.fill(); }
+    if (k === 1) { x.beginPath(); x.moveTo(cx, cy + 26); x.bezierCurveTo(cx - 44, cy - 6, cx - 22, cy - 40, cx, cy - 14); x.bezierCurveTo(cx + 22, cy - 40, cx + 44, cy - 6, cx, cy + 26); x.fill(); }
+    if (k === 2) { x.fillStyle = 'rgba(0,0,0,.12)'; for (let a = 0; a < 4; a++) x.fillRect(i * s, j * s + a * 32 + 8, s, 12); }
+    x.setLineDash([10, 8]); x.strokeStyle = 'rgba(255,255,255,.8)'; x.lineWidth = 4; x.strokeRect(i * s + 8, j * s + 8, s - 16, s - 16); x.setLineDash([]); r(); }
+}, { key: 'bquilt', repeat: [1.5, 1.5] });
+/** What a window looks at. city: moon with a halo, stars, lit buildings across the street (Leo). blue: cool blue night, crescent, rooftops and a tree (Mia). */
+const viewTex = (kind) => ctex(1024, 1024, (x, w, h) => {
+  const r = rng(kind === 'city' ? 4 : 9), g = x.createLinearGradient(0, 0, 0, h);
+  if (kind === 'city') { g.addColorStop(0, '#1a2a8a'); g.addColorStop(.6, '#3a4fc0'); g.addColorStop(1, '#8a6fd0'); } else { g.addColorStop(0, '#1c3a9a'); g.addColorStop(.55, '#3f7ad8'); g.addColorStop(1, '#8fc6f0'); }
+  x.fillStyle = g; x.fillRect(0, 0, w, h);
+  x.fillStyle = '#f2f4ff'; for (let i = 0; i < 90; i++) { const s = r() < .15 ? 3.2 : 1.8; x.beginPath(); x.arc(r() * w, r() * h * .6, s, 0, 7); x.fill(); }
+  const mx = kind === 'city' ? 640 : 360, my = 230, mr = 92;
+  const mg = x.createRadialGradient(mx, my, mr * .6, mx, my, mr * 3.2); mg.addColorStop(0, 'rgba(235,240,255,.6)'); mg.addColorStop(1, 'rgba(235,240,255,0)'); x.fillStyle = mg; x.fillRect(0, 0, w, h * .8);
+  x.fillStyle = '#fff7da'; x.beginPath(); x.arc(mx, my, mr, 0, 7); x.fill();
+  if (kind === 'city') { x.fillStyle = '#e8dcae'; for (const [a, b, c] of [[-26, -22, 20], [30, 28, 14], [6, 38, 9], [-34, 30, 7]]) { x.beginPath(); x.arc(mx + a, my + b, c, 0, 7); x.fill(); } }
+  else { x.fillStyle = g; x.beginPath(); x.arc(mx + 40, my - 24, mr * .92, 0, 7); x.fill(); }   // crescent
+  if (kind === 'city') {
+    const B = [[0, 520, 230, '#22287a'], [200, 600, 200, '#2a3392'], [380, 470, 210, '#1f2672'], [560, 640, 190, '#2d3796'], [720, 540, 304, '#232a80']];
+    for (const [bx, by, bw, col] of B) { x.fillStyle = col; x.fillRect(bx, by, bw, h - by); x.fillStyle = '#3a46b0'; x.fillRect(bx, by, bw, 12);
+      for (let j = 0; j < 9; j++) for (let i = 0; i < Math.floor(bw / 52); i++) { const lit = r() < .5; x.fillStyle = lit ? (r() < .65 ? '#ffd27a' : r() < .5 ? '#9fe0ff' : '#ff9a7a') : '#1a2066'; x.fillRect(bx + 16 + i * 52, by + 40 + j * 54, 28, 34); } }
+    x.fillStyle = '#1a1f66'; x.fillRect(420, 380, 12, 90); x.fillRect(395, 440, 60, 10); x.fillStyle = '#ff5a6a'; x.beginPath(); x.arc(426, 376, 8, 0, 7); x.fill();   // antenna with a red light
+    x.fillStyle = '#1a1f66'; x.fillRect(790, 470, 70, 70); x.fillRect(800, 540, 8, 30); x.fillRect(842, 540, 8, 30); x.beginPath(); x.moveTo(782, 470); x.lineTo(825, 440); x.lineTo(868, 470); x.fill();   // water tower
