@@ -120,3 +120,28 @@ const moonPatchTex = () => ctex(256, 256, (x, W) => { x.filter = 'blur(6px)'; x.
 const mirrorTex = () => ctex(256, 384, (x, w, h) => { const g = x.createLinearGradient(0, 0, w, h); g.addColorStop(0, '#cfeaff'); g.addColorStop(.5, '#9cc8f2'); g.addColorStop(1, '#7aa6e0'); x.fillStyle = g; x.fillRect(0, 0, w, h);
   x.fillStyle = 'rgba(255,255,255,.55)'; x.beginPath(); x.moveTo(40, 0); x.lineTo(100, 0); x.lineTo(10, 140); x.lineTo(-50, 140); x.fill(); x.beginPath(); x.moveTo(140, 0); x.lineTo(160, 0); x.lineTo(60, 160); x.lineTo(40, 160); x.fill(); }, { key: 'bmirror' });
 
+// ---------------- pieces (all take m = 1 or -1 so Mia's room is Leo's mirrored, text never mirrored) ----------------
+const poster = (g, kind, x, y, z, rz = 0, ry = 0, s = 1) => { const p = group(g, { x, y, z, rz, ry }); put(p, G.box(.5 * s, .69 * s, .025), toon(0x2a2233)); put(p, G.plane(.46 * s, .65 * s), toon(0xffffff, { map: posterTex(kind) }), { z: .014, noInk: true });
+  for (const sx of [-1, 1]) put(p, G.sph(.013 * s + .004, 8, 6), toon(0xe2463b), { x: sx * (.2 * s), y: .3 * s, z: .03, noInk: true }); return p; };
+/** Bed, origin at the middle of the headboard on the floor, running toward +z (length L). */
+function bed(P) {
+  const b = new THREE.Group(), wood = toon(P.wood), woodD = toon(P.woodD), L = 2.28;
+  put(b, G.box(1.56, .28, L), wood, { y: .2, z: L / 2 }); put(b, G.rbox(1.5, .16, L - .06, .06), toon(0xdfe2f2), { y: .36, z: L / 2 });
+  put(b, G.rbox(1.62, 1.28, .09, .05), woodD, { y: .64 }); for (let i = 0; i < 5; i++) put(b, G.box(.2, .7, .03), wood, { x: -.56 + i * .28, y: .86, z: .055 });
+  for (const [px, pr] of [[-.38, .12], [.38, -.1]]) put(b, G.rbox(.62, .2, .4, .09), toon(P.pillow), { x: px, y: .58, z: .32, rx: -.5, ry: pr });
+  const dm = toon(0xffffff, { map: P.duvet });
+  put(b, G.box(1.58, .1, 1.45), dm, { y: .44, z: L - .75, rz: .012 }); put(b, G.box(.05, .34, 1.45), dm, { x: -.79, y: .3, z: L - .75 }); put(b, G.box(.05, .34, 1.45), dm, { x: .79, y: .3, z: L - .75 });
+  for (const [lx, lz, ls] of [[-.5, 1.88, 1], [.52, 1.58, 1.2], [.1, 2.03, .8], [-.45, 1.13, .9]]) put(b, G.sph(.2, 16, 10), dm, { x: lx, y: .46, z: lz, s: [1.5 * ls, .3, 1.1 * ls] });
+  put(b, G.box(1.58, .07, .3), toon(P.sheet), { y: .47, z: .78, rx: .06 });   // folded-back sheet edge
+  put(b, G.rbox(1.62, .52, .08, .04), woodD, { y: .52, z: L }); for (let i = 0; i < 5; i++) put(b, G.box(.2, .3, .03), wood, { x: -.56 + i * .28, y: .55, z: L + .05 });
+  for (const s of [-1, 1]) { put(b, G.cyl(.055, .06, 1.02, 14), woodD, { x: s * .8, y: .51, z: L }); put(b, G.sph(.085, 16, 12), wood, { x: s * .8, y: 1.08, z: L }); }
+  b.userData.L = L; return b;
+}
+/** Window in a wall, frame + view + curtains on a rod. Window spans x x0..x1, y y0..y1 in the wall plane at z (room side +z). */
+function windowUnit(g, P, x0, x1, y0, y1, z) {
+  const fm = toon(P.frame), cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+  put(g, G.box(x1 - x0 + .2, .09, .38), fm, { x: cx, y: y0 - .03, z: z + .03 }); put(g, G.box(x1 - x0 + .12, .08, .3), fm, { x: cx, y: y1 + .02, z: z - .1 });
+  for (const x of [x0, cx, x1]) put(g, G.box(.07, y1 - y0, .3), fm, { x, y: cy, z: z - .12 }); put(g, G.box(x1 - x0, .06, .28), fm, { x: cx, y: cy + .1, z: z - .12 });
+  put(g, G.plane(3.0, 3.0), glow(0xffffff, { map: viewTex(P.view) }), { x: cx, y: cy + .3, z: z - 1.1, noInk: true, shadow: false });
+  put(g, G.cyl(.02, .02, x1 - x0 + .7, 8), toon(0x2a2233), { x: cx, y: y1 + .2, z: z + .12, rz: Math.PI / 2 });
+  for (const s of [-1, 1]) put(g, G.sph(.04, 10, 8), toon(PAL.gold), { x: cx + s * (x1 - x0 + .7) / 2, y: y1 + .2, z: z + .12 });
