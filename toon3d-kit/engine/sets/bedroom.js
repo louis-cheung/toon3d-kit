@@ -145,3 +145,28 @@ function windowUnit(g, P, x0, x1, y0, y1, z) {
   put(g, G.plane(3.0, 3.0), glow(0xffffff, { map: viewTex(P.view) }), { x: cx, y: cy + .3, z: z - 1.1, noInk: true, shadow: false });
   put(g, G.cyl(.02, .02, x1 - x0 + .7, 8), toon(0x2a2233), { x: cx, y: y1 + .2, z: z + .12, rz: Math.PI / 2 });
   for (const s of [-1, 1]) put(g, G.sph(.04, 10, 8), toon(PAL.gold), { x: cx + s * (x1 - x0 + .7) / 2, y: y1 + .2, z: z + .12 });
+  for (const [ex, dir] of [[x0 - .12, -1], [x1 + .12, 1]]) for (let i = 0; i < 3; i++) put(g, G.cyl(.065, .08, 1.75, 10), toon(i % 2 ? P.curtain[0] : P.curtain[1]), { x: ex + dir * i * .07 - dir * .07, y: y1 + .2 - .875, z: z + .12 + (i % 2) * .03, shadow: false });
+  for (const ex of [x0 - .12, x1 + .12]) put(g, G.torus(.1, .022, 12), toon(PAL.gold), { x: ex, y: y0 + .1, z: z + .2 });   // tie-backs
+  // the moonlight itself is a real shadowed patch (sun through the hole); this cool sheen on the sill sells it
+  put(g, G.plane(x1 - x0, .3), additive(moonPatchTex(), .35, 0xbfd0ff), { x: cx, y: y0 + .025, z: z + .16, rx: -Math.PI / 2, noInk: true, shadow: false });
+}
+function stringLights(g, from, to, sag, n, colors, z, halo = true) {
+  let prev = null; const hm = additive(poolTex(), .16);
+  for (let i = 0; i < n; i++) { const t = i / (n - 1), x = from[0] + (to[0] - from[0]) * t, y = from[1] + (to[1] - from[1]) * t - Math.sin(t * Math.PI) * sag + (i % 2) * .015;
+    put(g, G.sph(.036, 12, 8), glow(colors[i % colors.length]), { x, y, z, noInk: true, shadow: false });
+    if (halo && i % 2 === 0) put(g, G.plane(.38, .38), hm, { x, y, z: z - .03, noInk: true, shadow: false });
+    if (prev) rod(g, [prev[0], prev[1] + .03, z], [x, y + .03, z], .006, toon(0x12163c), { noInk: true, shadow: false }); prev = [x, y]; }
+}
+function nightstand(g, P, x, z, lampOn) {
+  const nt = group(g, { x, z }), wood = toon(P.wood), woodD = toon(P.woodD);
+  put(nt, G.rbox(.5, .56, .44, .03), wood, { y: .28 }); put(nt, G.box(.4, .17, .02), woodD, { y: .4, z: .225 }); put(nt, G.box(.4, .17, .02), woodD, { y: .18, z: .225 });
+  for (const y of [.4, .18]) put(nt, G.sph(.025, 10, 8), toon(PAL.gold), { y, z: .245 });
+  put(nt, G.cyl(.075, .09, .04, 16), toon(0x2a2233), { x: -.1 * P.m, y: .58, z: -.05 }); put(nt, G.cyl(.016, .016, .3, 8), toon(0x2a2233), { x: -.1 * P.m, y: .74, z: -.05 });
+  put(nt, G.cyl(.1, .17, .22, 20), lampOn ? glow(P.shade) : toon(0xb89a6a), { x: -.1 * P.m, y: .98, z: -.05 });
+  if (lampOn) put(nt, G.plane(1.0, 1.0), additive(poolTex(), .45), { x: -.02 * P.m, y: .565, z: 0, rx: -Math.PI / 2, noInk: true, shadow: false });
+  return nt;
+}
+/** Shell: floor, ceiling, four walls with a window hole in the back wall, trim. Returns the window rectangle. */
+function shell(g, P, W, H, ZB, ZF, win) {
+  const fl = put(g, G.plane(W, ZF - ZB), toon(0xffffff, { map: boardTex(P.boards, P.seam) }), { rx: -Math.PI / 2, z: (ZB + ZF) / 2, noInk: true, shadow: false }); fl.receiveShadow = true;
+  put(g, G.box(W, .1, ZF - ZB), toon(P.ceiling), { y: H + .05, z: (ZB + ZF) / 2, shadow: false });
