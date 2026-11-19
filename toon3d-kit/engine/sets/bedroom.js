@@ -73,3 +73,50 @@ const viewTex = (kind) => ctex(1024, 1024, (x, w, h) => {
       for (let j = 0; j < 9; j++) for (let i = 0; i < Math.floor(bw / 52); i++) { const lit = r() < .5; x.fillStyle = lit ? (r() < .65 ? '#ffd27a' : r() < .5 ? '#9fe0ff' : '#ff9a7a') : '#1a2066'; x.fillRect(bx + 16 + i * 52, by + 40 + j * 54, 28, 34); } }
     x.fillStyle = '#1a1f66'; x.fillRect(420, 380, 12, 90); x.fillRect(395, 440, 60, 10); x.fillStyle = '#ff5a6a'; x.beginPath(); x.arc(426, 376, 8, 0, 7); x.fill();   // antenna with a red light
     x.fillStyle = '#1a1f66'; x.fillRect(790, 470, 70, 70); x.fillRect(800, 540, 8, 30); x.fillRect(842, 540, 8, 30); x.beginPath(); x.moveTo(782, 470); x.lineTo(825, 440); x.lineTo(868, 470); x.fill();   // water tower
+  } else {
+    x.fillStyle = '#2a4fa8'; x.beginPath(); x.moveTo(0, 700); for (let i = 0; i <= 8; i++) x.lineTo(i * 130, 640 + (i % 2) * 70); x.lineTo(w, h); x.lineTo(0, h); x.fill();
+    for (let i = 0; i < 7; i++) { x.fillStyle = r() < .6 ? '#ffd27a' : '#bfe6ff'; x.fillRect(60 + i * 140, 760 + (i % 2) * 40, 34, 40); }
+    x.fillStyle = '#1e3a8a'; x.fillRect(820, 520, 30, 500); for (const [a, b, c] of [[835, 470, 120], [760, 540, 90], [910, 540, 90], [835, 380, 80]]) { x.beginPath(); x.arc(a, b, c, 0, 7); x.fill(); }
+  }
+}, { key: 'bview' + kind });
+function posterTex(kind) {
+  return ctex(256, 352, (x, w, h) => {
+    x.lineWidth = 8; x.strokeStyle = '#241726';
+    if (kind === 'mountain') { x.fillStyle = '#f2b279'; x.fillRect(0, 0, w, h); x.fillStyle = '#ffe9b0'; x.beginPath(); x.arc(180, 96, 38, 0, 7); x.fill(); x.stroke();
+      x.fillStyle = '#5b6fc4'; x.beginPath(); x.moveTo(-10, 290); x.lineTo(96, 110); x.lineTo(170, 230); x.lineTo(214, 170); x.lineTo(270, 290); x.fill(); x.stroke();
+      x.fillStyle = '#ffffff'; x.beginPath(); x.moveTo(96, 110); x.lineTo(66, 162); x.lineTo(92, 150); x.lineTo(112, 170); x.lineTo(128, 162); x.fill(); x.stroke(); x.fillStyle = '#3f7a45'; x.fillRect(0, 284, w, 70); }
+    if (kind === 'band') { x.fillStyle = '#2d2a5c'; x.fillRect(0, 0, w, h); x.fillStyle = '#f5c84a'; x.beginPath(); x.moveTo(128, 0); x.lineTo(20, 260); x.lineTo(236, 260); x.fill();
+      for (const [cx, col] of [[70, '#e2553b'], [128, '#f3f3f6'], [186, '#7fe3ff']]) { x.fillStyle = col; x.beginPath(); x.arc(cx, 150, 26, 0, 7); x.fill(); x.stroke(); x.beginPath(); x.moveTo(cx, 176); x.lineTo(cx, 236); x.moveTo(cx - 24, 200); x.lineTo(cx + 24, 196); x.moveTo(cx, 236); x.lineTo(cx - 16, 270); x.moveTo(cx, 236); x.lineTo(cx + 16, 270); x.stroke(); }
+      x.fillStyle = '#f3f3f6'; x.font = `900 46px ${F}`; x.textAlign = 'center'; x.fillText('THE NAPS', w / 2, 326); }
+    if (kind === 'ball') { x.fillStyle = '#3f8f8a'; x.fillRect(0, 0, w, h); x.fillStyle = '#ef8a3c'; x.beginPath(); x.arc(128, 150, 86, 0, 7); x.fill(); x.stroke();
+      x.beginPath(); x.moveTo(42, 150); x.lineTo(214, 150); x.moveTo(128, 64); x.lineTo(128, 236); x.stroke(); x.beginPath(); x.arc(40, 150, 70, -.9, .9); x.stroke(); x.beginPath(); x.arc(216, 150, 70, Math.PI - .9, Math.PI + .9); x.stroke();
+      x.fillStyle = '#f1e7cf'; x.font = `900 50px ${F}`; x.textAlign = 'center'; x.fillText('HOOPS', w / 2, 318); }
+    if (kind === 'sun') { const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#ff7a8a'); g.addColorStop(1, '#ffc26a'); x.fillStyle = g; x.fillRect(0, 0, w, h);
+      x.fillStyle = '#fff2c4'; x.beginPath(); x.arc(128, 170, 70, Math.PI, 0); x.fill(); x.fillStyle = '#ff7a8a'; for (let i = 0; i < 4; i++) x.fillRect(50, 120 + i * 16, 160, 6);
+      x.fillStyle = '#4fbfc4'; x.fillRect(0, 170, w, 90); x.fillStyle = '#fff2c4'; for (let i = 0; i < 5; i++) x.fillRect(40 + i * 12, 190 + i * 14, 176 - i * 24, 5);
+      x.fillStyle = '#7a2a5a'; x.font = `900 44px ${F}`; x.textAlign = 'center'; x.fillText('GOOD VIBES', w / 2, 318); }
+    if (kind === 'heart') { x.fillStyle = '#ffe4ec'; x.fillRect(0, 0, w, h); x.fillStyle = '#ef4f7a'; x.beginPath(); x.moveTo(128, 250); x.bezierCurveTo(-10, 160, 40, 40, 128, 110); x.bezierCurveTo(216, 40, 266, 160, 128, 250); x.fill(); x.stroke();
+      x.fillStyle = '#ffffff'; x.beginPath(); x.ellipse(84, 118, 16, 10, -.6, 0, 7); x.fill(); x.fillStyle = '#7a2a5a'; x.font = `900 46px ${F}`; x.textAlign = 'center'; x.fillText('XOXO', w / 2, 314); }
+    if (kind === 'flower') { x.fillStyle = '#4f7ad8'; x.fillRect(0, 0, w, h); for (const [cx, cy, col] of [[80, 110, '#ffd166'], [170, 170, '#f26b8a'], [100, 240, '#fff1dc']]) { x.fillStyle = col; for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2; x.beginPath(); x.arc(cx + Math.cos(a) * 26, cy + Math.sin(a) * 26, 20, 0, 7); x.fill(); x.stroke(); } x.fillStyle = '#ef8a3c'; x.beginPath(); x.arc(cx, cy, 16, 0, 7); x.fill(); x.stroke(); }
+      x.fillStyle = '#fff1dc'; x.font = `900 46px ${F}`; x.textAlign = 'center'; x.fillText('BLOOM', w / 2, 324); }
+    x.lineWidth = 12; x.strokeStyle = '#f1e7cf'; x.strokeRect(6, 6, w - 12, h - 12);
+  }, { key: 'bposter' + kind });
+}
+/** Little instant photo: bean faces, a beach, a sunset (stuck on Mia's mirror and her photo string). */
+function photoTex(k) {
+  return ctex(128, 150, (x, w, h) => {
+    x.fillStyle = '#fbf7ee'; x.fillRect(0, 0, w, h);
+    const sc = [['#7fd0f0', '#ffd166'], ['#ff9a8a', '#f26b8a'], ['#9fe0a8', '#4fbfc4'], ['#b48ae0', '#ffd166'], ['#ffc26a', '#ef6f5a']][k % 5];
+    const g = x.createLinearGradient(0, 10, 0, 118); g.addColorStop(0, sc[0]); g.addColorStop(1, sc[1]); x.fillStyle = g; x.fillRect(10, 10, 108, 108);
+    x.strokeStyle = '#241726'; x.lineWidth = 4;
+    const faces = k % 3 === 2 ? 1 : 2; for (let i = 0; i < faces; i++) { const cx = faces === 1 ? 64 : 44 + i * 40, cy = 70; x.fillStyle = '#f6f6f8'; x.beginPath(); x.arc(cx, cy, 18, 0, 7); x.fill(); x.stroke();
+      x.fillStyle = '#241726'; x.beginPath(); x.arc(cx - 6, cy - 3, 2.5, 0, 7); x.arc(cx + 6, cy - 3, 2.5, 0, 7); x.fill(); x.beginPath(); x.arc(cx, cy + 3, 7, .2, Math.PI - .2); x.stroke();
+      x.fillStyle = i ? '#4a2a1a' : '#7a4a2a'; x.beginPath(); x.arc(cx, cy - 8, 18, Math.PI, 0); x.fill(); x.fillStyle = i ? '#e2463b' : '#4fbfc4'; x.fillRect(cx - 14, cy + 18, 28, 30); }
+  }, { key: 'bphoto' + k });
+}
+const poolTex = () => ctex(256, 256, (x, W) => { const r = x.createRadialGradient(W / 2, W / 2, 0, W / 2, W / 2, W / 2); r.addColorStop(0, 'rgba(255,190,110,.85)'); r.addColorStop(.4, 'rgba(255,160,80,.35)'); r.addColorStop(1, 'rgba(255,150,70,0)'); x.fillStyle = r; x.fillRect(0, 0, W, W); }, { key: 'bpool' });
+/** Four soft window panes of moonlight, laid on the floor or bed. */
+const moonPatchTex = () => ctex(256, 256, (x, W) => { x.filter = 'blur(6px)'; x.fillStyle = 'rgba(200,215,255,.9)'; for (const [a, b] of [[24, 24], [134, 24], [24, 134], [134, 134]]) x.fillRect(a, b, 98, 98); }, { key: 'bmoonpatch' });
+const mirrorTex = () => ctex(256, 384, (x, w, h) => { const g = x.createLinearGradient(0, 0, w, h); g.addColorStop(0, '#cfeaff'); g.addColorStop(.5, '#9cc8f2'); g.addColorStop(1, '#7aa6e0'); x.fillStyle = g; x.fillRect(0, 0, w, h);
+  x.fillStyle = 'rgba(255,255,255,.55)'; x.beginPath(); x.moveTo(40, 0); x.lineTo(100, 0); x.lineTo(10, 140); x.lineTo(-50, 140); x.fill(); x.beginPath(); x.moveTo(140, 0); x.lineTo(160, 0); x.lineTo(60, 160); x.lineTo(40, 160); x.fill(); }, { key: 'bmirror' });
+
