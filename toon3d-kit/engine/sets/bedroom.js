@@ -191,3 +191,28 @@ const MIA = { m: -1, view: 'blue', wall: ['#ec5a82', '#ff9cb8', '#c8344e', 'flor
   ceiling: 0xc8508a, trim: 0xfff1e6, frame: 0xffffff, curtain: [0x4fbfc4, 0x3aa8b0], wood: 0x7fd0c4, woodD: 0x4fa89c, pillow: 0xfff1f4, sheet: 0xfff1dc, shade: 0xffd0e0,
   duvet: () => quiltTex() };
 
+function leoDecor(g, P, BX, ZB, ZF, soggy, lamp) {
+  const X = (v) => P.m * v;
+  const nt = nightstand(g, P, X(BX - 1.12), ZB + .42, lamp);
+  const bowl = raw('cereal-bowl', { soggy }); bowl.position.set(.1, .56, .08); nt.add(bowl);
+  put(nt, G.cyl(.035, .03, .11, 14), toon(0xa9d6ee), { x: -.15, y: .615, z: .14 });
+  poster(g, 'band', X(BX - 1.1), 2.02, ZB + .02, -.04); poster(g, 'mountain', X(BX - .42), 2.14, ZB + .02, .03); poster(g, 'ball', X(BX + .27), 1.98, ZB + .02, -.02, 0, .82);
+  const sh = group(g, { x: X(BX - .75), y: 2.78, z: ZB + .14 }), wood = toon(P.wood), woodD = toon(P.woodD); put(sh, G.box(1.5, .05, .26), wood); for (const s of [-1, 1]) put(sh, G.box(.04, .16, .2), woodD, { x: s * .6, y: -.1 });
+  const BC = [0xe2553b, 0xf5c84a, 0x3f8f8a, 0xf1e7cf, 0x8a6ad8, 0xef8a3c, 0x3c7be0, 0xf2a6b3]; let bx = -.68;
+  for (let i = 0; i < 8; i++) { const bw = .05 + (i * 37 % 4) * .012, bh = .22 + (i * 53 % 5) * .025; put(sh, G.box(bw, bh, .17), toon(BC[i]), { x: bx + bw / 2, y: .025 + bh / 2, rz: i === 7 ? -.3 : 0 }); bx += bw + .008; }
+  const tr = group(sh, { x: .42, y: .025 }); put(tr, G.box(.13, .05, .1), toon(0x2a2233), { y: .025 }); put(tr, G.cyl(.015, .02, .08, 10), toon(PAL.gold), { y: .09 }); put(tr, G.cyl(.065, .03, .11, 16), toon(PAL.gold), { y: .185 });
+  for (const s of [-1, 1]) put(tr, G.torus(.035, .009, 12), toon(PAL.gold), { x: s * .07, y: .19 });
+  put(g, G.cone(.2, .62, 3), toon(0xf5c84a), { x: X(BX + .5), y: 2.72, z: ZB + .03, rz: -Math.PI / 2 - .1, s: [1, 1, .08] });
+  stringLights(g, [X(BX - 1.55), 3.14], [X(BX + .7), 3.14], .2, 15, [0xffd98a, 0xff9d6b, 0xffe9b0], ZB + .06);
+  put(g, G.plane(1.8, 1.6), additive(poolTex(), .38), { x: X(BX - 1.2), y: 1.05, z: ZB + .005, noInk: true, shadow: false });   // warm lamp pool on the wall
+  // floor: rug, sneakers, dropped hoodie, controller
+  put(g, G.box(1.7, .02, 2.0), toon(0xffffff, { map: rugTex() }), { x: X(BX - 1.75), y: .011, z: -1.9, ry: .06 });
+  const sn = raw('sneakers'); sn.position.set(X(BX - 1.35), .03, -1.45); sn.rotation.y = .5; g.add(sn);
+  const hd = group(g, { x: X(BX - 1.9), y: .02, z: -2.35, ry: .4 }), hm = toon(0xf0a83a); put(hd, G.sph(.26, 16, 10), hm, { y: .07, s: [1.3, .32, 1] }); put(hd, G.sph(.2, 16, 10), hm, { x: .22, y: .11, z: .1, s: [1.2, .4, .9] });
+  put(hd, G.torus(.11, .045, 16), hm, { x: -.2, y: .12, z: -.08, rx: 1.2 }); put(hd, G.cyl(.012, .012, .26, 6), toon(0xf1e7cf), { x: -.06, y: .15, z: .12, rz: 1.2 });
+  const ct = group(g, { x: X(BX - 1.2), y: .03, z: -2.15, ry: -.3 }), cm = toon(0x3a3f6a); put(ct, G.rbox(.24, .05, .11, .02), cm, { y: .03 }); for (const s of [-1, 1]) { put(ct, G.sph(.055, 12, 10), cm, { x: s * .11, y: .03, z: .06, s: [1, .6, 1.4] }); put(ct, G.cyl(.022, .022, .03, 12), toon(0x12163c), { x: s * .065, y: .06 }); }
+  for (const [dx, dz, c] of [[.1, .02, 0xe2553b], [.07, -.02, 0xf5c84a]]) put(ct, G.sph(.012, 8, 6), glow(c), { x: dx, y: .06, z: dz, noInk: true });
+  // right side (window side): a desk under the window corner with a glowing monitor and a gaming chair, a basketball
+  const dk = raw('desk', { w: 1.2, color: 0x8a5d38 }); dk.position.set(X(2.45), 0, -2.6); dk.rotation.y = -Math.PI / 2 * P.m; g.add(dk);
+  const mon = raw('monitor', {}); mon.position.set(X(2.75), .8, -2.6); mon.rotation.y = -Math.PI / 2 * P.m; mon.scale.setScalar(.8); g.add(mon);
+  const chr = raw('office-chair', { color: 0xc8341f }); chr.position.set(X(2.0), 0, -2.3); chr.rotation.y = 2.2 * P.m; g.add(chr);
