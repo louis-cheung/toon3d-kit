@@ -338,3 +338,28 @@ function splitHalf(g, s, P) {   // s = -1 Leo (left), +1 Mia (right). Inner wall
   put(g, G.box(wx1 - wx0, y0, .3), toon(P.wall[2]), { x: (wx0 + wx1) / 2, y: y0 / 2, z: ZB - .15 }); put(g, G.box(wx1 - wx0, H - y1, .3), toon(P.wall[0]), { x: (wx0 + wx1) / 2, y: (H + y1) / 2, z: ZB - .15 });
   windowUnit(g, P, wx0, wx1, y0, y1, ZB);
   put(g, G.box(.3, H, 3.2), toon(0xffffff, { map: wallTex(...P.side) }), { x: X(W + .15), y: H / 2, z: ZB + 1.6 });   // outer wall
+  put(g, G.box(W, .14, .05), toon(P.trim), { x: cx, y: .07, z: ZB + .03 }); put(g, G.box(W, .1, .07), toon(P.trim), { x: cx, y: H - .05, z: ZB + .04 });
+  // bed against the back wall, near the middle wall so both people sit close together in a narrow frame
+  const BX = X(1.05), b = bed({ ...P, duvet: P.duvet() }); b.position.set(BX, 0, ZB + .12); b.scale.set(1, 1, .82); g.add(b);
+  const nt = nightstand(g, { ...P, m: s }, X(1.05 + 1.12), ZB + .42, true);
+  if (s < 0) { const bowl = raw('cereal-bowl', {}); bowl.position.set(.1, .56, .08); nt.add(bowl); }
+  else { const mug = raw('mug', { color: 0x4fbfc4 }); mug.position.set(.12, .56, .1); mug.scale.setScalar(.8); nt.add(mug); const pb = plush(P); pb.position.set(BX - .45, .5, ZB + .55); pb.rotation.y = .3; g.add(pb); }
+  if (s < 0) { poster(g, 'band', X(.45), 1.95, ZB + .02, -.04); poster(g, 'mountain', X(1.25), 2.05, ZB + .02, .03); poster(g, 'ball', X(1.95), 1.92, ZB + .02, -.02, 0, .82);
+    stringLights(g, [X(.25), 2.82], [X(2.25), 2.82], .18, 12, [0xffd98a, 0xff9d6b, 0xffe9b0], ZB + .06);
+    put(g, G.box(1.4, .02, 1.6), toon(0xffffff, { map: rugTex() }), { x: X(1.2), y: .011, z: ZB + 2.55, ry: .06 }); const sn = raw('sneakers'); sn.position.set(X(.6), .03, ZB + 2.6); sn.rotation.y = .5; g.add(sn); }
+  else { const mr = group(g, { x: X(.5), y: 1.95, z: ZB + .03 }); put(mr, G.rbox(.6, .84, .05, .07), toon(0xffd166)); put(mr, G.plane(.5, .74), glow(0xffffff, { map: mirrorTex() }), { z: .03, noInk: true });
+    [[-.27, .3, .2], [.26, .32, -.15], [.27, -.24, .18]].forEach(([px, py, r], k) => { const ph = group(mr, { x: px, y: py, z: .05, rz: r }); put(ph, G.plane(.15, .18), toon(0xffffff, { map: photoTex(k) }), { noInk: true }); });
+    poster(g, 'sun', X(1.25), 2.05, ZB + .02, .03, 0, .8); poster(g, 'heart', X(1.95), 1.95, ZB + .02, -.04, 0, .6);
+    stringLights(g, [X(.25), 2.85], [X(3.2), 2.85], .1, 20, [0xffe9b0, 0xffb6d0, 0xfff6d8, 0xb8f0ff], ZB + .06);
+    put(g, G.cyl(.75, .75, .02, 36), toon(0xffffff, { map: roundRugTex() }), { x: X(1.25), y: .011, z: ZB + 2.55 });
+    const fp = raw('plant', { size: 1.0, pot: 0x4fbfc4, seed: 3 }); fp.position.set(X(3.0), 0, ZB + 2.4); g.add(fp); }
+  put(g, G.plane(1.4, 1.3), additive(poolTex(), .38, s < 0 ? 0xffffff : 0xffc0d0), { x: X(2.1), y: 1.0, z: ZB + .005, noInk: true, shadow: false });
+  return { BX };
+}
+register('bedrooms-split', {
+  kind: 'set', tags: ['home', 'bedroom', 'split', 'dollhouse', 'night', 'dating', 'compare', 'both'], aliases: ['split-bedrooms', 'dollhouse'],
+  desc: "Both bedrooms at once, a dollhouse cut in half: Leo's cold blue room on the left, Mia's warm pink room on the right, a cream cut wall between them, a roof with a moon above, a hedge and flowers along the front. Beds sit close to the middle wall so both people fit a 9:16 frame. Camera: main (both beds), close (tighter), leo, mia. Spots: leo, mia (sitting on each bed), pillLeo, pillMia (where the A and B pills hang).",
+  opts: {},
+  build: () => {
+    const g = new THREE.Group(), H = 3.0, cut = toon(0xfff1dc), cutDark = toon(0x3a2a5a);
+    const L = splitHalf(g, -1, LEO), M = splitHalf(g, 1, MIA);
