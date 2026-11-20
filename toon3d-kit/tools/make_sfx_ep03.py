@@ -43,3 +43,25 @@ def bell(sec=1.6):
     trem = (np.sin(2 * np.pi * 18 * t) > 0).astype(float) * .5 + .5   # an electric bell's clapper
     return ring * trem * np.minimum(1, t / .002)
 
+def fanfare():
+    notes = [(523.3, 0, .12), (659.3, .1, .12), (784, .2, .12), (1046.5, .3, .5), (784, .62, .1), (1046.5, .72, .7)]
+    x = np.zeros(int(1.6 * SR))
+    for f, st, d in notes:
+        tt = np.arange(int((d + .3) * SR)) / SR
+        v = (np.sign(np.sin(2 * np.pi * f * tt)) * .35 + np.sin(2 * np.pi * f * tt) * .6 + np.sin(2 * np.pi * f * 2.003 * tt) * .25) * np.minimum(1, tt / .006) * np.exp(-tt * (3 if d > .4 else 8))
+        place(x, v, st)
+    return lp(x, .35)
+
+def jackpot():
+    x = np.zeros(int(3.2 * SR)); r = rng(5)
+    # reels whirring: a filtered noise bed and clicks that speed up, then thin out as the reels stop
+    t = T(1.1); place(x, lp(r.uniform(-1, 1, len(t)), .08) * np.minimum(1, t / .05) * .35, 0)
+    k = 0.0
+    while k < 1.1:
+        rate = 22 + 30 * min(1, k / .3) * (1 - .55 * max(0, (k - .6) / .5)); place(x, clink(r, 1800 + r.uniform(0, 400)) * .35, k); k += 1 / rate
+    for at in (.6, .85, 1.1):   # reel stops: a clunk and a little bounce
+        tt = T(.25); place(x, (np.sin(2 * np.pi * 110 * tt) * env(tt, .001, 30) + lp(r.uniform(-1, 1, len(tt)), .4) * env(tt, .001, 60)) * .9, at)
+    place(x, bell(1.8), 1.12, .7); place(x, fanfare(), 1.12, .8); place(x, coins(1.9, 110, 7), 1.18, .8)
+    tt = T(.5); place(x, np.sin(2 * np.pi * 60 * tt) * env(tt, .002, 7) * 1.2, 1.1)   # the boom of the win
+    return x
+
