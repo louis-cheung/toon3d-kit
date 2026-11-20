@@ -291,3 +291,25 @@ function buildRoom(who, { soggy = false, lamp = true } = {}) {
   ];
   const C = (pos, look, fov) => ({ pos: [X(pos[0]), pos[1], pos[2]], look: [X(look[0]), look[1], look[2]], fov });
   const cameras = {
+    main: C([1.3, 1.5, 1.2], [0, 1.15, -3.4], 50),
+    hook: C([.55, 1.0, -1.3], [.2, 1.22, -3.05], 40),            // tight on the face from slightly below; the phone sits small at the bottom edge
+    phone: C([.27, 1.36, -2.95], [.21, 1.0, -2.45], 33),          // over the shoulder, square onto a phone at spots.phone (prop ry PI, rx .62): the screen fills the frame
+    thumb: C([.05, 1.25, -2.92], [.17, .97, -2.47], 40),             // close on the hand and thumb over the screen (same phone)
+    wide: C([.7, 1.12, .7], [.15, 1.05, -3.3], 50),                // low from the foot of the bed, the footboard across the bottom of the frame
+    bedLow: C([2.15, .85, -.75], [.05, .6, -2.75], 50),            // locked-off low wide from the foot corner, across the bed (spots.bedLie)
+    timer: C([.48, .68, -2.58], [.55, .65, -3.15], 38),            // tight on the phone standing against the pillows (spots.timerPhone)
+    cloud: C([.3, 2.75, -.6], [.25, 2.75, -3.3], 46),             // straight onto a thought cloud above a head at spots.bed
+  };
+  if (who === 'mia') {
+    cameras.bed = C([.5, 1.2, -.45], [.2, .75, -2.6], 46);       // medium from the foot of the bed on her lying on her stomach (spots.bedLie)
+    cameras.sit = C([.3, 2.3, .25], [.2, 2.3, -3.1], 46);      // medium on her sitting, chin on hand; the top half is empty wall for a thought cloud at spots.cloud
+  }
+  const spots = { bed: [X(BX), .01, -3.3], bedLie: [X(BX), .5, -2.65], floor: [X(BX + .1), 0, -.6], phone: [X(BX + .01), 1.0, -2.45], timerPhone: [X(BX + .35), .62, -3.15], bowlBed: [X(BX - .55), .5, -2.25], phoneBed: [X(BX - .2), .53, -2.0], cloud: [X(BX), 1.9, -3.1] };
+  const sun = who === 'mia' ? [0xa8c8ff, 2.4, [-4.0, 6.0, -5.4]] : [0xc0d2ff, 2.8, [4.0, 6.0, -5.4]];   // steep enough that the window's moonlight lands on the bed
+  // mood light keys (only used when a shot asks for mood light; see MOOD in core.js): the bedside lamp, the window, a phone at spots.phone
+  const keys = { lamp: { kind: 'lamp', at: [X(BX - 1.22), 1.0, ZB + .42], color: who === 'mia' ? 0xffa088 : 0xffa24a },
+    window: { kind: 'window', at: [X(1.85), 2.1, ZB + .5] }, phone: { kind: 'phone', at: spots.phone } };
+  keys.default = keys.lamp;
+  return { root: g, light: { base: who === 'mia' ? 'bedroomWarm' : 'bedroomNight', sun }, shadowSize: 7, lights, cameras, spots, zFoot, keys, mood: { shadow: who === 'mia' ? 'plum' : 'blue' } };
+}
+
