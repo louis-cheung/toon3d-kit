@@ -363,3 +363,36 @@ register('bedrooms-split', {
   build: () => {
     const g = new THREE.Group(), H = 3.0, cut = toon(0xfff1dc), cutDark = toon(0x3a2a5a);
     const L = splitHalf(g, -1, LEO), M = splitHalf(g, 1, MIA);
+    // the cut: middle wall, floor slab, ceiling slab, outer wall edges, all with a cream cut face
+    put(g, G.box(.3, H + .3, 3.3), cut, { y: (H + .3) / 2 - .15, z: -.4 });
+    put(g, G.box(7.4, .3, 3.5), cut, { y: -.15, z: -.4 }); put(g, G.box(7.4, .3, 3.5), cut, { y: H + .15, z: -.4 });
+    put(g, G.box(7.42, .08, .02), cutDark, { y: -.02, z: 1.36, noInk: true }); put(g, G.box(7.42, .08, .02), cutDark, { y: H + .02, z: 1.36, noInk: true });
+    put(g, G.plane(3.4, 3.2), toon(0x2a3a96), { x: -1.7, y: H - .001, z: -.4, rx: Math.PI / 2, noInk: true }); put(g, G.plane(3.4, 3.2), toon(0xf2a0b8), { x: 1.7, y: H - .001, z: -.4, rx: Math.PI / 2, noInk: true });
+    // roof: two slopes meeting over the middle wall, shingles on the front edge, a chimney and a round attic window
+    const shingle = toon(0xffffff, { map: ctex(512, 128, (x, w, h) => { x.fillStyle = '#c84a5a'; x.fillRect(0, 0, w, h); for (let j = 0; j < 4; j++) for (let i = 0; i < 17; i++) { x.fillStyle = (i + j) % 3 ? '#b23a4c' : '#d85a68'; x.beginPath(); x.arc(i * 32 + (j % 2) * 16, j * 32 + 26, 16, 0, Math.PI); x.fill(); } }, { key: 'split-shingle', repeat: [3, 1] }) });
+    for (const s of [-1, 1]) put(g, G.box(4.3, .22, 3.7), shingle, { x: s * 1.85, y: H + .3 + 1.0, z: -.4, rz: -s * .52 });
+    const gable = new THREE.Shape(); gable.moveTo(-3.55, 0); gable.lineTo(0, 2.05); gable.lineTo(3.55, 0); gable.lineTo(-3.55, 0);
+    put(g, new THREE.ShapeGeometry(gable), toon(0x5a3a8a), { y: H + .3, z: -2.05, noInk: true });
+    put(g, G.cyl(.32, .32, .1, 28), toon(0xfff1dc), { y: H + 1.05, z: -2.0, rx: Math.PI / 2 }); put(g, G.cyl(.25, .25, .02, 28), glow(0xffd98a), { y: H + 1.05, z: -1.94, rx: Math.PI / 2, noInk: true });
+    put(g, G.box(.45, 1.0, .45), toon(0xb8564a), { x: 2.1, y: H + 1.65, z: -1.2 }); put(g, G.box(.55, .1, .55), toon(0x8a3a3a), { x: 2.1, y: H + 2.17, z: -1.2 });
+    // ground: lawn strip, hedge and flowers in the foreground, a little lamp post on each side
+    put(g, G.box(30, .3, 12), toon(0x3f8a5a), { y: -.45, z: 2 }); put(g, G.box(8, .1, 1.2), toon(0xc8a68a), { y: -.28, z: 1.95 });
+    for (let i = 0; i < 9; i++) { const x = -3.6 + i * .9; put(g, G.sph(.36, 16, 12), toon(i % 2 ? 0x3f8a4a : 0x4f9c55), { x, y: -.2, z: 2.0, s: [1.2, .8, .8] });
+      for (let k = 0; k < 2; k++) put(g, G.sph(.06, 10, 8), toon([0xf26b8a, 0xffd166, 0xfff1dc][(i + k) % 3]), { x: x - .15 + k * .3, y: .06, z: 2.18 }); }
+    // sky dressing: moon and a few clouds behind the house
+    put(g, new THREE.CircleGeometry(.75, 32), glow(0xfff4d0), { x: -3.4, y: 5.6, z: -6, noInk: true });
+    for (const [x, y, s] of [[2.8, 5.5, 1], [-1.5, 6.2, .7], [4.2, 4.6, .6]]) { const c = group(g, { x, y, z: -6 }); for (const [a, b, r] of [[0, 0, .4], [.4, -.05, .32], [-.4, -.05, .3], [.15, .2, .3]]) put(c, new THREE.CircleGeometry(r * s, 24), glow(0x6f7fd8), { x: a * s, y: b * s, noInk: true }); }
+    const r = rng(3); for (let i = 0; i < 40; i++) put(g, new THREE.CircleGeometry(.025 + r() * .03, 8), glow(0xf2f4ff), { x: -8 + r() * 16, y: 3.6 + r() * 5, z: -7, noInk: true });
+    const lights = [
+      (s) => pointLight(s, -1.7, 2.6, -.2, 0x6f9cff, 6, 5.5), (s) => pointLight(s, -2.2, 1.0, -1.4, 0xffa64d, 3.2, 2.6),   // Leo: cold blue room, small amber lamp
+      (s) => pointLight(s, 1.7, 2.6, -.2, 0xff8fb0, 6, 5.5), (s) => pointLight(s, 2.2, 1.0, -1.4, 0xffb08a, 3.5, 2.6),    // Mia: warm pink room
+    ];
+    return { root: g, light: 'splitNight', shadowSize: 8, lights,
+      cameras: {
+        main: { pos: [0, 1.8, 6.6], look: [0, 1.6, -1.2], fov: 48 },
+        close: { pos: [0, 1.55, 5.2], look: [0, 1.3, -1.4], fov: 46 },
+        leo: { pos: [-1.05, 1.4, 2.6], look: [-1.05, 1.15, -1.6], fov: 46 }, mia: { pos: [1.05, 1.4, 2.6], look: [1.05, 1.15, -1.6], fov: 46 },
+      },
+      spots: { leo: [L.BX, .01, -1.55], mia: [M.BX, .01, -1.55], leoLie: [L.BX, .48, -1.0], miaLie: [M.BX, .48, -1.0], pillLeo: [-.92, 2.3, .4], pillMia: [.92, 2.3, .4] } };
+  },
+});
