@@ -48,3 +48,28 @@ function woodTex() {   // warm vertical wood slats
     x.fillStyle = 'rgba(80,40,20,.35)'; x.fillRect(i * 32, 0, 4, h); x.fillStyle = 'rgba(255,230,190,.18)'; for (let k = 0; k < 3; k++) x.fillRect(i * 32 + 8 + r() * 16, r() * h, 3, 40 + r() * 60); } }, { key: 'dealer-wood', repeat: [6, 1] });
 }
 function ceilTex() {   // white coffered ceiling, a warm downlight in every coffer
+  return ctex(256, 256, (x, w) => { x.fillStyle = '#f4f1ea'; x.fillRect(0, 0, w, w); x.fillStyle = '#e4dccb'; x.fillRect(14, 14, w - 28, w - 28); x.fillStyle = '#efe9dc'; x.fillRect(28, 28, w - 56, w - 56);
+    x.fillStyle = '#c9a24a'; x.beginPath(); x.arc(w / 2, w / 2, 30, 0, 7); x.fill(); x.fillStyle = '#fff6d8'; x.beginPath(); x.arc(w / 2, w / 2, 22, 0, 7); x.fill(); }, { repeat: [7, 5], key: 'dealer-ceil' });
+}
+function textCard(w, h, draw, key) { return ctex(w, h, draw, { key }); }
+function bannerTex(top, big, bot, bg, fg, key) {   // a vertical hanging promo banner
+  return textCard(320, 640, (x, w, h) => { x.fillStyle = bg; x.fillRect(0, 0, w, h); x.strokeStyle = fg; x.lineWidth = 12; x.strokeRect(16, 16, w - 32, h - 32);
+    x.fillStyle = fg; x.textAlign = 'center'; x.textBaseline = 'middle';
+    if (top) { x.font = '900 64px Helvetica'; x.fillText(top, w / 2, 120, w - 50); }
+    x.font = '900 150px Helvetica'; const lines = big.split('\n'); lines.forEach((l, i) => x.fillText(l, w / 2, h / 2 + (i - (lines.length - 1) / 2) * 150 + 10, w - 40));
+    if (bot) { x.font = '900 60px Helvetica'; x.fillText(bot, w / 2, h - 110, w - 50); }
+    for (let i = 0; i < 7; i++) { x.fillStyle = fg; x.beginPath(); x.moveTo(i * w / 6, h); x.lineTo(i * w / 6 + w / 12, h - 26); x.lineTo(i * w / 6 + w / 6, h); x.fill(); } }, key);
+}
+function posterTex(title, sub, sky, carCol, key) {   // a framed car poster: sunset road and a big side-on car
+  return textCard(600, 420, (x, w, h) => {
+    const g = x.createLinearGradient(0, 0, 0, h); sky.forEach((c, i) => g.addColorStop(i / (sky.length - 1), c)); x.fillStyle = g; x.fillRect(0, 0, w, h);
+    x.fillStyle = 'rgba(255,240,200,.85)'; x.beginPath(); x.arc(w * .75, h * .42, 60, 0, 7); x.fill();
+    x.fillStyle = '#3a3050'; x.fillRect(0, h * .72, w, h * .28); x.fillStyle = '#f6e6b0'; for (let i = 0; i < 6; i++) x.fillRect(20 + i * 110, h * .84, 60, 8);
+    x.fillStyle = carCol; x.beginPath(); x.roundRect(w * .14, h * .55, w * .72, h * .16, 30); x.fill(); x.beginPath(); x.roundRect(w * .3, h * .45, w * .34, h * .14, 34); x.fill();
+    x.fillStyle = '#bfe6ff'; x.beginPath(); x.roundRect(w * .34, h * .48, w * .26, h * .08, 14); x.fill();
+    x.strokeStyle = '#241726'; x.lineWidth = 7; x.beginPath(); x.roundRect(w * .14, h * .55, w * .72, h * .16, 30); x.stroke();
+    for (const cx of [w * .27, w * .73]) { x.fillStyle = '#241726'; x.beginPath(); x.arc(cx, h * .72, 34, 0, 7); x.fill(); x.fillStyle = '#d9dce6'; x.beginPath(); x.arc(cx, h * .72, 16, 0, 7); x.fill(); }
+    x.fillStyle = '#ffffff'; x.strokeStyle = '#241726'; x.lineWidth = 10; x.textAlign = 'center'; x.font = '900 70px Helvetica'; x.strokeText(title, w / 2, 80, w - 40); x.fillText(title, w / 2, 80, w - 40);
+    x.font = '900 40px Helvetica'; x.fillStyle = GOLD; x.lineWidth = 7; x.strokeText(sub, w / 2, 135, w - 40); x.fillText(sub, w / 2, 135, w - 40);
+  }, key);
+}
