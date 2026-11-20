@@ -73,3 +73,28 @@ function posterTex(title, sub, sky, carCol, key) {   // a framed car poster: sun
     x.font = '900 40px Helvetica'; x.fillStyle = GOLD; x.lineWidth = 7; x.strokeText(sub, w / 2, 135, w - 40); x.fillText(sub, w / 2, 135, w - 40);
   }, key);
 }
+function priceCard(price) {   // the same card as car-showroom's price stand
+  return ctex(940, 600, (x, w, h) => { x.fillStyle = '#fbf6ea'; x.fillRect(0, 0, w, h); x.strokeStyle = '#e6c25a'; x.lineWidth = 18; x.strokeRect(14, 14, w - 28, h - 28);
+    x.fillStyle = '#2b2230'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = 'bold 70px Helvetica'; x.fillText('SPECIAL', w / 2, 130); x.fillStyle = '#d5322c'; x.font = '900 200px Helvetica'; x.fillText(price, w / 2, 340, w - 70); x.fillStyle = '#2b2230'; x.font = 'bold 54px Helvetica'; x.fillText('DRIVE TODAY', w / 2, 500); }, { key: 'price' + price });
+}
+const signTex = (text, bg, fg, font, w = 1024, h = 256, key) => textCard(w, h, (x) => { if (bg) { x.fillStyle = bg; x.fillRect(0, 0, w, h); } else x.clearRect(0, 0, w, h); x.fillStyle = fg; x.font = font; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(text, w / 2, h / 2 + 6, w - 40); }, key || 'dsign' + text + bg + fg + w);
+
+// ---------- small furniture (internal) ----------
+function plant(parent, x, z, h = 1.4, seed = 1) {
+  const p = group(parent, { x, z }), r = rng(seed); put(p, G.cyl(.26, .2, .5, 18), toon(0xf4f1ea), { y: .25 }); put(p, G.cyl(.27, .27, .05, 18), toon(0xc9a24a), { y: .48, noInk: true });
+  put(p, G.cyl(.03, .03, h * .5, 6), toon(0x6a4630), { y: .5 + h * .25 });
+  const leaf = toon(0x3f9a55), leaf2 = toon(0x5bb865);
+  for (let i = 0; i < 7; i++) { const a = i * 2.4 + r(), y = .7 + (i / 7) * h * .75; put(p, G.sph(.18, 10, 8), i % 2 ? leaf : leaf2, { x: Math.cos(a) * .2, y, z: Math.sin(a) * .2, s: [1.4, .5, .8], ry: -a, rz: .5 }); }
+  return p;
+}
+function pendant(parent, x, z, len = 1.1, col = 0x1c2a6a) {   // a hanging spot lamp: cord, a navy and gold cone, a glowing lens
+  const p = group(parent, { x, y: CH, z }); put(p, G.cyl(.012, .012, len, 6), toon(0x2a2c38), { y: -len / 2, noInk: true });
+  put(p, G.cone(.24, .34, 20), toon(col), { y: -len - .1, rx: Math.PI }); put(p, G.torus(.22, .025, 20), toon(0xe6c25a), { y: -len - .27, rx: Math.PI / 2, noInk: true });
+  put(p, G.cyl(.2, .2, .02, 20), glow(0xfff4d6), { y: -len - .27, noInk: true }); return p;
+}
+function banner(parent, x, z, tex, ry = 0, w = 1.0, h = 2.0) {   // a hanging promo banner on a gold rod, printed on both sides
+  const b = group(parent, { x, y: CH - .35, z, ry }); put(b, G.cyl(.025, .025, w + .2, 8), toon(0xe6c25a), { rz: Math.PI / 2 });
+  for (const s of [-1, 1]) put(b, G.cyl(.006, .006, .35, 4), toon(0x2a2c38), { x: s * w * .4, y: .17, noInk: true });
+  put(b, G.box(w, h, .02), toon(0xffffff), { y: -h / 2 - .02, noInk: true });
+  for (const s of [1, -1]) put(b, G.plane(w, h), glow(0xffffff, { map: tex }), { y: -h / 2 - .02, z: s * .012, ry: s > 0 ? 0 : Math.PI, noInk: true });
+  return b;
