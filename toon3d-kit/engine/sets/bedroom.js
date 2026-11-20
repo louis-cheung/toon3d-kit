@@ -313,3 +313,28 @@ function buildRoom(who, { soggy = false, lamp = true } = {}) {
   return { root: g, light: { base: who === 'mia' ? 'bedroomWarm' : 'bedroomNight', sun }, shadowSize: 7, lights, cameras, spots, zFoot, keys, mood: { shadow: who === 'mia' ? 'plum' : 'blue' } };
 }
 
+register('bedroom-leo', {
+  kind: 'set', tags: ['home', 'bedroom', 'interior', 'night', 'dating', 'guy', 'phone'], aliases: ['leo-room', 'guy-bedroom'],
+  desc: "Leo's bedroom at night: saturated cold blue room, moon through the window landing as a patch of light, lit city across the street, one warm amber lamp pool, hot orange duvet, posters, shelf with trophy, string lights, rug, sneakers, hoodie, controller, gaming desk under the window. Bed has a footboard to shoot past. Cameras: main, hook, phone, thumb, wide, bedLow, timer. Spots: bed (sitting), bedLie (lying on the bed), floor, phone (a hand-held phone in front of him), timerPhone, phoneBed, bowlBed.",
+  opts: { soggy: 'true = the cereal on the bedside table has gone soggy', lamp: 'false = bedside lamp off' },
+  build: (o = {}) => buildRoom('leo', o),
+});
+register('bedroom-mia', {
+  kind: 'set', tags: ['home', 'bedroom', 'interior', 'night', 'dating', 'girl', 'phone', 'pink'], aliases: ['mia-room', 'girl-bedroom'],
+  desc: "Mia's bedroom at night, Leo's room mirrored and recoloured: warm pink floral walls with a coral wainscot, one cool blue window with a crescent moon, fairy lights, plants (hanging, floor, sill), a mirror with photos stuck to it, a photo string, a pink plush bunny, a patchwork quilt, round rug, vanity mirror with bulbs. Cameras: main, hook (Leo's hook mirrored), bed, sit (room above her head for a thought cloud), phone, thumb, wide, bedLow, timer. Spots: bed, bedLie, floor, phone, timerPhone, phoneBed.",
+  opts: { lamp: 'false = bedside lamp off' },
+  build: (o = {}) => buildRoom('mia', o),
+});
+
+// ---------------- both rooms at once: a dollhouse cut in half ----------------
+function splitHalf(g, s, P) {   // s = -1 Leo (left), +1 Mia (right). Inner wall at x = 0, outer wall at x = s*3.4
+  const W = 3.4, ZB = -2.0, H = 3.0, X = (v) => s * v, cx = X(W / 2);
+  const fl = put(g, G.plane(W, 3.2), toon(0xffffff, { map: boardTex(P.boards, P.seam) }), { x: cx, rx: -Math.PI / 2, z: ZB + 1.6, noInk: true, shadow: false }); fl.receiveShadow = true;
+  const wm = toon(0xffffff, { map: wallTex(...P.wall) });
+  // back wall with a window on the outer side
+  const wx0 = Math.min(X(2.35), X(3.15)), wx1 = Math.max(X(2.35), X(3.15)), y0 = 1.25, y1 = 2.45, outerX = X(W);
+  const lo = Math.min(0, outerX), hi = Math.max(0, outerX);
+  put(g, G.box(wx0 - lo, H, .3), wm, { x: (lo + wx0) / 2, y: H / 2, z: ZB - .15 }); put(g, G.box(hi - wx1, H, .3), wm, { x: (wx1 + hi) / 2, y: H / 2, z: ZB - .15 });
+  put(g, G.box(wx1 - wx0, y0, .3), toon(P.wall[2]), { x: (wx0 + wx1) / 2, y: y0 / 2, z: ZB - .15 }); put(g, G.box(wx1 - wx0, H - y1, .3), toon(P.wall[0]), { x: (wx0 + wx1) / 2, y: (H + y1) / 2, z: ZB - .15 });
+  windowUnit(g, P, wx0, wx1, y0, y1, ZB);
+  put(g, G.box(.3, H, 3.2), toon(0xffffff, { map: wallTex(...P.side) }), { x: X(W + .15), y: H / 2, z: ZB + 1.6 });   // outer wall
