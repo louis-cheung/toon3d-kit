@@ -98,3 +98,28 @@ function banner(parent, x, z, tex, ry = 0, w = 1.0, h = 2.0) {   // a hanging pr
   put(b, G.box(w, h, .02), toon(0xffffff), { y: -h / 2 - .02, noInk: true });
   for (const s of [1, -1]) put(b, G.plane(w, h), glow(0xffffff, { map: tex }), { y: -h / 2 - .02, z: s * .012, ry: s > 0 ? 0 : Math.PI, noInk: true });
   return b;
+}
+function frame(parent, o, tex, w = 1.5, h = 1.05) {   // a framed poster on a wall (faces +z of its group)
+  const f = group(parent, o); put(f, G.box(w + .12, h + .12, .05), toon(0xe6c25a)); put(f, G.plane(w, h), glow(0xffffff, { map: tex }), { z: .03, noInk: true }); return f;
+}
+function priceStand(parent, x, z, ry, price) {
+  const st = group(parent, { x, z, ry }), chrome = toon(0xd9dce6);
+  put(st, G.cyl(.25, .3, .05, 24), chrome, { y: .025 }); put(st, G.cyl(.025, .025, 1.0, 10), chrome, { y: .5 });
+  put(st, G.box(1.0, .66, .04), toon(0x16141c), { y: 1.23 }); put(st, G.plane(.94, .6), glow(0xffffff, { map: priceCard(price) }), { y: 1.23, z: .022, noInk: true });
+  return st;
+}
+function coffeeStation(parent, x, z) {   // on the counter top (y 1.05): machine, cup stacks, a FREE COFFEE sign
+  const c = group(parent, { x, y: 1.05, z });
+  const m = group(c, { x: .15, z: -.12 }); put(m, G.rbox(.42, .55, .36, .05), toon(0xc8323a), { y: .28 }); put(m, G.box(.3, .08, .2), toon(0x2a2c38), { y: .06, z: .1 });
+  put(m, G.plane(.24, .12), glow(0xffffff, { map: signTex('BREW', '#16141c', '#7fe3ff', '900 150px Helvetica', 512, 256) }), { y: .42, z: .185, noInk: true });
+  put(m, G.cyl(.05, .04, .1, 14), toon(0xf4f1ea), { y: .15, z: .12 }); put(m, G.cyl(.02, .02, .06, 8), toon(0x2a2c38), { y: .28, z: .14 });
+  for (let i = 0; i < 3; i++) for (let k = 0; k < 6; k++) put(c, G.cyl(.045, .035, .09, 12), toon(i === 1 ? 0xe6c25a : 0xf8f6f0), { x: -.18 + i * .0, y: .05 + k * .035, z: .1 - i * .12, noInk: k > 0 });
+  put(c, G.cyl(.035, .035, .1, 10), toon(0xe6c25a), { x: -.32, y: .05, z: -.1 });   // a sugar jar
+  const sg = group(c, { x: -.05, y: .3, z: .2, rx: -.12 }); put(sg, G.box(.62, .34, .03), toon(0x16141c), {}); put(sg, G.plane(.58, .3), glow(0xffffff, { map: textCard(600, 300, (x, w, h) => { x.fillStyle = '#fbf6ea'; x.fillRect(0, 0, w, h); x.fillStyle = '#c8323a'; x.font = '900 120px Helvetica'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('FREE', w / 2, 95); x.fillStyle = '#16141c'; x.font = '900 96px Helvetica'; x.fillText('COFFEE', w / 2, 210); x.strokeStyle = '#e6b84a'; x.lineWidth = 12; x.strokeRect(8, 8, w - 16, h - 16); }, 'freecoffee') }), { z: .017, noInk: true });
+  put(sg, G.cyl(.012, .012, .3, 6), toon(0x2a2c38), { y: -.3, noInk: true });
+  return c;
+}
+function keyRack(parent, x, y, z) {   // a board of hooks with coloured key tags, on the back wall
+  const k = group(parent, { x, y, z }); put(k, G.box(1.0, .6, .04), toon(0xb98552)); const cols = [0xe2463b, 0xe6c25a, 0x3c7be0, 0x3fae6a, 0xf08a3a];
+  for (let i = 0; i < 5; i++) for (let j = 0; j < 2; j++) { const kx = -.38 + i * .19, ky = .14 - j * .3; put(k, G.cyl(.008, .008, .05, 6), toon(0xd9dce6), { x: kx, y: ky, z: .04, rx: Math.PI / 2, noInk: true }); if ((i + j) % 3 !== 2) put(k, G.box(.05, .08, .01), toon(cols[(i + j * 2) % 5]), { x: kx, y: ky - .07, z: .05, noInk: true }); }
+  return k;
