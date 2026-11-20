@@ -23,3 +23,28 @@ function timeHook(root, fn) {
 function cityRow(g, z, ry, seed, names, skip = []) {
   const row = group(g, { z, ry }), r = rng(seed), cols = ['#7a6ab8', '#d08a6a', '#4f8fb0', '#c9a24a', '#8a5a9a', '#5aa08a', '#c86a7a'];
   for (let i = 0; i < 9; i++) { const x = -26 + i * 6.5; if (skip.includes(i)) continue;
+    const b = raw('building', { w: 6, h: 8 + r() * 10, d: 4, base: cols[(i + seed) % cols.length], seed: seed * 10 + i, lit: .15 }); b.position.set(x, 0, -2.2); row.add(b);
+    if (i % 2 === 0) { const s = raw('storefront', { name: names[(i / 2) % names.length] }); s.position.set(x, 0, .1); row.add(s); } }
+  return row;
+}
+
+// ---------- textures ----------
+function floorTex() {   // glossy white tiles, warm grey grout, a navy and gold diamond inlay at every other corner, a soft sheen
+  return ctex(512, 512, (x, w) => {
+    x.fillStyle = '#f6f4ef'; x.fillRect(0, 0, w, w); const s = w / 2;
+    for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++) { const g = x.createLinearGradient(i * s, j * s, i * s + s, j * s + s); g.addColorStop(0, 'rgba(255,255,255,.9)'); g.addColorStop(.45, 'rgba(232,236,246,.0)'); g.addColorStop(1, 'rgba(214,220,236,.55)'); x.fillStyle = g; x.fillRect(i * s, j * s, s, s); }
+    x.strokeStyle = '#cfc6b8'; x.lineWidth = 5; for (let i = 0; i <= 2; i++) { x.beginPath(); x.moveTo(i * s, 0); x.lineTo(i * s, w); x.stroke(); x.beginPath(); x.moveTo(0, i * s); x.lineTo(w, i * s); x.stroke(); }
+    const dia = (cx, cy, r, c) => { x.fillStyle = c; x.beginPath(); x.moveTo(cx, cy - r); x.lineTo(cx + r, cy); x.lineTo(cx, cy + r); x.lineTo(cx - r, cy); x.closePath(); x.fill(); };
+    for (const [cx, cy] of [[0, 0], [w, 0], [0, w], [w, w], [s, s]]) { dia(cx, cy, 42, '#1c2a6a'); dia(cx, cy, 26, GOLD); dia(cx, cy, 10, '#1c2a6a'); }
+    x.fillStyle = 'rgba(255,255,255,.7)'; x.fillRect(30, 40, 120, 8); x.fillRect(s + 30, s + 40, 120, 8);
+  }, { repeat: [7, 5], key: 'dealer-floor' });
+}
+function tealWallTex() {   // deep teal panels with thin gold reveals
+  return ctex(512, 512, (x, w, h) => { x.fillStyle = TEAL; x.fillRect(0, 0, w, h);
+    for (let i = 0; i < 4; i++) { x.fillStyle = i % 2 ? '#115b67' : '#0e515c'; x.fillRect(i * w / 4 + 6, 0, w / 4 - 12, h); x.fillStyle = '#c9a24a'; x.fillRect(i * w / 4 - 3, 0, 6, h); } }, { key: 'dealer-teal', repeat: [3, 1] });
+}
+function woodTex() {   // warm vertical wood slats
+  return ctex(256, 256, (x, w, h) => { const r = rng(5); for (let i = 0; i < 8; i++) { x.fillStyle = ['#b98552', '#c99360', '#a87444', '#bf8a56'][i % 4]; x.fillRect(i * 32, 0, 32, h);
+    x.fillStyle = 'rgba(80,40,20,.35)'; x.fillRect(i * 32, 0, 4, h); x.fillStyle = 'rgba(255,230,190,.18)'; for (let k = 0; k < 3; k++) x.fillRect(i * 32 + 8 + r() * 16, r() * h, 3, 40 + r() * 60); } }, { key: 'dealer-wood', repeat: [6, 1] });
+}
+function ceilTex() {   // white coffered ceiling, a warm downlight in every coffer
