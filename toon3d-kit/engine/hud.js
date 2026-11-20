@@ -16,3 +16,26 @@ function counterAt(c, sec) {
   return [v, pop];
 }
 
+/** LIES row under the NET WORTH box. Called inside drawCorner's transform (the box's own space: 330 x 116 at 0,0).
+ *  lies: { value, steps: [{at, value}], roll: {from, to, at: [t0, t1]}, label ('LIES'), color ('#ff5a7a') } */
+export function drawLiesRow(ctx, lies, sec) {
+  const [v, pop] = counterAt(lies, sec), col = lies.color || '#ff5a7a', s = 1 + .16 * pop;
+  ctx.save(); ctx.translate(0, 128);
+  ctx.translate(125, 42); ctx.scale(s, s); ctx.translate(-125, -42);
+  if (pop > 0) { ctx.save(); ctx.shadowColor = 'rgba(255,90,122,.9)'; ctx.shadowBlur = 30 * pop; ctx.fillStyle = 'rgba(255,90,122,.45)'; ctx.beginPath(); ctx.roundRect(0, 0, 250, 84, 20); ctx.fill(); ctx.restore(); }
+  ctx.fillStyle = 'rgba(42,10,28,.88)'; ctx.beginPath(); ctx.roundRect(0, 0, 250, 84, 20); ctx.fill(); ctx.lineWidth = 5; ctx.strokeStyle = col; ctx.stroke();
+  ctx.fillStyle = col; ctx.font = 'bold 30px Helvetica, Arial'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(lies.label || 'LIES', 22, 44);
+  ctx.fillStyle = '#ffffff'; ctx.font = '900 54px Helvetica, Arial'; ctx.textAlign = 'right'; ctx.fillText(String(v), 232, 46, 120);
+  ctx.restore();
+}
+
+/** Gold text with a thick ink outline, a lighter top and a white glint. */
+function goldText(ctx, text, px, stroke = .16) {
+  ctx.font = `900 ${px}px Helvetica, Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+  ctx.lineWidth = px * stroke * 2; ctx.strokeStyle = INK; ctx.strokeText(text, 0, 0);
+  const g = ctx.createLinearGradient(0, -px * .5, 0, px * .5); g.addColorStop(0, '#fff6b8'); g.addColorStop(.45, '#ffd23a'); g.addColorStop(.55, '#f2b01e'); g.addColorStop(1, '#c97a10');
+  ctx.fillStyle = g; ctx.fillText(text, 0, 0);
+  ctx.lineWidth = px * .035; ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.strokeText(text, 0, -px * .03);
+}
+function star4(ctx, x, y, r, col) { ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(x, y - r); ctx.lineTo(x + r * .28, y - r * .28); ctx.lineTo(x + r, y); ctx.lineTo(x + r * .28, y + r * .28); ctx.lineTo(x, y + r); ctx.lineTo(x - r * .28, y + r * .28); ctx.lineTo(x - r, y); ctx.lineTo(x - r * .28, y - r * .28); ctx.closePath(); ctx.fill(); }
+
