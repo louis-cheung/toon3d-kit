@@ -266,3 +266,28 @@ function miaDecor(g, P, BX, ZB, ZF, lamp) {
   put(g, G.cyl(.2, .2, .45, 20), toon(0xef6f8a), { x: X(2.0), y: .225, z: -2.6 }); put(g, G.cyl(.21, .21, .06, 20), toon(0xffd0dc), { x: X(2.0), y: .47, z: -2.6 });
   for (const [dx, c] of [[-.3, 0xef4f7a], [-.1, 0xffd166], [.2, 0x4fbfc4]]) put(g, G.cyl(.03, .03, .12, 10), toon(c), { x: X(2.5), y: .86, z: -2.6 + dx });
   poster(g, 'flower', X(3.17), 1.95, -1.3, .03 * P.m, -Math.PI / 2 * P.m, 1.2);
+  const door = raw('door', { number: '', color: 0xffffff }); door.position.set(X(-1.6), 0, ZF - .02); door.rotation.y = Math.PI; g.add(door);
+  put(g, G.box(.86, .03, .02), glow(0xffc97a), { x: X(-1.6), y: .02, z: ZF - .1, noInk: true, shadow: false });
+  const pl2 = raw('plant', { size: .9, pot: 0xef8a5c, seed: 5 }); pl2.position.set(X(-2.7), 0, ZB + .4); g.add(pl2);
+}
+
+/** One full bedroom. who: 'leo' | 'mia'. */
+function buildRoom(who, { soggy = false, lamp = true } = {}) {
+  const P = who === 'mia' ? MIA : LEO, m = P.m, X = (v) => m * v;
+  const g = new THREE.Group(), W = 6.4, H = 3.4, ZB = -4, ZF = 2.6, BX = .2;
+  const wx = [1.3, 2.4].map(X).sort((a, b) => a - b);
+  shell(g, { ...P }, W, H, ZB, ZF, [wx[0], wx[1], 1.45, 2.85]);
+  windowUnit(g, P, wx[0], wx[1], 1.45, 2.85, ZB);
+  const b = bed({ ...P, duvet: P.duvet() }); b.position.set(X(BX), 0, ZB + .12); g.add(b);
+  if (who === 'mia') { const pb = plush(P); pb.position.set(X(BX + .5), .5, ZB + .62); pb.rotation.y = -.3 * m; b.parent.add(pb); miaDecor(g, P, BX, ZB, ZF, lamp); }
+  else leoDecor(g, P, BX, ZB, ZF, soggy, lamp);
+  const L = b.userData.L, zFoot = ZB + .12 + L;
+  // lights: the warm lamp, a soft fill so the corners are deep blue (or plum) and never black, the string lights' glow
+  const lights = [
+    (s) => lamp && pointLight(s, X(BX - 1.2), 1.05, ZB + .6, who === 'mia' ? 0xffa0a8 : 0xffa64d, who === 'mia' ? 5 : 6.5, 4.2),
+    (s) => pointLight(s, X(BX - .4), 2.95, ZB + .5, who === 'mia' ? 0xffc0d8 : 0xffc58a, who === 'mia' ? 3.2 : 1.8, 3.2),
+    (s) => pointLight(s, X(0), 2.6, -.5, who === 'mia' ? 0xff9ec0 : 0x6f86ff, who === 'mia' ? 3 : 4, 7),
+    (s) => pointLight(s, X(2.4), 1.6, -2.5, who === 'mia' ? 0x9fc8ff : 0x7fd0ff, 1.6, 2.6),   // monitor / vanity glow on the window side
+  ];
+  const C = (pos, look, fov) => ({ pos: [X(pos[0]), pos[1], pos[2]], look: [X(look[0]), look[1], look[2]], fov });
+  const cameras = {
