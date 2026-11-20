@@ -65,3 +65,14 @@ def jackpot():
     tt = T(.5); place(x, np.sin(2 * np.pi * 60 * tt) * env(tt, .002, 7) * 1.2, 1.1)   # the boom of the win
     return x
 
+def big_ching():
+    t = T(1.4); r = rng(8); x = np.zeros(len(t))
+    place(x, np.sin(2 * np.pi * 55 * t[:int(.5 * SR)]) * env(t[:int(.5 * SR)], .002, 8) * 1.1, 0)
+    place(x, lp(r.uniform(-1, 1, len(t)), .6) * env(t, .001, 70) * .8, 0)
+    tt = t[:int(1.2 * SR)]; b = sum(np.sin(2 * np.pi * f * tt) * np.exp(-tt * d) * a for f, d, a in ((2637, 3.0, 1), (3951, 3.8, .55), (5274, 5.5, .3), (2660, 3.0, .5)))
+    place(x, b * .9, .1); place(x, b * .6, .2)
+    return x
+
+os.makedirs(OUT, exist_ok=True)
+for name, fn in [('jackpot', jackpot), ('coins', coins), ('big-ching', big_ching)]:
+    write(name, fn())
