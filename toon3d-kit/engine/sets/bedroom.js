@@ -241,3 +241,28 @@ function miaDecor(g, P, BX, ZB, ZF, lamp) {
   put(g, G.box(.6, .04, .22), wood, { x: X(BX - 1.15), y: 1.42, z: ZB + .12 });   // little shelf over the nightstand with a stack of books
   for (let i = 0; i < 3; i++) put(g, G.box(.24 - i * .02, .04, .17), toon([0xffd166, 0xb48ae0, 0xef4f7a][i]), { x: X(BX - 1.3), y: 1.46 + i * .04, z: ZB + .12, ry: i * .2 });
   // mirror with photos stuck round the frame, where Leo has his band poster
+  const mr = group(g, { x: X(BX - 1.12), y: 2.05, z: ZB + .03 }); put(mr, G.rbox(.72, 1.0, .05, .08), toon(0xffd166)); put(mr, G.plane(.6, .88), glow(0xffffff, { map: mirrorTex() }), { z: .03, noInk: true });
+  [[-.32, .38, .2], [.3, .4, -.15], [-.34, -.1, -.1], [.33, -.3, .18], [.0, .5, .05]].forEach(([px, py, r], k) => { const ph = group(mr, { x: px, y: py, z: .05, rz: r }); put(ph, G.plane(.17, .2), toon(0xffffff, { map: photoTex(k) }), { noInk: true }); put(ph, G.plane(.08, .03), toon(0xfff2a8), { y: .1, z: .002, rz: .2, noInk: true }); });
+  // photo string with clips above the bed, fairy light garland, posters
+  stringLights(g, [X(BX - .8), 2.55], [X(BX + .85), 2.55], .16, 9, [0xfff0b0], ZB + .05, false);
+  for (let i = 0; i < 4; i++) { const t = (i + .5) / 4, x = X(BX - .8 + 1.65 * t), y = 2.55 - Math.sin(t * Math.PI) * .16 - .14; const ph = group(g, { x, y, z: ZB + .04, rz: (i % 2 ? .08 : -.06) }); put(ph, G.plane(.17, .2), toon(0xffffff, { map: photoTex(i + 2) }), { noInk: true }); put(ph, G.box(.02, .05, .02), toon(0xef4f7a), { y: .11 }); }
+  poster(g, 'sun', X(BX + .35), 1.98, ZB + .02, .03 * P.m, 0, .8); poster(g, 'heart', X(BX - .45), 3.0, ZB + .02, -.05 * P.m, 0, .55);
+  stringLights(g, [X(-3.1), 3.2], [X(1.0), 3.22], .1, 26, [0xffe9b0, 0xffb6d0, 0xfff6d8, 0xb8f0ff], ZB + .06);   // fairy lights across the whole back wall
+  stringLights(g, [X(BX + .9), 2.9], [X(BX + .9), 1.4], .0, 9, [0xffe9b0, 0xffb6d0], ZB + .06);
+  put(g, G.plane(1.8, 1.6), additive(poolTex(), .3, 0xffc0d0), { x: X(BX - 1.2), y: 1.05, z: ZB + .005, noInk: true, shadow: false });
+  // plants: one hanging in the window corner, one on the floor, one small on the sill
+  const hp = group(g, { x: X(2.65), y: 2.7, z: ZB + .35 }); rod(hp, [0, .6, 0], [0, 0, 0], .006, toon(0xfff1dc), { noInk: true }); put(hp, G.cyl(.14, .1, .16, 16), toon(0xef8a5c), { y: -.08 });
+  for (let i = 0; i < 7; i++) { const a = i / 7 * Math.PI * 2; put(hp, G.cap(.035, .25 + (i % 3) * .1, 8), toon(i % 2 ? PAL.leaf : PAL.grass), { x: Math.cos(a) * .12, y: -.25 - (i % 3) * .05, z: Math.sin(a) * .12, rz: Math.cos(a) * .3, rx: Math.sin(a) * .3 }); }
+  const fp = raw('plant', { size: 1.3, pot: 0x4fbfc4, seed: 3 }); fp.position.set(X(-2.6), 0, -1.0); g.add(fp);
+  const sp = raw('plant', { size: .5, pot: 0xffd166, seed: 8 }); sp.position.set(X(1.65), 1.44, ZB + .12); g.add(sp);
+  // floor: round fluffy rug, slippers, a laundry basket, a vanity with a stool
+  put(g, G.cyl(1.0, 1.0, .02, 40), toon(0xffffff, { map: roundRugTex() }), { x: X(BX - 1.6), y: .011, z: -1.8 });
+  for (const [dx, r] of [[0, .3], [.2, -.2]]) { const s = group(g, { x: X(BX - 1.3 + dx), z: -1.5, ry: r }); put(s, G.rbox(.12, .05, .26, .025), toon(0xffb6c8), { y: .025 }); put(s, G.sph(.07, 12, 8), toon(0xfff1f4), { y: .06, z: .04, s: [1, .5, 1.1] }); }
+  const lb = group(g, { x: X(BX - 2.0), z: -2.6 }); put(lb, G.cyl(.25, .21, .45, 18), toon(0xf3e2d4), { y: .225 }); put(lb, G.torus(.25, .02, 18), toon(0xd8b8a8), { y: .45, rx: Math.PI / 2 });
+  for (const [c, a] of [[0x4fbfc4, .2], [0xffd166, 2.2], [0xb48ae0, 4]]) put(lb, G.sph(.13, 12, 8), toon(c), { x: Math.cos(a) * .1, y: .47, z: Math.sin(a) * .1, s: [1, .5, 1] });
+  const dk = raw('desk', { w: 1.2, color: 0xf3e2d4 }); dk.position.set(X(2.45), 0, -2.6); dk.rotation.y = -Math.PI / 2 * P.m; g.add(dk);
+  const vm = group(g, { x: X(3.15), y: 1.55, z: -2.6, ry: -Math.PI / 2 * P.m }); put(vm, G.torus(.4, .04, 32), toon(0xffd166)); put(vm, G.cyl(.38, .38, .02, 32), glow(0xffffff, { map: mirrorTex() }), { rx: Math.PI / 2, z: -.01, noInk: true });
+  for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; put(vm, G.sph(.035, 10, 8), glow(0xfff2c8), { x: Math.cos(a) * .4, y: Math.sin(a) * .4, z: .04, noInk: true }); }
+  put(g, G.cyl(.2, .2, .45, 20), toon(0xef6f8a), { x: X(2.0), y: .225, z: -2.6 }); put(g, G.cyl(.21, .21, .06, 20), toon(0xffd0dc), { x: X(2.0), y: .47, z: -2.6 });
+  for (const [dx, c] of [[-.3, 0xef4f7a], [-.1, 0xffd166], [.2, 0x4fbfc4]]) put(g, G.cyl(.03, .03, .12, 10), toon(c), { x: X(2.5), y: .86, z: -2.6 + dx });
+  poster(g, 'flower', X(3.17), 1.95, -1.3, .03 * P.m, -Math.PI / 2 * P.m, 1.2);
