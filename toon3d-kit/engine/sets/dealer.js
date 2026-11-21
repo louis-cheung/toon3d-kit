@@ -298,3 +298,28 @@ register('car-dealership', {
     put(g, G.cyl(.25, .25, .7, 16), toon(0x3c7be0), { x: 1.0, y: .35, z: -6.8 }); put(g, G.cyl(.25, .25, .7, 16), toon(0x3fae6a), { x: 1.55, y: .35, z: -6.6 });   // oil drums
     // the two-post lift (empty): posts either side of a car whose nose points -z
     const LX = 3.8, LZ = -8.2, post = toon(0x3c7be0), arm = toon(0xf0b43a);
+    const PZ = LZ - .75;
+    for (const s of [-1, 1]) { const px = LX + s * 1.55; put(g, G.box(.3, 4.0, .36), post, { x: px, y: 2.0, z: PZ }); put(g, G.box(.4, .08, .5), toon(0x2a2c38), { x: px, y: .04, z: PZ });
+      put(g, G.plane(.2, .6), glow(0xffffff, { map: signTex('LIFT', '#f5c84a', '#16141c', '900 90px Helvetica', 256, 128, 'liftlbl') }), { x: px - s * .16, y: 3.2, z: PZ, ry: -s * Math.PI / 2, noInk: true });
+      const car = group(g, { x: px, y: liftY - .12, z: PZ }); put(car, G.box(.42, .4, .5), toon(0x2a2c38), { y: .05 });
+      for (const tz of [LZ - 1.3, LZ + 1.35]) { const dx = (LX - s * .6) - px, dz = tz - PZ, len = Math.hypot(dx, dz), arm1 = group(car, { y: -.04, ry: Math.atan2(dz, -dx) });   // two arms swing out under the car to its jacking points
+        put(arm1, G.box(len, .08, .14), arm, { x: -len / 2 }); put(arm1, G.cyl(.1, .1, .08, 12), toon(0x2a2c38), { x: -len, y: .06 }); } }
+    put(g, G.box(3.4, .12, .3), post, { x: LX, y: 4.0, z: PZ });   // overhead crossbar
+    // ---- outside: the lot
+    const lotPaint = toon(0xf4f2ee);
+    for (let x = -15; x <= 17; x += 3) { if (x > -7 && x < 1) continue; put(g, G.box(.1, .012, 4.2), lotPaint, { x, y: .006, z: 15.8, noInk: true }); put(g, G.box(.1, .012, 4.2), lotPaint, { x, y: .006, z: 20.0, noInk: true }); }
+    for (const [x0, x1] of [[-15, -6], [0, 17]]) { put(g, G.box(x1 - x0, .012, .12), lotPaint, { x: (x0 + x1) / 2, y: .006, z: 13.7, noInk: true }); put(g, G.box(x1 - x0, .012, .12), lotPaint, { x: (x0 + x1) / 2, y: .006, z: 17.9, noInk: true }); }
+    const arrow = ctex(128, 256, (x, w, h) => { x.clearRect(0, 0, w, h); x.fillStyle = 'rgba(250,250,245,.95)'; x.fillRect(w / 2 - 16, 80, 32, 170); x.beginPath(); x.moveTo(w / 2, 4); x.lineTo(w - 8, 96); x.lineTo(8, 96); x.closePath(); x.fill(); }, { key: 'lotarrow' });
+    for (const [x, rz] of [[-4.6, 0], [-1.4, Math.PI]]) put(g, G.plane(.8, 1.6), new THREE.MeshBasicMaterial({ map: arrow, transparent: true, depthWrite: false }), { x, y: .012, z: 17.5, rx: -Math.PI / 2, rz, noInk: true, shadow: false });   // the driveway: in and out arrows
+    for (let x = -12; x <= 16; x += 4) put(g, G.box(1.8, .012, .14), toon(0xf0b43a), { x, y: .007, z: 8.4, noInk: true });   // yellow fire-lane dashes by the building
+    put(g, G.box(XW * 2 + 2, .14, 2.4), toon(0xd9d6e0), { y: .07, z: ZF + 1.3, noInk: true });   // the walk in front of the glass
+    put(g, G.box(XW * 2 + 2, .02, .1), toon(0xf0b43a), { y: .145, z: ZF + 2.48, noInk: true });
+    const r = rng(17), carCols = [0xe2463b, 0xf8f6f0, 0x3c7be0, 0x2a2c48, 0xf5c84a, 0x2f8f86, 0xc8c9d4, 0x8a5ad8, 0xf08a3a];
+    for (const [z, ry] of [[15.8, Math.PI / 2], [20.0, -Math.PI / 2]]) for (let x = -13.5; x <= 15.5; x += 3) { if (x > -6 && x < 0) continue; if (r() < .14) continue;
+      const c = raw('car', { color: carCols[(r() * carCols.length) | 0] }); c.scale.setScalar(2.05); c.position.set(x, 0, z); c.rotation.y = ry; g.add(c);
+      if (r() < .55) put(c, G.box(.02, .14, .2), glow(0xfff36a), { x: .4, y: .8, z: .15, noInk: true }); }   // a yellow price sticker on the windshield
+    // light poles with pennant bunting to the building
+    const poles = [[-11, 13.4], [2.4, 13.4], [12.5, 13.4], [-9, 22.3], [6, 22.3]];
+    for (const [x, z] of poles) { put(g, G.cyl(.08, .12, 6.5, 10), toon(0x3a3e4e), { x, y: 3.25, z }); put(g, G.box(1.0, .14, .3), toon(0x3a3e4e), { x, y: 6.45, z }); put(g, G.box(.8, .04, .22), glow(0xfff6dc), { x, y: 6.37, z, noInk: true }); put(g, G.cyl(.3, .36, .3, 12), toon(0xd9d6e0), { x, y: .15, z }); }
+    const flags = [...pennants(g, [-7, 4.4, ZF + .3], [-11, 5.6, 13.4], .7, 16, 1), ...pennants(g, [0, 4.4, ZF + .3], [2.4, 5.6, 13.4], .7, 14, 2), ...pennants(g, [7, 4.4, ZF + .3], [12.5, 5.6, 13.4], .7, 15, 3),
+      ...pennants(g, [-11, 5.6, 13.4], [2.4, 5.6, 13.4], .9, 22, 4), ...pennants(g, [2.4, 5.6, 13.4], [12.5, 5.6, 13.4], .8, 18, 5)];

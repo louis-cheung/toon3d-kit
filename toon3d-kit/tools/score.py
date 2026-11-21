@@ -21,3 +21,26 @@ Older moods, kept for old episodes:
 For a bed that changes mood with the story (sad opening, silence, then a lift), build one file from timed
 sections with tools/bed.py instead of looping one mood under the whole episode.
 
+The file loops cleanly (notes that ring past the end wrap to the start). Point the episode at it with
+META.music = { file: 'audio/bed.wav' }. With META.mix set, tools/voice.py puts it at a fixed level under the voice,
+so the loudness of this file does not matter. The twist still gets `musicOff: true` on its shot plus a `sting`.
+"""
+import argparse, pathlib
+import numpy as np
+import soundfile as sf
+
+SR = 48000
+hz = lambda m: 440 * 2 ** ((m - 69) / 12)
+
+
+def lowpass(x, cutoff):
+    """Brick-ish low-pass in the frequency domain (fast, and a loop stays a loop)."""
+    X = np.fft.rfft(x); f = np.fft.rfftfreq(len(x), 1 / SR); X *= 1 / np.sqrt(1 + (f / cutoff) ** 6); return np.fft.irfft(X, len(x))
+
+
+class Loop:
+    def __init__(self, bpm, bars, seed, meter=4):
+        # meter: beats per bar (4; the waltz is 3). wrap: notes ringing past the end wrap to the start (a clean loop);
+        # tools/bed.py turns it off and renders one long take instead.
+        self.beat = 60 / bpm; self.meter = meter; self.n = int(round(bars * meter * self.beat * SR)); self.x = np.zeros(self.n); self.rng = np.random.default_rng(seed); self.wrap = True
+
