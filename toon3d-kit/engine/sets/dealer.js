@@ -323,3 +323,28 @@ register('car-dealership', {
     for (const [x, z] of poles) { put(g, G.cyl(.08, .12, 6.5, 10), toon(0x3a3e4e), { x, y: 3.25, z }); put(g, G.box(1.0, .14, .3), toon(0x3a3e4e), { x, y: 6.45, z }); put(g, G.box(.8, .04, .22), glow(0xfff6dc), { x, y: 6.37, z, noInk: true }); put(g, G.cyl(.3, .36, .3, 12), toon(0xd9d6e0), { x, y: .15, z }); }
     const flags = [...pennants(g, [-7, 4.4, ZF + .3], [-11, 5.6, 13.4], .7, 16, 1), ...pennants(g, [0, 4.4, ZF + .3], [2.4, 5.6, 13.4], .7, 14, 2), ...pennants(g, [7, 4.4, ZF + .3], [12.5, 5.6, 13.4], .7, 15, 3),
       ...pennants(g, [-11, 5.6, 13.4], [2.4, 5.6, 13.4], .9, 22, 4), ...pennants(g, [2.4, 5.6, 13.4], [12.5, 5.6, 13.4], .8, 18, 5)];
+    anim.push((sec) => { for (const [f, ph] of flags) f.rotation.x = .25 * Math.sin(sec * 5 + ph) + .15; });
+    // the pylon sign
+    { const P = group(g, { x: -10.2, z: 7.4, ry: .35 }); for (const s of [-1, 1]) put(P, G.box(.35, 9, .35), toon(0x1c2a6a), { x: s * 1.1, y: 4.5 });
+      put(P, G.rbox(3.4, 2.0, .5, .1), toon(0x1c2a6a), { y: 7.9 }); put(P, G.box(3.5, .1, .55), gold, { y: 6.85 }); put(P, G.box(3.5, .1, .55), gold, { y: 8.95 });
+      for (const s of [1, -1]) put(P, G.plane(3.1, 1.6), glow(0xffffff, { map: textCard(800, 420, (x, w, h) => { x.fillStyle = '#1c2a6a'; x.fillRect(0, 0, w, h); x.fillStyle = GOLD; x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = '900 190px Georgia, serif'; x.fillText('HALE', w / 2, 140); x.font = '900 120px Georgia, serif'; x.fillText('MOTORS', w / 2, 310); }, 'pylon') }), { y: 7.9, z: s * .26, ry: s > 0 ? 0 : Math.PI, noInk: true });
+      put(P, G.rbox(2.6, 1.0, .3, .06), toon(0xc8232a), { y: 6.1 }); for (const s of [1, -1]) put(P, G.plane(2.4, .8), glow(0xffffff, { map: signTex('SALE', '#c8232a', '#ffffff', '900 200px Helvetica', 600, 220, 'pylonsale') }), { y: 6.1, z: s * .16, ry: s > 0 ? 0 : Math.PI, noInk: true });
+      put(P, G.box(3.0, .5, .3), toon(0xffffff), { y: 4.9 }); for (const s of [1, -1]) put(P, G.plane(2.8, .42), glow(0xffffff, { map: signTex('0% APR  DRIVE TODAY', '#ffffff', '#1c2a6a', '900 110px Helvetica', 1400, 200, 'pylonapr') }), { y: 4.9, z: s * .16, ry: s > 0 ? 0 : Math.PI, noInk: true }); }
+    // balloons, the tube man, a SALE sandwich board
+    const bunches = [balloons(g, -10.2, 9.0, 7.4, 3), balloons(g, 6.8, 0, 6.8, 5), balloons(g, -6.4, 0, 6.8, 7)];
+    anim.push((sec) => bunches.forEach((b, i) => { b.rotation.y = .15 * Math.sin(sec * 1.3 + i); b.position.y = (i === 0 ? 9.0 : 0) + .05 * Math.sin(sec * 2 + i * 2); }));
+    if (withTube) { const tm = tubeMan(g, 4.6, 7.0);
+      anim.push((sec) => { tm.segs.forEach((s, i) => { s.rotation.z = .32 * Math.sin(sec * 4.2 - i * .9) * (i ? 1 : .4); s.rotation.x = .12 * Math.sin(sec * 3.1 - i * .7); });
+        tm.arms.forEach(([a, s], i) => { a.rotation.z = s * (.6 * Math.sin(sec * 6 + i * 2)) - s * .2; }); }); }
+    { const sb = group(g, { x: -.4, z: 6.9, ry: -.3 }); for (const s of [-1, 1]) { const p = group(sb, { y: 0, rx: s * .22 }); put(p, G.box(.7, 1.0, .04), toon(0xf8f6f0), { y: .5, z: s * .02 });
+      put(p, G.plane(.62, .9), glow(0xffffff, { map: textCard(320, 460, (x, w, h) => { x.fillStyle = '#fbf6ea'; x.fillRect(0, 0, w, h); x.fillStyle = '#c8232a'; x.textAlign = 'center'; x.font = '900 96px Helvetica'; x.fillText('SALE', w / 2, 120); x.fillStyle = '#1c2a6a'; x.font = '900 52px Helvetica'; x.fillText('EVERY CAR', w / 2, 220); x.fillText('MUST GO', w / 2, 290); x.fillStyle = GOLD; x.fillRect(40, 340, w - 80, 14); x.fillStyle = '#1c2a6a'; x.font = 'bold 40px Helvetica'; x.fillText('COME IN', w / 2, 410); }, 'sandwich') }), { y: .5, z: s * .045, ry: s > 0 ? 0 : Math.PI, noInk: true }); } }
+    // trees and planters along the walk and the street
+    for (const x of [-16, -13.5, 12, 16.5]) { const t = raw('tree', { h: 4, seed: x + 3 }); t.position.set(x, 0, 6.8); g.add(t); }
+    for (const x of [-18, -12, 2, 12, 18]) { const t = raw('tree', { h: 4.2, seed: x + 9 }); t.position.set(x, .14, 22.7); g.add(t); }
+    put(g, G.box(60, .14, 1.6), toon(0xd9d6e0), { y: .07, z: 22.6, noInk: true }); put(g, G.box(60, .14, 4), toon(0xd9d6e0), { y: .07, z: 28.6, noInk: true });
+    put(g, G.plane(60, 4.4), toon(0x3e4152), { rx: -Math.PI / 2, y: .004, z: 24.6, noInk: true, shadow: false });
+    for (let i = 0; i < 14; i++) put(g, G.box(1.6, .012, .14), lotPaint, { x: -26 + i * 4, y: .01, z: 24.6, noInk: true });
+    cityRow(g, 30.5, Math.PI, 5, ['NOODLE BAR', 'TIRES', 'COFFEE', 'PHONE REPAIR']);
+    { const sk = raw('skyline', { n: 22, seed: 9, spread: 90, base: '#6a74b8', minH: 10, maxH: 30 }); sk.position.set(0, 0, 52); sk.rotation.y = Math.PI; g.add(sk); }
+    // side neighbours so the high lot camera never sees the edge of the world
+    for (const [x, col] of [[-22, '#d08a6a'], [22, '#5aa08a']]) { const b = raw('building', { w: 10, h: 7, d: 16, base: col, seed: x + 50, lit: .2 }); b.position.set(x, 0, 0); g.add(b); }
