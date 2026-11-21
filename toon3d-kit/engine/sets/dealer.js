@@ -248,3 +248,28 @@ register('car-dealership', {
     const plat = group(TT, { y: .16 });
     put(plat, new THREE.CircleGeometry(2.05, 64), toon(0xffffff, { map: textCard(512, 512, (x, w) => { x.fillStyle = '#f2f0f6'; x.fillRect(0, 0, w, w); for (let i = 8; i > 0; i--) { x.fillStyle = i % 2 ? '#e8e4ee' : '#f6f4fa'; x.beginPath(); x.arc(w / 2, w / 2, i * 30, 0, 7); x.fill(); }
       x.strokeStyle = GOLD; x.lineWidth = 6; for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6; x.beginPath(); x.moveTo(w / 2 + Math.cos(a) * 200, w / 2 + Math.sin(a) * 200); x.lineTo(w / 2 + Math.cos(a) * 250, w / 2 + Math.sin(a) * 250); x.stroke(); } }, 'ttop') }), { y: .005, rx: -Math.PI / 2, noInk: true, shadow: false }).receiveShadow = true;
+    const sparks = [];
+    if (turntableCar !== false) { const car = raw('sports-car', { color: turntableCar, plate: 'HALE 1' }); car.position.y = .005; plat.add(car);
+      const stripe = toon(0xf8f6f0); for (const z of [-.16, .16]) { put(car, G.box(1.5, .015, .14), stripe, { x: 1.25, y: .815, z, rz: -.08, noInk: true }); put(car, G.box(1.1, .015, .14), stripe, { x: -1.5, y: .835, z, rz: .05, noInk: true }); }
+      
+      const star = new THREE.Shape(); for (let i = 0; i < 8; i++) { const r = i % 2 ? .05 : .2, a = i * Math.PI / 4; i ? star.lineTo(Math.cos(a) * r, Math.sin(a) * r) : star.moveTo(r, 0); }
+      const sg = new THREE.ShapeGeometry(star), sgm = glow(0xffffff, { side: THREE.DoubleSide });
+      for (const [x, y, z, ph] of [[1.6, .95, .5, 0], [-.9, 1.0, -.7, 1.7], [.4, 1.25, 0, 3.1], [-1.9, .75, .7, 4.4]]) { const st = group(car, { x, y, z }); for (const ry of [0, Math.PI / 2]) put(st, sg, sgm, { ry, noInk: true, shadow: false }); sparks.push([st, ph]); } }
+    anim.push((sec) => { plat.rotation.y = .6 + sec * spin; for (const [st, ph] of sparks) { const k = Math.max(0, Math.sin(sec * 3.2 + ph)); st.scale.setScalar(.05 + k * k); st.rotation.y = sec * 1.5 + ph; } });
+    priceStand(g, -.15, 2.0, -.55, '$148,000');
+    // stanchions: gold posts with a red rope in front of the turntable
+    for (const [x, z] of [[-4.9, 3.1], [-3.4, 3.4], [-1.6, 3.3], [-.1, 2.9]]) { put(g, G.cyl(.18, .2, .04, 16), gold, { x, y: .02, z }); put(g, G.cyl(.03, .03, .9, 10), gold, { x, y: .47, z }); put(g, G.sph(.06, 10, 8), gold, { x, y: .95, z }); }
+    for (const [a, b] of [[[-4.9, 3.1], [-3.4, 3.4]], [[-1.6, 3.3], [-.1, 2.9]]]) { const c = new THREE.CatmullRomCurve3([new THREE.Vector3(a[0], .88, a[1]), new THREE.Vector3((a[0] + b[0]) / 2, .62, (a[1] + b[1]) / 2), new THREE.Vector3(b[0], .88, b[1])]); put(g, new THREE.TubeGeometry(c, 12, .03, 6), toon(0xc8232a)); }
+    // ---- salesman desks on the right (salesman on +x facing -x)
+    if (heroDesk) { const d = raw('sales-desk', { name: heroName, screen: heroScreen, chairs: true }); d.position.set(4.2, 0, 1.4); g.add(d); }
+    { const d = raw('sales-desk', { name: 'KAREN', screen: 'cars', chairs: true, seed: 2 }); d.position.set(4.2, 0, -1.8); g.add(d); }
+    // a low rug under the desk area
+    put(g, G.box(3.2, .015, 6.4), toon(0xffffff, { map: textCard(256, 512, (x, w, h) => { x.fillStyle = '#26337e'; x.fillRect(0, 0, w, h); x.strokeStyle = GOLD; x.lineWidth = 8; x.strokeRect(12, 12, w - 24, h - 24); x.strokeStyle = 'rgba(230,184,74,.5)'; x.lineWidth = 4; for (let i = 0; i < 6; i++) { x.beginPath(); x.moveTo(30, 60 + i * 80); x.lineTo(w - 30, 100 + i * 80); x.stroke(); } }, 'drug') }), { x: 4.5, y: .008, z: -.2, noInk: true });
+    // a water cooler between the desks and a brochure rack on the wall
+    { const w = group(g, { x: 6.55, z: -.3 }); put(w, G.rbox(.4, 1.0, .4, .05), white, { y: .5 }); put(w, G.cyl(.16, .16, .4, 16), glow(0x9fd8ff, { transparent: true, opacity: .8 }), { y: 1.2, noInk: true }); put(w, G.box(.06, .06, .04), toon(0x3c7be0), { y: .8, x: -.21, noInk: true }); }
+    { const br = group(g, { x: XW - .06, y: 1.3, z: .65, ry: -Math.PI / 2 }); put(br, G.box(.9, .7, .1), toon(0xd9dce6)); const cols = ['#e2463b', '#1f6fff', '#f5c84a', '#2f8f86', '#7a4ab8', '#f08a3a'];
+      for (let i = 0; i < 6; i++) put(br, G.box(.24, .3, .02), toon(new THREE.Color(cols[i]).getHex()), { x: -.29 + (i % 3) * .29, y: i < 3 ? .16 : -.18, z: .07, rx: -.15 }); }
+    // ---- service desk at the back left
+    const SV = group(g, { x: -3.5, z: -4.2 });
+    put(SV, G.rbox(3.8, 1.0, .7, .05), white, { y: .5 }); put(SV, G.box(3.82, .08, .76), toon(0xb98552), { y: 1.03 });
+    put(SV, G.box(3.6, .18, .02), toon(0x0f5560), { y: .55, z: .36, noInk: true }); put(SV, G.box(3.6, .05, .02), gold, { y: .7, z: .36, noInk: true });
