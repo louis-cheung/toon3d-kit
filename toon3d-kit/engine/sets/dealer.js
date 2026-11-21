@@ -373,3 +373,9 @@ register('car-dealership', {
         service: [-3.5, 0, -3.35], serviceDesk: [-3.5, 0, -4.8], liftCar: LIFT_CAR, lot: [-2, 0, 10.5], lotExit: [12, 0, 10.5], back: [6.1, 0, -.35], back2: [6.1, 0, .55], desk2: [4.2, 0, -1.8], center: [.8, 0, 1.5] },
       keys: { default: { kind: 'window', at: [-1.5, 3.2, 4.2], color: 0xfff0d8, power: 30, reach: 4.5, dist: 18 },
         desk: { kind: 'lamp', at: [4.2, 2.9, 1.4], color: 0xffe2b0, power: 7, reach: 2.4, dist: 10 },
+        service: { kind: 'lamp', at: [-3.5, 2.8, -3.4], color: 0xffd59a, power: 7, reach: 2.4, dist: 10 },
+        lift: { kind: 'spot', at: [3.8, 4.3, -6.6], target: [3.8, 1.2, -8.2], color: 0xeaf4ff, power: 240, reach: 2.6, dist: 14, angle: .5 },
+        lot: { kind: 'window', at: [-2, 6, 12.5], color: 0xfff2dc, power: 60, reach: 6, dist: 24 } },
+      mood: { ambient: .45, sun: .5, fill: .35, others: .55, glowFloor: .72, sky: .82, vignette: .16, contrast: 1.06, floorAmount: .45 } };
+  },
+});
