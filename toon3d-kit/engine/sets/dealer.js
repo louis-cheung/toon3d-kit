@@ -173,3 +173,53 @@ register('car-dealership', {
     const g = new THREE.Group(), shell = toon(0xf2efe8), mull = toon(0x1e2440), gold = toon(0xe6c25a), white = toon(0xf8f6f0);
     const anim = [];   // functions of sec, run by the time hook
     // ---- ground: the lot asphalt everywhere, the showroom floor on top
+    put(g, G.plane(260, 260), toon(0x4a4d5e), { rx: -Math.PI / 2, y: -.01, z: 20, noInk: true, shadow: false }).receiveShadow = true;
+    put(g, G.box(XW * 2, .06, ZF - ZB), toon(0xffffff, { map: floorTex() }), { y: -.03 + .0, noInk: true, shadow: false }).receiveShadow = true;
+    // ---- building shell (walls cast no shadow, so the sun through the glass and over the roof lights the room)
+    const wallBox = (w, h, d, o) => put(g, G.box(w, h, d), shell, { ...o, shadow: false });
+    wallBox(.2, CH, ZF - ZB, { x: -XW - .1, y: CH / 2 }); wallBox(.2, CH, ZF - ZB, { x: XW + .1, y: CH / 2 });
+    wallBox(1 + XW, CH, .2, { x: (-XW + 1) / 2, y: CH / 2, z: ZB - .1 }); wallBox(.5, CH, .2, { x: 6.75, y: CH / 2, z: ZB - .1 }); wallBox(5.5, CH - 3.3, .2, { x: 3.75, y: 3.3 + (CH - 3.3) / 2, z: ZB - .1 });
+    put(g, G.box(XW * 2 + .4, .25, ZF - ZB + .4), shell, { y: CH + .12, shadow: false, noInk: true });   // roof slab
+    for (const [x, z] of [[-4, -2], [-1.2, -2.6], [3.5, 0]]) { put(g, G.rbox(1.6, .8, 1.2, .06), toon(0xc9ccd6), { x, y: CH + .65, z }); put(g, G.cyl(.4, .4, .06, 16), toon(0x8d93a6), { x, y: CH + 1.07, z, noInk: true }); }
+    for (const [x, z, w, d] of [[0, ZB - .1, XW * 2 + .4, .2], [-XW - .1, 0, .2, ZF - ZB + .2], [XW + .1, 0, .2, ZF - ZB + .2]]) put(g, G.box(w, .4, d), toon(0x1c2a6a), { x, y: CH + .45, z, shadow: false });
+    put(g, G.plane(XW * 2, ZF - ZB), toon(0xffffff, { map: ceilTex() }), { y: CH - .01, rx: Math.PI / 2, noInk: true, shadow: false });   // ceiling: coffers with downlights
+    // lit cove: a dropped soffit round the room with a warm glowing strip under its lip
+    for (const [x, z, w, d] of [[0, ZF - .45, XW * 2, .9], [-XW + .45, 0, .9, ZF - ZB], [XW - .45, 0, .9, ZF - ZB]]) { put(g, G.box(w, .35, d), white, { x, y: CH - .18, z, shadow: false, noInk: true }); }
+    for (const [x, z, w, d] of [[0, ZF - .92, XW * 2 - 1.8, .06], [-XW + .92, 0, .06, ZF - ZB - 1.8], [XW - .92, 0, .06, ZF - ZB - 1.8]]) put(g, G.box(w, .08, d), glow(0xffe4a8), { x, y: CH - .32, z, noInk: true, shadow: false });
+    // ---- the front: glass wall with dark mullions, a navy fascia with the gold name, the double doors at x -3.5
+    const glassM = glow(0xcfeaff, { transparent: true, opacity: .14, depthWrite: false });
+    for (const [x0, x1] of [[-XW, -4.5], [-2.5, XW]]) put(g, G.box(x1 - x0, CH, .03), glassM, { x: (x0 + x1) / 2, y: CH / 2, z: ZF, noInk: true, shadow: false });
+    put(g, G.box(2, CH - 2.45, .03), glassM, { x: -3.5, y: 2.45 + (CH - 2.45) / 2, z: ZF, noInk: true, shadow: false });   // transom over the doors
+    for (const x of [-7, -5.6, -4.55, -2.45, -1.0, .6, 2.2, 3.8, 5.4, 7]) put(g, G.box(.12, CH, .14), mull, { x, y: CH / 2, z: ZF });
+    for (const y of [.06, 2.45, CH - .06]) { put(g, G.box(2.5, .1, .14), mull, { x: -5.75, y, z: ZF }); put(g, G.box(9.5, .1, .14), mull, { x: 2.25, y, z: ZF }); }
+    put(g, G.box(2.1, .12, .14), mull, { x: -3.5, y: 2.45, z: ZF });
+    put(g, G.box(XW * 2 + .4, 1.2, .3), toon(0x1c2a6a), { y: CH + .55, z: ZF + .12, shadow: false });   // fascia (front .07 proud of the roof slab)
+    put(g, G.plane(7.6, 1.0), glow(0xffffff, { transparent: true, map: signTex('HALE MOTORS', null, GOLD, '900 190px Georgia, serif', 1600, 220, 'hale-fascia') }), { y: CH + .55, z: ZF + .28, noInk: true });
+    for (const x of [-6.2, 6.2]) put(g, G.sph(.18, 14, 10), glow(0xffd36a), { x, y: CH + .55, z: ZF + .29, noInk: true });
+    // gold door-frame accent: a strip above the doors outside
+    put(g, G.box(2.3, .1, .06), gold, { x: -3.5, y: 2.56, z: ZF + .09 });
+    const doors = [];
+    for (const s of [-1, 1]) {   // s -1: left leaf hinged at x -4.5; s 1: right leaf hinged at x -2.5. Each leaf 1 m wide, 2.4 high.
+      const hinge = group(g, { x: -3.5 + s * 1.0, z: ZF }), leaf = group(hinge, { x: -s * .5 });
+      for (const x of [-.46, .46]) put(leaf, G.box(.08, 2.38, .06), mull, { x, y: 1.2 }); put(leaf, G.box(1.0, .1, .06), mull, { y: 2.35 }); put(leaf, G.box(1.0, .2, .06), mull, { y: .1 }); put(leaf, G.box(.84, 2.1, .02), glow(0xd8f0ff, { transparent: true, opacity: .2, depthWrite: false }), { y: 1.25, noInk: true });
+      put(leaf, G.cyl(.022, .022, .9, 8), toon(0xd9dce6), { x: -s * .38, y: 1.15, z: .09 }); for (const y of [.75, 1.55]) put(leaf, G.box(.03, .03, .08), toon(0xd9dce6), { x: -s * .38, y, z: .05, noInk: true });   // pull bar on the outside
+      put(leaf, G.cyl(.022, .022, .9, 8), toon(0xd9dce6), { x: -s * .38, y: 1.15, z: -.09 });
+      put(leaf, G.plane(.6, .22), glow(0xffffff, { transparent: true, map: signTex('PUSH', null, '#ffffff', '900 170px Helvetica', 512, 200, 'push') }), { y: 1.48, z: .036, x: s * .02, noInk: true });
+      if (s < 0) put(leaf, G.plane(.62, .5), glow(0xffffff, { transparent: true, map: textCard(512, 400, (x, w, h) => { x.clearRect(0, 0, w, h); x.fillStyle = 'rgba(255,255,255,.95)'; x.textAlign = 'center'; x.font = '900 86px Helvetica'; x.fillText('OPEN', w / 2, 90); x.font = 'bold 54px Helvetica'; x.fillText('MON TO SAT', w / 2, 190); x.fillText('9AM TO 8PM', w / 2, 270); x.fillStyle = GOLD; x.fillRect(80, 320, w - 160, 10); }, 'hours') }), { y: .82, z: .036, noInk: true });
+      else put(leaf, G.plane(.5, .5), glow(0xffffff, { transparent: true, map: textCard(400, 400, (x, w, h) => { x.clearRect(0, 0, w, h); x.fillStyle = GOLD; x.font = '900 220px Georgia, serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('H', w / 2, h / 2 + 10); x.strokeStyle = GOLD; x.lineWidth = 14; x.beginPath(); x.arc(w / 2, h / 2, 170, 0, 7); x.stroke(); }, 'hmono') }), { y: .82, z: .036, noInk: true });
+      doors.push([hinge, s]);
+    }
+    const doorK = (sec) => Array.isArray(doorOpen) ? sm((sec - doorOpen[0]) / Math.max(.01, doorOpen[1] - doorOpen[0])) : c01(+doorOpen || 0);
+    anim.push((sec) => { const k = doorK(sec), over = Array.isArray(doorOpen) && sec > doorOpen[1] ? .04 * Math.sin((sec - doorOpen[1]) * 14) * Math.exp(-(sec - doorOpen[1]) * 4) : 0;
+      for (const [h, s] of doors) h.rotation.y = -s * (1.45 * k + over); });   // inward (toward -z)
+    for (const x of [-5.15, -1.85]) { const pl = group(g, { x, y: .14, z: ZF + .65 }); put(pl, G.rbox(.7, .55, .7, .06), toon(0x1c2a6a), { y: .27 }); put(pl, G.box(.72, .06, .72), gold, { y: .5, noInk: true });
+      for (let i = 0; i < 5; i++) { const a = i * 1.26; put(pl, G.sph(.22, 10, 8), toon(i % 2 ? 0x3f9a55 : 0x5bb865), { x: Math.cos(a) * .16, y: .75 + (i % 2) * .15, z: Math.sin(a) * .16, s: [1, 1.3, 1] }); } }
+    // welcome mat inside the doors
+    put(g, G.box(2.2, .02, 1.2), toon(0xffffff, { map: textCard(512, 280, (x, w, h) => { x.fillStyle = '#1c2a6a'; x.fillRect(0, 0, w, h); x.strokeStyle = GOLD; x.lineWidth = 12; x.strokeRect(16, 16, w - 32, h - 32); x.fillStyle = GOLD; x.font = '900 80px Georgia, serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('WELCOME', w / 2, h / 2 + 4); }, 'dmat') }), { x: -3.5, y: .01, z: 4.0, noInk: true });
+    // ---- interior walls: teal feature wall at the back (left of the opening), wood slats on the right wall, teal on the left wall
+    put(g, G.plane(1 + XW, CH), toon(0xffffff, { map: tealWallTex() }), { x: (-XW + 1) / 2, y: CH / 2, z: ZB + .005, noInk: true, shadow: false });
+    const wt = woodTex(); put(g, G.plane(ZF - ZB, CH), toon(0xffffff, { map: wt }), { x: XW - .005, y: CH / 2, ry: -Math.PI / 2, noInk: true, shadow: false });
+    const tl = tealWallTex().clone(); tl.needsUpdate = true; tl.repeat.set(3, 1); put(g, G.plane(ZF - ZB, CH), toon(0xffffff, { map: tl }), { x: -XW + .005, y: CH / 2, ry: Math.PI / 2, noInk: true, shadow: false });
+    for (const [x, ry, len] of [[-XW + .02, Math.PI / 2, ZF - ZB], [XW - .02, -Math.PI / 2, ZF - ZB]]) put(g, G.box(len, .14, .04), toon(0xf8f6f0), { x, y: .07, ry, noInk: true });   // skirting
+    put(g, G.box(8, .14, .04), toon(0xf8f6f0), { x: -3, y: .07, z: ZB + .02, noInk: true });
+    // the big gold name on the feature wall, over the service desk
