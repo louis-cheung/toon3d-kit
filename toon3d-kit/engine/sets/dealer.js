@@ -123,3 +123,28 @@ function keyRack(parent, x, y, z) {   // a board of hooks with coloured key tags
   const k = group(parent, { x, y, z }); put(k, G.box(1.0, .6, .04), toon(0xb98552)); const cols = [0xe2463b, 0xe6c25a, 0x3c7be0, 0x3fae6a, 0xf08a3a];
   for (let i = 0; i < 5; i++) for (let j = 0; j < 2; j++) { const kx = -.38 + i * .19, ky = .14 - j * .3; put(k, G.cyl(.008, .008, .05, 6), toon(0xd9dce6), { x: kx, y: ky, z: .04, rx: Math.PI / 2, noInk: true }); if ((i + j) % 3 !== 2) put(k, G.box(.05, .08, .01), toon(cols[(i + j * 2) % 5]), { x: kx, y: ky - .07, z: .05, noInk: true }); }
   return k;
+}
+function bell(parent, x, y, z) { const b = group(parent, { x, y, z }); put(b, G.cyl(.06, .07, .02, 16), toon(0x2a2c38), { y: .01 }); put(b, new THREE.SphereGeometry(.055, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), toon(0xe6c25a), { y: .02 }); put(b, G.sph(.012, 8, 6), toon(0xe6c25a), { y: .085, noInk: true }); return b; }
+function toolChest(parent, x, z, ry = 0, col = 0xd8322e) {
+  const t = group(parent, { x, z, ry }); put(t, G.rbox(1.1, 1.0, .5, .04), toon(col), { y: .55 }); for (let i = 0; i < 5; i++) put(t, G.box(.95, .03, .02), toon(0xd9dce6), { y: .25 + i * .16, z: .26, noInk: true });
+  put(t, G.rbox(1.1, .4, .5, .04), toon(col), { y: 1.28 }); put(t, G.box(.6, .03, .02), toon(0xd9dce6), { y: 1.28, z: .26, noInk: true });
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) put(t, G.cyl(.05, .05, .04, 10), toon(0x2a2c38), { x: sx * .45, y: .05, z: sz * .18, rx: Math.PI / 2 });
+  return t;
+}
+function tyreStack(parent, x, z, n = 4) { const t = group(parent, { x, z }); for (let i = 0; i < n; i++) { put(t, G.torus(.3, .13, 18), toon(0x2a2836), { y: .13 + i * .26, rx: Math.PI / 2, rz: i * .4 }); put(t, G.cyl(.18, .18, .2, 14), toon(0x9aa0b0), { y: .13 + i * .26, noInk: true }); } return t; }
+function hoseReel(parent, x, y, z) { const h = group(parent, { x, y, z }); put(h, G.cyl(.3, .3, .1, 20), toon(0x2a2c38), { rx: Math.PI / 2 }); for (let i = 0; i < 3; i++) put(h, G.torus(.2 + i * .045, .025, 18), toon(0xf0b43a), { z: .06 }); return h; }
+function pennants(parent, a, b, sag, n, seed) {   // a string of triangle flags from a to b with a sag; returns the flags (for the flutter)
+  const r = rng(seed), cols = [0xe2463b, 0xf5c84a, 0x3c7be0, 0x3fbf6a, 0xffffff, 0xf08a3a], flags = [];
+  const pt = (t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t - sag * 4 * t * (1 - t), a[2] + (b[2] - a[2]) * t];
+  const curve = new THREE.CatmullRomCurve3(Array.from({ length: 9 }, (_, i) => new THREE.Vector3(...pt(i / 8))));
+  put(parent, new THREE.TubeGeometry(curve, 24, .012, 4), toon(0x2a2c38), { noInk: true, shadow: false });
+  const tri = new THREE.Shape(); tri.moveTo(-.16, 0); tri.lineTo(.16, 0); tri.lineTo(0, -.38); tri.closePath(); const tg = new THREE.ShapeGeometry(tri);
+  const dir = Math.atan2(b[2] - a[2], b[0] - a[0]);
+  for (let i = 1; i < n; i++) { const p = pt(i / n), f = group(parent, { x: p[0], y: p[1], z: p[2], ry: -dir });
+    put(f, tg, new THREE.MeshToonMaterial({ color: cols[(i + seed) % cols.length], side: THREE.DoubleSide }), { noInk: true, shadow: false }); flags.push([f, r() * 6]); }
+  return flags;
+}
+function balloons(parent, x, y, z, seed = 1) {   // a bunch of balloons on strings; returns its group (bobbed by the time hook)
+  const b = group(parent, { x, y, z }), r = rng(seed), cols = [0xe2463b, 0xf5c84a, 0x3c7be0, 0xffffff, 0xe2463b];
+  for (let i = 0; i < 5; i++) { const a = i * 1.26 + r(), bx = Math.cos(a) * .32, bz = Math.sin(a) * .32, by = 1.4 + r() * .5;
+    put(b, G.sph(.26, 18, 14), toon(cols[i]), { x: bx, y: by, z: bz, s: [1, 1.18, 1] }); put(b, G.cone(.04, .07, 8), toon(cols[i]), { x: bx, y: by - .32, z: bz, rx: Math.PI, noInk: true });
