@@ -348,3 +348,28 @@ register('car-dealership', {
     { const sk = raw('skyline', { n: 22, seed: 9, spread: 90, base: '#6a74b8', minH: 10, maxH: 30 }); sk.position.set(0, 0, 52); sk.rotation.y = Math.PI; g.add(sk); }
     // side neighbours so the high lot camera never sees the edge of the world
     for (const [x, col] of [[-22, '#d08a6a'], [22, '#5aa08a']]) { const b = raw('building', { w: 10, h: 7, d: 16, base: col, seed: x + 50, lit: .2 }); b.position.set(x, 0, 0); g.add(b); }
+    for (const [x, z] of [[-17, 11], [-17, 15], [19, 10], [19, 16]]) { const t = raw('tree', { h: 4.2, seed: x * z }); t.position.set(x, 0, z); g.add(t); }
+    timeHook(g, (sec) => anim.forEach((f) => f(sec)));
+
+    const LIFT_CAR = [LX, +(liftY - .2).toFixed(3), LZ];
+    return { root: g, shadowSize: 16,
+      light: { base: 'day', hemi: [0xffffff, 0xb8a890, 1.55], sun: [0xfff2dc, 2.4, [6, 11, 9]], fill: [0xdfe8ff, .55] },
+      fog: [0xe8f5ff, 40, 130],
+      lights: [(s) => pointLight(s, -2.5, 3.6, .5, 0xffe2b0, 6, 7), (s) => pointLight(s, 4.2, 3.2, 0, 0xffe2b0, 5, 7), (s) => pointLight(s, -3.5, 3.0, -3.2, 0xffd59a, 4, 6), (s) => pointLight(s, 3.8, 3.8, -8.2, 0xe8f4ff, 6, 8)],
+      cameras: {
+        main: { pos: [-6.6, 3.9, 4.7], look: [1.8, 0, -2.6], fov: 62 },
+        door: { pos: [-2.9, 1.25, 10.8], look: [-3.5, 1.5, 5], fov: 50 },
+        doorIn: { pos: [.9, 1.7, 3.3], look: [-3.5, 1.3, 5.0], fov: 50 },
+        monitor: { pos: [3.65, 1.45, 2.25], look: [4.3, 1.15, .9], fov: 42 },   // from the side: the hero desk monitor big and readable, Brad behind it
+        desk: { pos: [2.0, 1.85, 1.95], look: [4.7, 1.15, .9], fov: 50 },
+        deskRev: { pos: [6.5, 2.0, 2.9], look: [3.2, 1.25, 1.2], fov: 44 },
+        service: { pos: [-1.0, 1.9, -.6], look: [-3.1, 1.3, -4.6], fov: 52 },
+        lift: { pos: [2.4, 2.0, -1.2], look: [3.9, 1.5, -8.2], fov: 52 },
+        glass: { pos: [-1.75, 1.7, 3.2], look: [-2.0, .9, 10.5], fov: 50 },
+        lot: { pos: [18, 10.5, 25], look: [2.5, .5, 8.5], fov: 48 },
+        turntable: { pos: [2.6, .55, .8], look: [-2.5, .95, .5], fov: 44 },
+      },
+      spots: { door: [-3.5, .14, 6.6], doorIn: [-3.5, 0, 3.7], turntable: [-2.5, .18, .5], desk: [4.2, 0, 1.4], deskChair: [4.98, .242, 1.4], deskGuest: [3.2, 0, 1.15],
+        service: [-3.5, 0, -3.35], serviceDesk: [-3.5, 0, -4.8], liftCar: LIFT_CAR, lot: [-2, 0, 10.5], lotExit: [12, 0, 10.5], back: [6.1, 0, -.35], back2: [6.1, 0, .55], desk2: [4.2, 0, -1.8], center: [.8, 0, 1.5] },
+      keys: { default: { kind: 'window', at: [-1.5, 3.2, 4.2], color: 0xfff0d8, power: 30, reach: 4.5, dist: 18 },
+        desk: { kind: 'lamp', at: [4.2, 2.9, 1.4], color: 0xffe2b0, power: 7, reach: 2.4, dist: 10 },
