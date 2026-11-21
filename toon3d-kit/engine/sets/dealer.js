@@ -273,3 +273,28 @@ register('car-dealership', {
     const SV = group(g, { x: -3.5, z: -4.2 });
     put(SV, G.rbox(3.8, 1.0, .7, .05), white, { y: .5 }); put(SV, G.box(3.82, .08, .76), toon(0xb98552), { y: 1.03 });
     put(SV, G.box(3.6, .18, .02), toon(0x0f5560), { y: .55, z: .36, noInk: true }); put(SV, G.box(3.6, .05, .02), gold, { y: .7, z: .36, noInk: true });
+    put(SV, G.plane(1.6, .3), glow(0xffffff, { transparent: true, map: signTex('SERVICE', null, '#ffffff', '900 150px Helvetica', 800, 160, 'svc-front') }), { x: -.6, y: .38, z: .365, noInk: true });
+    const svs = group(SV, { y: 2.95, z: .25 }); for (const s of [-1, 1]) put(svs, G.cyl(.01, .01, 1.1, 6), toon(0x2a2c38), { x: s * .9, y: .8, noInk: true });
+    put(svs, G.rbox(2.3, .55, .1, .04), toon(0xc8232a), {}); for (const s of [1, -1]) put(svs, G.plane(2.1, .45), glow(0xffffff, { map: signTex('SERVICE', '#c8232a', '#ffffff', '900 170px Helvetica', 1024, 220, 'svc-hang') }), { z: s * .052, ry: s > 0 ? 0 : Math.PI, noInk: true });
+    coffeeStation(SV, 1.45, 0); bell(SV, -.1, 1.07, .12); keyRack(g, -5.6, 1.75, ZB + .03);
+    put(SV, G.rbox(.4, .3, .3, .03), toon(0x2a2c38), { x: -1.2, y: 1.22, z: -.05 }); put(SV, G.plane(.34, .2), glow(0x7fd0ff), { x: -1.2, y: 1.24, z: .1, rx: -.1, noInk: true });   // a small monitor
+    for (let i = 0; i < 3; i++) put(SV, G.box(.3, .015, .22), toon([0xf4f1ea, 0xf5c84a, 0xf4f1ea][i]), { x: -.65, y: 1.08 + i * .016, z: .1, ry: i * .2, noInk: true });   // forms
+    // ---- the service bay (behind the opening)
+    put(g, G.box(6.7, .06, -BAY + ZB), toon(0xffffff, { map: tileTex('#9aa0b0', '#868c9e', 2, 4) }), { x: 3.75, y: -.03, z: (ZB + BAY) / 2, noInk: true, shadow: false }).receiveShadow = true;
+    wallBox(.2, CH, -BAY + ZB, { x: .4, y: CH / 2, z: (ZB + BAY) / 2 }); wallBox(.2, CH, -BAY + ZB, { x: XW + .1, y: CH / 2, z: (ZB + BAY) / 2 }); wallBox(6.9, CH, .2, { x: 3.75, y: CH / 2, z: BAY });
+    put(g, G.box(7.1, .25, -BAY + ZB + .2), shell, { x: 3.75, y: CH + .12, z: (ZB + BAY) / 2, shadow: false, noInk: true });
+    put(g, G.plane(6.6, -BAY + ZB), toon(0xdfe2ea), { x: 3.75, y: CH - .01, z: (ZB + BAY) / 2, rx: Math.PI / 2, noInk: true, shadow: false });
+    // bay back wall: blue-grey block, a roll-up door, a SAFETY FIRST sign; strip lights
+    put(g, G.plane(6.6, CH), toon(0xffffff, { map: tileTex('#7d8fb8', '#6a7aa2', 4, 1) }), { x: 3.75, y: CH / 2, z: BAY + .105, noInk: true, shadow: false }).material.map.repeat.set(4, 3);
+    put(g, G.box(3.2, 3.0, .04), toon(0xffffff, { map: textCard(256, 256, (x, w, h) => { x.fillStyle = '#c9ccd6'; x.fillRect(0, 0, w, h); x.fillStyle = '#a8adbb'; for (let i = 0; i < 16; i++) x.fillRect(0, i * 16, w, 4); }, 'rollup') }), { x: 3.4, y: 1.5, z: BAY + .13, noInk: true });
+    put(g, G.plane(1.6, .5), glow(0xffffff, { map: signTex('SAFETY FIRST', '#f5c84a', '#16141c', '900 120px Helvetica', 1024, 300, 'safety') }), { x: 3.4, y: 3.6, z: BAY + .13, noInk: true });
+    for (const z of [-6.5, -9.5]) put(g, G.box(3.0, .06, .2), glow(0xeaf6ff), { x: 3.8, y: CH - .1, z, noInk: true, shadow: false });
+    // safety stripes round the lift
+    const stripe = textCard(256, 32, (x, w, h) => { for (let i = 0; i < 16; i++) { x.fillStyle = i % 2 ? '#f5c84a' : '#16141c'; x.beginPath(); x.moveTo(i * 16, h); x.lineTo(i * 16 + 16, 0); x.lineTo(i * 16 + 32, 0); x.lineTo(i * 16 + 16, h); x.fill(); } }, 'hazstripe');
+    for (const [x, z, w, d] of [[3.8, -5.9, 4.4, .16], [3.8, -10.5, 4.4, .16], [1.65, -8.2, .16, 4.6], [5.95, -8.2, .16, 4.6]]) { const t = stripe.clone(); t.needsUpdate = true; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(Math.max(w, d) / .5, 1); const m = put(g, G.plane(Math.max(w, d), Math.min(w, d)), toon(0xffffff, { map: t }), { x, y: .005, z, rx: -Math.PI / 2, rz: w > d ? 0 : Math.PI / 2, noInk: true, shadow: false }); m.receiveShadow = true; }
+    toolChest(g, 1.2, -10.6, 0, 0xd8322e); toolChest(g, 6.5, -6.4, -Math.PI / 2, 0x1f6fff); tyreStack(g, 6.3, -10.4, 4); tyreStack(g, 5.6, -10.6, 3); tyreStack(g, .95, -5.9, 2);
+    hoseReel(g, 6.9, 2.0, -8.0).rotation.y = -Math.PI / 2; hoseReel(g, .55, 2.0, -8.6).rotation.y = Math.PI / 2;
+    { const c = new THREE.CatmullRomCurve3([[.6, 1.8, -8.6], [.9, .6, -8.3], [1.4, .05, -7.6], [2.2, .05, -7.0]].map((v) => new THREE.Vector3(...v))); put(g, new THREE.TubeGeometry(c, 20, .025, 6), toon(0xf0b43a)); }
+    put(g, G.cyl(.25, .25, .7, 16), toon(0x3c7be0), { x: 1.0, y: .35, z: -6.8 }); put(g, G.cyl(.25, .25, .7, 16), toon(0x3fae6a), { x: 1.55, y: .35, z: -6.6 });   // oil drums
+    // the two-post lift (empty): posts either side of a car whose nose points -z
+    const LX = 3.8, LZ = -8.2, post = toon(0x3c7be0), arm = toon(0xf0b43a);
