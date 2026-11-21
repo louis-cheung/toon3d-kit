@@ -223,3 +223,28 @@ register('car-dealership', {
     for (const [x, ry, len] of [[-XW + .02, Math.PI / 2, ZF - ZB], [XW - .02, -Math.PI / 2, ZF - ZB]]) put(g, G.box(len, .14, .04), toon(0xf8f6f0), { x, y: .07, ry, noInk: true });   // skirting
     put(g, G.box(8, .14, .04), toon(0xf8f6f0), { x: -3, y: .07, z: ZB + .02, noInk: true });
     // the big gold name on the feature wall, over the service desk
+    put(g, G.plane(6.6, .9), glow(0xffffff, { transparent: true, map: signTex('HALE MOTORS', null, GOLD, '900 180px Georgia, serif', 1600, 220, 'hale-wall') }), { x: -3.0, y: 3.62, z: ZB + .02, noInk: true });
+    put(g, G.box(6.4, .04, .04), gold, { x: -3.0, y: 3.1, z: ZB + .03, noInk: true });
+    put(g, G.box(5.5, .7, .08), toon(0xc8232a), { x: 3.75, y: 3.85, z: ZB + .06 });
+    put(g, G.plane(5.3, .6), glow(0xffffff, { map: signTex('SERVICE CENTER', '#c8232a', '#ffffff', '900 150px Helvetica', 1600, 180, 'svc-center') }), { x: 3.75, y: 3.85, z: ZB + .105, noInk: true });
+    for (const x of [1.0, 6.5]) put(g, G.box(.14, 3.3, .3), toon(0x1c2a6a), { x, y: 1.65, z: ZB - .05 });   // the opening's navy jambs
+    // posters on the side walls
+    frame(g, { x: -XW + .04, y: 2.1, z: -1.0, ry: Math.PI / 2 }, posterTex('THE ALL NEW GT', 'ZERO DOWN', ['#ff8a5a', '#ffcf7a', '#ffe9b0'], '#1f6fff', 'post1'), 1.7, 1.2);
+    frame(g, { x: -XW + .04, y: 2.1, z: 2.6, ry: Math.PI / 2 }, posterTex('TRADE IN TODAY', 'WE BUY ANY CAR', ['#5ea8ef', '#a8d6ff', '#e8f5ff'], '#e2463b', 'post2'), 1.7, 1.2);
+    frame(g, { x: XW - .04, y: 2.35, z: 3.4, ry: -Math.PI / 2 }, posterTex('SUMMER DEALS', '0% FOR 60 MONTHS', ['#7a4ab8', '#e06a9a', '#ffc08a'], '#f5c84a', 'post3'), 1.6, 1.12);
+    frame(g, { x: XW - .04, y: 2.35, z: -3.4, ry: -Math.PI / 2 }, posterTex('EMPLOYEE OF THE MONTH', 'BRAD', ['#2f8f86', '#7fd0b0', '#e6f6e0'], '#16141c', 'post4'), 1.3, .9);
+    // hanging promo banners and pendant lamps
+    banner(g, -.2, 2.6, bannerTex('ONLY', '0%\nAPR', 'FINANCING', '#e2463b', '#ffffff', 'b-apr'), .25);
+    banner(g, 1.9, -.4, bannerTex('BIG', 'SALE', 'THIS WEEK', '#f5c84a', '#c8232a', 'b-sale'), .25);
+    banner(g, -5.4, -1.6, bannerTex('', 'DRIVE\nTODAY', 'HALE MOTORS', '#1c2a6a', '#e6b84a', 'b-drive'), .7);
+    banner(g, 5.3, 3.6, bannerTex('ONLY', '0%\nAPR', 'FINANCING', '#e2463b', '#ffffff', 'b-apr'), -.4, .8, 1.6);
+    for (const [x, z, len] of [[-3.6, 1.5, 1.2], [-1.4, -.4, 1.2], [-3.2, -.9, 1.4], [4.2, 1.4, 1.5], [4.2, -1.8, 1.5], [-3.5, -3.9, 1.3], [-1.6, 2.6, 1.0], [1.4, 1.0, 1.1]]) pendant(g, x, z, len);
+    // plants in the corners and by the doors
+    plant(g, -6.4, 4.3, 1.5, 3); plant(g, .1, 4.4, 1.2, 5); plant(g, 6.4, 4.3, 1.5, 7); plant(g, 6.4, -4.4, 1.3, 9); plant(g, -.4, -4.4, 1.3, 11);
+    // ---- turntable with the hero car, the price stand
+    const TT = group(g, { x: -2.5, z: .5 });
+    put(TT, G.cyl(2.2, 2.25, .16, 64), toon(0x1c2a6a), { y: .08 });
+    put(TT, G.torus(2.22, .035, 64), glow(0xffd36a), { y: .12, rx: Math.PI / 2, noInk: true, shadow: false });
+    const plat = group(TT, { y: .16 });
+    put(plat, new THREE.CircleGeometry(2.05, 64), toon(0xffffff, { map: textCard(512, 512, (x, w) => { x.fillStyle = '#f2f0f6'; x.fillRect(0, 0, w, w); for (let i = 8; i > 0; i--) { x.fillStyle = i % 2 ? '#e8e4ee' : '#f6f4fa'; x.beginPath(); x.arc(w / 2, w / 2, i * 30, 0, 7); x.fill(); }
+      x.strokeStyle = GOLD; x.lineWidth = 6; for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6; x.beginPath(); x.moveTo(w / 2 + Math.cos(a) * 200, w / 2 + Math.sin(a) * 200); x.lineTo(w / 2 + Math.cos(a) * 250, w / 2 + Math.sin(a) * 250); x.stroke(); } }, 'ttop') }), { y: .005, rx: -Math.PI / 2, noInk: true, shadow: false }).receiveShadow = true;
