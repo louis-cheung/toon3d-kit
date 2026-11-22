@@ -262,3 +262,29 @@ register('tow-truck', {
       hookG.position.set(x + swing * .5, y, 0); hookG.rotation.z = swing + (carRoot ? -.1 * lk : 0);
       const mid = [(top[0] + x + swing * .5) / 2 - sag, (top[1] + y) / 2 - sag * .4, 0];
       setSeg(cable[0], [top[0], top[1], 0], mid); setSeg(cable[1], mid, [x + swing * .5, y, 0]);
+    };
+    root.userData.update(0); return root;
+  },
+});
+
+// ---------- Ep 2 v2 (2026-11-14): a tow hook on its chain, swinging into frame ----------
+register('tow-hook', {
+  tags: ['tow', 'hook', 'chain', 'truck', 'repo', 'rich-system'], aliases: ['swinging-hook'],
+  desc: "The tow truck's big steel hook on a chain, hanging from a pivot above (off the top of the frame). Origin at the pivot; the chain runs down -y for len metres to the hook. swing [t0, t1] swings it in from the side (from angle `from` rad to hanging straight) with an overshoot and a damped sway, a clank moment at t1. Same hook as tow-truck, a little bigger.",
+  opts: { len: 'chain length in m (1.6)', swing: '[t0, t1] the swing in (null = hangs still, with a slow sway)', from: 'start angle in rad about z (-1.1, + swings from the other side)', size: 'hook scale (1.4)' },
+  build: ({ len = 1.6, swing = null, from = -1.1, size = 1.4 } = {}) => {
+    const g = new THREE.Group(), pv = group(g), hm = toon(0x6a7088), link = toon(0x4a4e60);
+    const n = Math.max(4, Math.round(len / .09));
+    for (let i = 0; i < n; i++) put(pv, G.torus(.03, .011, 8, 14), link, { y: -i * (len / n) - .03, ry: i % 2 ? Math.PI / 2 : 0 });
+    const hk = group(pv, { y: -len, s: size });
+    put(hk, G.rbox(.12, .2, .1, .03), toon(0xf5c84a), { y: -.1 }); put(hk, G.cyl(.04, .04, .12, 10), hm, { y: -.24 });
+    put(hk, G.torus(.15, .05, 18, Math.PI * 1.45), hm, { y: -.42, rz: Math.PI * .78 }); put(hk, G.sph(.065, 12, 10), hm, { x: .13, y: -.33 });
+    const cl = (t) => Math.max(0, Math.min(1, t));
+    g.userData.update = (sec) => {
+      let a = .04 * Math.sin(sec * 1.7);
+      if (swing) { const k = cl((sec - swing[0]) / Math.max(.01, swing[1] - swing[0])); const e = 1 - Math.pow(1 - k, 2);
+        a = from * (1 - e); if (sec > swing[1]) { const t = sec - swing[1]; a = -Math.sign(from) * .28 * Math.sin(t * 6.5) * Math.exp(-t * 2.2) + .03 * Math.sin(sec * 1.7); } }
+      pv.rotation.z = a; };
+    g.userData.update(0); return g;
+  },
+});
