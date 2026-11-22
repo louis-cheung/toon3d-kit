@@ -17,7 +17,10 @@
 //   META.mix   {} locks music and effects at fixed levels under the voice (STYLE.md 8); META.music = { file } from tools/score.py
 //   note       the director's intent in a few words, shown to the scored review so a deliberate choice is not marked as a mistake
 //   tag        calendar tag top right ('YEAR 5', '+75 YEARS', 'DAY 1')
-export const META = { title: 'Demo: The Man Who Wanted Everything', fps: 30, dof: 'auto' };
+//   reaction   { face: 'shock_gasp' } (an ANIME_FACES name): a 1-2 s close-up reaction cut, the face's backdrop fills the screen, one
+//              cast entry (the reacting character), the line said in that emotion. RULES L14, STYLE.md section 2. No set needed.
+//   META.faces 'anime': every character gets the anime face (RULES L1). Keep it on for every new episode.
+export const META = { title: 'Demo: The Man Who Wanted Everything', fps: 30, dof: 'auto', faces: 'anime' };
 
 export const SHOTS = [
   {

@@ -137,3 +137,28 @@ register('card-terminal', {
   },
 });
 
+// ---------- tow truck ----------
+// Truck-local: origin on the road under the middle of the truck, front +x. Body x -3.25 (rear) .. +3.6 (front bumper), width 2.4.
+// The boom tip pulley is at x -3.57, y 3.4. The wheel-lift cradle sits at x -4.65 under the towed car's front wheels.
+// The towed car (option car) is a sports-car with its root at (-5.95, 0, 0) facing +x: its front wheels (car x 1.3) on the cradle,
+// its nose .4 m behind the truck's rear, the hook cupping its front bumper in that gap. To tow a car parked at P facing +x, put the truck at P + [5.95, 0, 0], ry 0.
+const TT = { carX: -5.95, cradleX: -4.65, tipX: -3.57, tipY: 3.4, rearAxle: -1.35, frontAxle: 1.3, lift: .2, hookPt: [2.38, .47] };
+register('tow-truck', {
+  tags: ['vehicle', 'truck', 'tow', 'wrecker', 'street', 'dealership', 'rich-system'], aliases: ['wrecker'],
+  desc: 'Chunky cartoon wrecker: bright orange cab with HALE TOWING on both doors, a chrome grille and bumper, an amber light bar on the roof, a yellow boom arm rising back over the rear with a winch cable and a big steel hook, and a low wheel-lift arm at the back. Front points +x, about 6.9 m long (x -3.25..3.6, the wheel lift reaches back to -4.75), wheels on y 0, origin on the road under the middle of the truck. The hook hangs from the boom tip at x -3.57 (stowed about 2.9 m up); dropped, it cups the towed car front bumper at about truck-local [-3.57, .47, 0]. The towed car (car option) is built behind the truck with its root at truck-local [-5.95, 0, 0], facing +x, nose to the wheel lift: to tow a car parked at P facing +x, put the truck at P + [5.95, 0, 0] with ry 0 and pass car. With carLift the car pivots on its rear axle (rear wheels stay on the road) so its nose comes up 11 degrees; the hook rides on its front bumper. Wheels turn with drive and with any from/move of the prop.',
+  opts: { lights: 'true, or a start second: the amber light bar flashes (default off)', hookDrop: '[t0, t1]: the hook drops on its cable from stowed to the car\'s front bumper height, overshoots, swings and settles (the clank)', hook: '0..1 held hook position (0 stowed; default 1 when car is given and hookDrop is not, else 0)',
+    car: 'sports-car options object (e.g. {rearDamage: 1, airbags: true, bumperDrop: 0, hazards: true}) or null (default): builds Tyler\'s car hooked up behind the truck. Its own timed options (bumperDrop [t0, t1], hazards, airbags) animate; a fallen bumper lies on the road even when the car is tilted, and stays there when the truck drives off', carColor: 'shortcut for car.color',
+    carLift: '0..1 or [t0, t1]: the towed car\'s front rises onto the wheel lift (nose up 11 degrees, rear wheels on the road) and the cable goes taut (default 0)',
+    drive: '[t0, t1, metres]: the whole truck (with the car) drives forward along +x that far over the span; it eases in (accelerates over the first 40%) then rolls at a steady speed and stops at t1, so end the shot or be off frame by t1. Truck and car wheels turn to match' },
+  inkWidth: .014,
+  build: ({ lights = false, hookDrop = null, hook = null, car = null, carColor = null, carLift = 0, drive = null } = {}) => {
+    const root = g0(), mv = group(root), orange = toon(0xff8a1f), yellow = toon(0xf5c84a), chrome = toon(0xd9dce6), steel = toon(0x8f96a8), dark = toon(0x232842), tyre = toon(0x1c1820), white = toon(0xf8f6f0);
+    // chassis, deck, fenders
+    put(mv, G.box(6.3, .28, 1.0), dark, { y: .72 });
+    put(mv, G.box(4.3, .12, 2.3), toon(0x9aa0b0, { map: ctex(128, 128, (x, w) => { x.fillStyle = '#9aa0b0'; x.fillRect(0, 0, w, w); x.fillStyle = '#c4c9d6'; for (let i = 0; i < 8; i++) for (let j = 0; j < 8; j++) { x.save(); x.translate(i * 16 + 8, j * 16 + 8); x.rotate((i + j) % 2 ? .7 : -.7); x.fillRect(-5, -1.5, 10, 3); x.restore(); } }, { key: 'diamondplate', repeat: [4, 2] }) }), { x: -1.1, y: .92 });
+    for (const s of [-1, 1]) { put(mv, G.rbox(3.3, .85, .55, .06), orange, { x: -1.35, y: 1.4, z: s * .9 });   // side tool boxes
+      for (let i = 0; i < 3; i++) put(mv, G.box(.9, .62, .02), toon(0xf07a12), { x: -2.45 + i * 1.08, y: 1.42, z: s * 1.18, noInk: true });
+      for (let i = 0; i < 3; i++) put(mv, G.box(.16, .04, .03), chrome, { x: -2.45 + i * 1.08, y: 1.62, z: s * 1.2, noInk: true });
+      put(mv, G.box(3.4, .1, .04), white, { x: -1.35, y: 1.0, z: s * 1.19, noInk: true });
+      put(mv, G.box(1.3, .08, .62), dark, { x: -1.9, y: 1.06 - .1, z: s * .95 });   // rear fender over the tandem
+      put(mv, G.box(.06, .4, .5), dark, { x: -3.0, y: .45, z: s * .95, noInk: true });   // mud flap
