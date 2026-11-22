@@ -90,3 +90,28 @@ register('sales-desk', {
     for (let i = 0; i < 4; i++) put(br, G.box(.22, .012, .3), toon(new THREE.Color(bcol[(i + seed) % 4]).getHex()), { y: .006 + i * .013, ry: (i - 1.5) * .12, noInk: i < 3 });
     put(br, G.plane(.2, .28), glow(0xffffff, { map: ctex(200, 280, (x, w, h) => { x.fillStyle = bcol[(3 + seed) % 4]; x.fillRect(0, 0, w, h); x.fillStyle = '#ffffff'; x.font = '900 40px Helvetica'; x.textAlign = 'center'; x.fillText('HALE GT', w / 2, 60); x.fillStyle = '#16141c'; x.beginPath(); x.roundRect(30, 140, 140, 40, 16); x.fill(); x.fillStyle = GOLD; x.font = 'bold 26px Helvetica'; x.fillText('DRIVE TODAY', w / 2, 240); }, { key: 'broch' + seed }) }), { y: .06, rx: -Math.PI / 2, rz: .18, noInk: true });
     put(g, G.cyl(.04, .035, .09, 14), toon(0xf8f6f0), { x: .35, y: H + .045, z: .55 }); put(g, G.torus(.025, .008, 8), toon(0xf8f6f0), { x: .39, y: H + .05, z: .55, noInk: true });
+    if (chairs) { officeChair(g, .78, 0, 0); guestChair(g, -.88, .42, 0); }
+    g.userData.update = (sec) => {
+      sc.update(sec);
+      if (flagAt) { const t = sec - flagAt[0]; const on = sec >= flagAt[0] && sec < flagAt[1] && !(t >= .16 && t < .32); flag.visible = on; if (on) flag.scale.setScalar(1 + .12 * Math.max(0, 1 - (t >= .32 ? t - .32 : t) / .12)); }
+    };
+    g.userData.update(0); return g;
+  },
+});
+
+// ---------- card terminal ----------
+function drawTerminal(x, w, h, paid, amount, merchant = 'HALE MOTORS') {
+  if (!paid) {
+    x.fillStyle = '#f7f7fb'; x.fillRect(0, 0, w, h); x.fillStyle = NAVY; x.fillRect(0, 0, w, 70);
+    x.fillStyle = '#ffffff'; x.font = 'bold 40px Helvetica'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(merchant, w / 2, 37);
+    x.fillStyle = '#16141c'; x.font = '900 100px Helvetica'; x.fillText(amount, w / 2, 150, w - 30);
+    x.strokeStyle = '#1f6fff'; x.lineWidth = 18; for (let i = 0; i < 4; i++) { x.beginPath(); x.arc(w / 2 - 70, 300, 30 + i * 30, -.85, .85); x.stroke(); }
+    x.fillStyle = '#1f6fff'; x.beginPath(); x.arc(w / 2 - 70, 300, 14, 0, 7); x.fill();
+    x.fillStyle = '#16141c'; x.font = '900 62px Helvetica'; x.fillText('TAP TO PAY', w / 2, 430, w - 30);
+  } else {
+    x.fillStyle = '#1fa856'; x.fillRect(0, 0, w, h);
+    x.fillStyle = '#ffffff'; x.beginPath(); x.arc(w / 2, 170, 112, 0, 7); x.fill();
+    x.strokeStyle = '#1fa856'; x.lineWidth = 30; x.beginPath(); x.moveTo(w / 2 - 56, 172); x.lineTo(w / 2 - 12, 218); x.lineTo(w / 2 + 62, 122); x.stroke();
+    x.fillStyle = '#ffffff'; x.font = '900 110px Helvetica'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('PAID', w / 2, 360);
+    x.font = '900 64px Helvetica'; x.fillText(amount, w / 2, 448, w - 30);
+  }
