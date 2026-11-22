@@ -115,3 +115,25 @@ function drawTerminal(x, w, h, paid, amount, merchant = 'HALE MOTORS') {
     x.fillStyle = '#ffffff'; x.font = '900 110px Helvetica'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('PAID', w / 2, 360);
     x.font = '900 64px Helvetica'; x.fillText(amount, w / 2, 448, w - 30);
   }
+}
+register('card-terminal', {
+  tags: ['pay', 'card', 'tap', 'checkout', 'dealership', 'rich-system'], aliases: ['tap-terminal', 'payment-terminal', 'pos-terminal'],
+  desc: 'Countertop tap-to-pay card terminal on a little chrome stand. Faces +z with the screen tilted up toward the customer (about 30 degrees). The screen is most of its face: a big amount, contactless waves and TAP TO PAY; at paidAt it flips to green with a big white check, PAID and the amount, with a small pop. Origin at the bottom of the stand (put it on a counter top). Real size about 11 x 20 cm, top at y .27; size scales it.',
+  opts: { merchant: "name on the screen header ('HALE MOTORS')", amount: "'$58,000'", paidAt: 'sec when it flips to PAID (null = never)', paid: 'true = already paid', size: 'scale (1)' },
+  inkWidth: .004,
+  build: ({ amount = '$58,000', paidAt = null, paid = false, size = 1, merchant = 'HALE MOTORS' } = {}) => {
+    const g = g0(), inner = group(g); inner.scale.setScalar(size); const dark = toon(0x2a2c38), chrome = toon(0xd9dce6);
+    put(inner, G.cyl(.07, .08, .015, 24), chrome, { y: .0075 }); put(inner, G.cyl(.015, .02, .08, 10), chrome, { y: .05 });
+    const head = group(inner, { y: .17, z: .0, rx: -.52 });
+    put(head, G.rbox(.115, .2, .035, .014), dark, {});
+    const isPaid = (sec) => paid || (paidAt != null && sec >= paidAt);
+    const sc = liveTex(400, 480, (x, w, h, sec) => drawTerminal(x, w, h, isPaid(sec), amount, merchant), (sec) => isPaid(sec));
+    const scr = put(head, G.plane(.1, .12), glow(0xffffff, { map: sc.tex }), { y: .03, z: .0181, noInk: true });
+    put(head, G.plane(.1, .05), glow(0xffffff, { map: ctex(200, 100, (x, w, h) => { x.fillStyle = '#2a2c38'; x.fillRect(0, 0, w, h); const c = ['#d9dce6', '#d9dce6', '#d9dce6']; for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) { x.fillStyle = c[i]; x.beginPath(); x.roundRect(14 + i * 62, 8 + j * 30, 50, 22, 6); x.fill(); }
+      x.fillStyle = '#e2463b'; x.fillRect(14, 96, 50, 4); }, { key: 'tkeys' }) }), { y: -.065, z: .0181, noInk: true });
+    put(head, G.box(.07, .008, .02), toon(0x16141c), { y: .1, z: 0, noInk: true });   // card slot on the top edge
+    g.userData.update = (sec) => { sc.update(sec); const t = paidAt != null ? sec - paidAt : -1; const pop = t >= 0 && t < .28 ? Math.sin(t / .28 * Math.PI) * .14 : 0; scr.scale.setScalar(1 + pop); head.position.y = .17 + pop * .05; };
+    g.userData.update(0); return g;
+  },
+});
+
