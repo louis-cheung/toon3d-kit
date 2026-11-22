@@ -162,3 +162,28 @@ register('tow-truck', {
       put(mv, G.box(3.4, .1, .04), white, { x: -1.35, y: 1.0, z: s * 1.19, noInk: true });
       put(mv, G.box(1.3, .08, .62), dark, { x: -1.9, y: 1.06 - .1, z: s * .95 });   // rear fender over the tandem
       put(mv, G.box(.06, .4, .5), dark, { x: -3.0, y: .45, z: s * .95, noInk: true });   // mud flap
+      put(mv, G.cyl(.18, .18, .7, 16), chrome, { x: .45, y: .58, z: s * .95, rz: Math.PI / 2 }); }   // fuel tanks
+    // cab + hood
+    put(mv, G.rbox(1.55, 1.8, 2.3, .14), orange, { x: 1.72, y: 1.9 });
+    put(mv, G.rbox(.85, .9, 2.2, .12), orange, { x: 2.85, y: 1.38 });
+    put(mv, G.rbox(.9, .06, 2.1, .02), toon(0xf07a12), { x: 2.85, y: 1.84, noInk: true });
+    for (const s of [-1, 1]) { put(mv, G.box(1.56, .12, .02), white, { x: 1.72, y: 1.12, z: s * 1.16, noInk: true }); put(mv, G.box(.86, .12, .02), white, { x: 2.85, y: 1.12, z: s * 1.11, noInk: true }); }
+    put(mv, G.box(.03, .78, 1.95), glow(0x8fc8f0), { x: 2.6, y: 2.3, noInk: true }); put(mv, G.box(.02, .1, 1.7), glow(0xd9f0ff), { x: 2.62, y: 2.55, noInk: true });
+    for (const s of [-1, 1]) put(mv, G.plane(.95, .6), glow(0x8fc8f0), { x: 1.82, y: 2.32, z: s * 1.162, ry: s > 0 ? 0 : Math.PI, noInk: true });
+    const door = ctex(640, 300, (x, w, h) => { x.fillStyle = '#ffffff'; x.beginPath(); x.roundRect(6, 6, w - 12, h - 12, 40); x.fill(); x.lineWidth = 10; x.strokeStyle = INKC; x.stroke();
+      x.fillStyle = NAVY; x.font = '900 130px Georgia, serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('HALE', w / 2, 100); x.fillStyle = '#d5322c'; x.font = '900 92px Helvetica'; x.fillText('TOWING', w / 2, 200); x.fillStyle = NAVY; x.font = 'bold 42px Helvetica'; x.fillText('555-0187  24 HRS', w / 2, 262); }, { key: 'towdoor' });
+    for (const s of [-1, 1]) put(mv, G.plane(1.1, .52), glow(0xffffff, { map: door }), { x: 1.72, y: 1.55, z: s * 1.163, ry: s > 0 ? 0 : Math.PI, noInk: true });
+    // grille, bumper, lights, mirrors, exhaust
+    put(mv, G.rbox(.1, .72, 1.5, .03), chrome, { x: 3.39, y: 1.32 });
+    put(mv, G.plane(1.3, .58), glow(0xffffff, { map: ctex(256, 128, (x, w, h) => { x.fillStyle = '#c9ccd6'; x.fillRect(0, 0, w, h); x.fillStyle = '#3a3e52'; for (let i = 0; i < 7; i++) x.fillRect(10, 8 + i * 17, w - 20, 9); x.fillStyle = '#e6b84a'; x.beginPath(); x.arc(w / 2, h / 2, 22, 0, 7); x.fill(); x.fillStyle = NAVY; x.font = '900 30px Georgia'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('H', w / 2, h / 2 + 2); }, { key: 'towgrille' }) }), { x: 3.475, y: 1.32, ry: Math.PI / 2, noInk: true });
+    put(mv, G.rbox(.24, .3, 2.45, .06), toon(0xc4c8d4), { x: 3.45, y: .74 });
+    for (const s of [-1, 1]) { put(mv, G.cyl(.15, .15, .1, 18), chrome, { x: 3.36, y: 1.6, z: s * .82, rz: Math.PI / 2 }); put(mv, G.cyl(.12, .12, .105, 18), glow(0xfff6d0), { x: 3.365, y: 1.6, z: s * .82, rz: Math.PI / 2, noInk: true });
+      put(mv, G.box(.06, .08, .2), glow(0xffb43a), { x: 3.37, y: 1.12, z: s * .95, noInk: true });
+      put(mv, G.cyl(.015, .015, .5, 6), chrome, { x: 2.45, y: 2.1, z: s * 1.38, rx: Math.PI / 2 }); put(mv, G.rbox(.08, .42, .2, .03), chrome, { x: 2.45, y: 2.25, z: s * 1.6 }); }
+    put(mv, G.cyl(.07, .07, 1.9, 12), chrome, { x: .85, y: 2.2, z: -1.0 }); put(mv, G.cyl(.075, .075, .2, 12), dark, { x: .85, y: 3.15, z: -1.0, rz: .3 });
+    // amber light bar on the roof
+    put(mv, G.rbox(.42, .14, 2.0, .04), dark, { x: 1.7, y: 2.87 });
+    const lamps = []; for (let i = 0; i < 4; i++) { const m = put(mv, G.rbox(.36, .16, .4, .05), glow(0x6a4010), { x: 1.7, y: 2.97, z: -.72 + i * .48, noInk: true }); lamps.push(m); }
+    put(mv, G.box(.38, .02, 1.98), chrome, { x: 1.7, y: 3.06, noInk: true });
+    // the wrecker: turret, boom arm, ram, pulley
+    put(mv, G.rbox(.8, .7, 1.0, .06), yellow, { x: -.35, y: 1.33 });
