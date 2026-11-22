@@ -65,3 +65,28 @@ register('sales-desk', {
     for (const sz of [-1, 1]) put(g, G.box(.82, .03, .03), chrome, { y: .08, z: sz * .78 });
     put(g, G.box(.03, .48, 1.6), toon(0x0f5560), { x: -.42, y: .44 }); put(g, G.box(.035, .05, 1.6), gold, { x: -.42, y: .6, noInk: true });
     put(g, G.plane(.5, .14), glow(0xffffff, { transparent: true, map: ctex(512, 140, (x, w, h) => { x.clearRect(0, 0, w, h); x.fillStyle = GOLD; x.font = '900 96px Georgia, serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('HALE', w / 2, h / 2 + 6); }, { key: 'deskhale' }) }), { x: -.44, y: .38, ry: -Math.PI / 2, noInk: true });
+    // the monitor: on the -z end, screen facing +z, turned a little toward the salesman (+x)
+    const mon = group(g, { x: .1, y: H, z: -.52, ry: .18 }); mon.scale.setScalar(screenScale);
+    put(mon, G.cyl(.11, .13, .02, 20), dark, { y: .01 }); put(mon, G.box(.05, .2, .04), dark, { y: .11, z: -.03 });
+    put(mon, G.rbox(.68, .44, .04, .02), dark, { y: .42 });
+    let sc = null;
+    const st = { borrower, balance, status };
+    if (screen === 'loan') sc = liveTex(1024, 640, (x, w, h) => drawLoan(x, w, h, st), () => 'loan');
+    else if (screen === 'off') sc = liveTex(512, 320, (x, w, h) => { x.fillStyle = '#141a3a'; x.fillRect(0, 0, w, h); x.fillStyle = 'rgba(160,190,255,.12)'; x.beginPath(); x.moveTo(60, 0); x.lineTo(200, 0); x.lineTo(80, h); x.lineTo(-60, h); x.fill(); }, () => 'off');
+    else sc = liveTex(1024, 640, (x, w, h) => drawCars(x, w, h, seed), () => 'cars');
+    put(mon, G.plane(.63, .394), glow(0xffffff, { map: sc.tex }), { y: .42, z: .021, noInk: true });
+    const flag = group(mon, { y: .42, z: .03, rz: .1 }); flag.visible = false;
+    put(flag, G.plane(.58, .17), glow(0xffffff, { transparent: true, map: ctex(1024, 300, (x, w, h) => { x.clearRect(0, 0, w, h); x.fillStyle = '#e2231a'; x.beginPath(); x.roundRect(8, 8, w - 16, h - 16, 26); x.fill(); x.strokeStyle = '#ffffff'; x.lineWidth = 16; x.beginPath(); x.roundRect(26, 26, w - 52, h - 52, 18); x.stroke();
+      x.fillStyle = '#ffffff'; x.font = '900 190px Helvetica'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('PAST DUE', w / 2, h / 2 + 8, w - 80); }, { key: 'pastdue' }) }), { noInk: true });
+    // keyboard, mouse, nameplate, pen cup, plant, brochures, a mug
+    put(g, G.box(.17, .02, .46), dark, { x: .2, y: H + .01, z: -.02, ry: .05 }); put(g, G.plane(.15, .43), glow(0xffffff, { map: ctex(128, 360, (x, w, h) => { x.fillStyle = '#3a3e52'; x.fillRect(0, 0, w, h); x.fillStyle = '#d9dce6'; for (let i = 0; i < 4; i++) for (let j = 0; j < 12; j++) x.fillRect(10 + i * 29, 8 + j * 29, 22, 22); }, { key: 'kbd' }) }), { x: .2, y: H + .021, z: -.02, rx: -Math.PI / 2, rz: .05, noInk: true });
+    put(g, G.sph(.035, 12, 8), dark, { x: .22, y: H + .015, z: .3, s: [1.4, .6, 1] });
+    const np = group(g, { x: -.34, y: H, z: .32 }); put(np, G.box(.07, .05, .4), dark, { y: .025 });
+    const npp = group(np, { x: -.02, y: .1, rz: -.25 }); put(npp, G.box(.025, .11, .38), toon(0x16141c), {});
+    put(npp, G.plane(.36, .1), glow(0xffffff, { map: ctex(512, 140, (x, w, h) => { x.fillStyle = '#16141c'; x.fillRect(0, 0, w, h); x.strokeStyle = GOLD; x.lineWidth = 10; x.strokeRect(6, 6, w - 12, h - 12); x.fillStyle = GOLD; x.font = '900 96px Helvetica'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(name, w / 2, h / 2 + 4, w - 40); }, { key: 'np' + name }) }), { x: -.014, ry: -Math.PI / 2, noInk: true });
+    const pc = group(g, { x: .28, y: H, z: -.82 + .1 }); put(pc, G.cyl(.045, .04, .11, 14), toon(0xc8232a), { y: .055 }); for (const [a, c] of [[.2, 0x1f6fff], [-.15, 0x16141c], [.05, 0xe6c25a]]) put(pc, G.cyl(.006, .006, .16, 6), toon(c), { y: .13, x: a * .1, rz: a, noInk: true });
+    const pl = group(g, { x: -.28, y: H, z: -.62 }); put(pl, G.cyl(.06, .05, .09, 14), toon(0xf4f1ea), { y: .045 }); for (let i = 0; i < 6; i++) { const a = i * 1.05; put(pl, G.sph(.045, 10, 8), toon(i % 2 ? 0x3f9a55 : 0x5bb865), { x: Math.cos(a) * .04, y: .12 + (i % 3) * .03, z: Math.sin(a) * .04, s: [1.3, .6, .8], ry: -a, rz: .4 }); }
+    const br = group(g, { x: -.12, y: H, z: .62, ry: .3 }), bcol = ['#e2463b', '#1f6fff', '#f5c84a', '#2f8f86'];
+    for (let i = 0; i < 4; i++) put(br, G.box(.22, .012, .3), toon(new THREE.Color(bcol[(i + seed) % 4]).getHex()), { y: .006 + i * .013, ry: (i - 1.5) * .12, noInk: i < 3 });
+    put(br, G.plane(.2, .28), glow(0xffffff, { map: ctex(200, 280, (x, w, h) => { x.fillStyle = bcol[(3 + seed) % 4]; x.fillRect(0, 0, w, h); x.fillStyle = '#ffffff'; x.font = '900 40px Helvetica'; x.textAlign = 'center'; x.fillText('HALE GT', w / 2, 60); x.fillStyle = '#16141c'; x.beginPath(); x.roundRect(30, 140, 140, 40, 16); x.fill(); x.fillStyle = GOLD; x.font = 'bold 26px Helvetica'; x.fillText('DRIVE TODAY', w / 2, 240); }, { key: 'broch' + seed }) }), { y: .06, rx: -Math.PI / 2, rz: .18, noInk: true });
+    put(g, G.cyl(.04, .035, .09, 14), toon(0xf8f6f0), { x: .35, y: H + .045, z: .55 }); put(g, G.torus(.025, .008, 8), toon(0xf8f6f0), { x: .39, y: H + .05, z: .55, noInk: true });
