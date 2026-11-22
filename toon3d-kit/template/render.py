@@ -1,6 +1,6 @@
 """Render an episode.
   python3 template/render.py episodes/<slug>/episode.js --stills        # one still per shot + contact sheet (fast check)
-  python3 template/render.py episodes/<slug>/episode.js                 # all frames -> out.mp4
+  python3 template/render.py episodes/<slug>/episode.js                 # all frames -> out.mp4 (refused until tools/gate.py is open)
 Options: --scale 0.5 (draft resolution), --audio voice.mp3 (muxed in), --out <dir>, --frames 0-120, --gpu (on a Mac with a real GPU)
 """
 import sys, os, base64, argparse, threading, http.server, functools, pathlib, subprocess, time
@@ -9,6 +9,9 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 a = argparse.ArgumentParser(); a.add_argument('episode'); a.add_argument('--stills', action='store_true'); a.add_argument('--scale', type=float, default=1.0)
 a.add_argument('--resume', action='store_true', help='Reuse existing frames only after checking sources are unchanged'); a.add_argument('--audio'); a.add_argument('--out'); a.add_argument('--frames'); a.add_argument('--gpu', action='store_true'); A = a.parse_args()
 ep = pathlib.Path(A.episode).resolve(); A.audio = A.audio or (str(ep.parent / 'voice' / 'mix.wav') if (ep.parent / 'voice' / 'mix.wav').exists() else None); out = pathlib.Path(A.out or ep.parent / 'render'); (out / 'frames').mkdir(parents=True, exist_ok=True)
+if not A.stills:   # the render gate (RULES P9): no frames until the stills passed. tools/gate.py explains it. No override.
+    sys.path.insert(0, str(ROOT / 'tools')); import gate; why = gate.problems(ep)
+    if why: raise SystemExit('RENDER REFUSED: the stills have not passed.\n' + '\n'.join('  - ' + w for w in why))
 class Q(http.server.SimpleHTTPRequestHandler):
     def log_message(self, *a): pass
 srv = http.server.ThreadingHTTPServer(('127.0.0.1', 0), functools.partial(Q, directory=str(ROOT))); threading.Thread(target=srv.serve_forever, daemon=True).start()
