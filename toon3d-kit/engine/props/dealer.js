@@ -212,3 +212,28 @@ register('tow-truck', {
     const hookG = group(mv), hm = toon(0x6a7088), hk = group(hookG);
     put(hk, G.rbox(.12, .2, .1, .03), toon(0xf5c84a), { y: -.1 }); put(hk, G.cyl(.04, .04, .12, 10), hm, { y: -.24 });
     put(hk, G.torus(.15, .05, 18, Math.PI * 1.45), hm, { y: -.42, rz: Math.PI * .78 }); put(hk, G.sph(.065, 12, 10), hm, { x: .13, y: -.33 });
+    const cable = [0, 1].map(() => put(mv, G.cyl(.022, .022, 1, 8), toon(0x2a2c38), { noInk: true }));
+    const setSeg = (m, a, b) => { const dx = b[0] - a[0], dy = b[1] - a[1], dz = b[2] - a[2], L = Math.max(.001, Math.hypot(dx, dy, dz)); m.position.set((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2); m.scale.set(1, L, 1);
+      m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(dx / L, dy / L, dz / L)); };
+    // the towed car
+    let carRoot = null, carPivot = null, carUpd = null, bump = null, spokes = [], carOpts = null;
+    if (car || carColor) {
+      carOpts = { ...(car || {}), ...(carColor ? { color: carColor } : {}) };
+      carPivot = group(mv, { x: TT.carX + TT.rearAxle, y: .34 });
+      carRoot = raw('sports-car', carOpts); carRoot.position.set(-TT.rearAxle, -.34, 0); carPivot.add(carRoot);
+      carUpd = carRoot.userData.update || null; delete carRoot.userData.update;   // the truck calls it, then lays a fallen bumper flat on the road
+      bump = carRoot.children.find((c) => c.isGroup && c.children.length === 1 && c.children[0].isGroup && Math.abs(c.children[0].position.z - .86) < 1e-6) || null;
+      for (const [x, z] of [[-1.35, -1], [-1.35, 1], [1.3, -1], [1.3, 1]]) { const sp = group(carRoot, { x, y: .34, z: z * .985 }); put(sp, G.box(.34, .045, .012), toon(0x3a3e52), { noInk: true }); put(sp, G.box(.045, .34, .012), toon(0x3a3e52), { noInk: true }); spokes.push([sp, x < 0]); }
+    }
+    const bumpU = (sec) => { const bd = carOpts?.bumperDrop, dmg = carOpts && (carOpts.rearDamage > 0 || carOpts.rearDamageAt); if (Array.isArray(bd)) return c01((sec - bd[0]) / Math.max(.01, bd[1] - bd[0])); return bd ?? (dmg ? .14 : 0); };
+    const LIFT = 11 * Math.PI / 180, _q = new THREE.Quaternion(), _z = new THREE.Vector3(0, 0, 1);
+    const hookDefault = hook ?? (carRoot && !hookDrop ? 1 : 0);
+    const driveAt = (sec) => { if (!drive) return 0; const u = c01((sec - drive[0]) / Math.max(.01, drive[1] - drive[0])), a = .4, v = 1 / (1 - a / 2); return drive[2] * (u < a ? v * u * u / (2 * a) : v * (a / 2 + (u - a))); };
+    root.userData.update = (sec) => {
+      const d = driveAt(sec); mv.position.x = d;
+      const roll = d + root.position.x * Math.cos(root.rotation.y) - root.position.z * Math.sin(root.rotation.y);   // distance rolled: the drive plus any move of the prop itself along its facing
+      for (const w of wheels) w.rotation.z = -roll / .5;
+      const lk = sm(span(carLift, sec)), th = LIFT * lk;
+      mv.position.y = drive && sec > drive[0] && sec < drive[1] ? .012 * Math.sin(sec * 17) : 0;
+      // lights
+      const l0 = lights === true ? -1e9 : typeof lights === 'number' ? lights : null;
