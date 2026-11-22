@@ -237,3 +237,28 @@ register('tow-truck', {
       mv.position.y = drive && sec > drive[0] && sec < drive[1] ? .012 * Math.sin(sec * 17) : 0;
       // lights
       const l0 = lights === true ? -1e9 : typeof lights === 'number' ? lights : null;
+      lamps.forEach((m, i) => { const on = l0 != null && sec >= l0 && (Math.floor((sec - l0) * 6) + (i < 2 ? 0 : 1)) % 2 === 0; m.material.color.setHex(on ? 0xffb21a : 0x6a4010); });
+      // the towed car: tilt on its rear axle, call its own update, lay a fallen bumper flat on the road
+      let tow = [TT.tipX, .5];
+      if (carRoot) {
+        carPivot.rotation.z = th; if (carUpd) carUpd(sec);
+        if (bump && (th > 0 || d !== 0)) { const bu = bumpU(sec), w = sm(bu / .35), a = -th * w, P = [TT.rearAxle, .34]; bump.position.x -= d * sm((bu - .5) / .3);   // once it has let go it stays on the road where it fell, not dragged along
+          const px = bump.position.x - P[0], py = bump.position.y - P[1];
+          bump.position.x = P[0] + px * Math.cos(a) - py * Math.sin(a); bump.position.y = P[1] + px * Math.sin(a) + py * Math.cos(a); _q.setFromAxisAngle(_z, a); bump.quaternion.premultiply(_q); }
+        for (const [sp, rear] of spokes) sp.rotation.z = rear ? -roll / .34 : -(roll * (1 - lk)) / .34;
+        const hx = TT.hookPt[0] - TT.rearAxle, hy = TT.hookPt[1] - .34;   // the tow point on the car's nose, in truck space
+        tow = [TT.carX + TT.rearAxle + hx * Math.cos(th) - hy * Math.sin(th), .34 + hx * Math.sin(th) + hy * Math.cos(th)];
+      }
+      // wheel lift: the cradle under the car's front wheels (rises with the lift)
+      const fx = carRoot ? TT.carX + TT.rearAxle + (TT.frontAxle - TT.rearAxle) * Math.cos(th) : TT.cradleX, fy = carRoot ? .34 + (TT.frontAxle - TT.rearAxle) * Math.sin(th) - .34 : 0;
+      const cy = .1 + fy, ax = -3.2, ay = .55; cradle.position.set(fx, cy, 0);
+      wlArm.position.set((ax + fx) / 2, (ay + cy) / 2, 0); wlArm.scale.x = Math.hypot(fx - ax, cy - ay); wlArm.rotation.z = Math.atan2(cy - ay, fx - ax);
+      // the hook: stowed under the pulley, or dropped to the tow point, with an overshoot, a swing and a settle
+      const top = [TT.tipX, TT.tipY], stow = TT.tipY - .5, low = tow[1] + .42;
+      let hk01 = hookDrop ? span(hookDrop, sec) : c01(hookDefault), y = stow + (low - stow) * hk01 * hk01, x = TT.tipX + (tow[0] - TT.tipX) * hk01, swing = 0, sag = 0;
+      if (hookDrop && sec > hookDrop[1]) { const t = sec - hookDrop[1]; y += -.09 * Math.sin(t * 15) * Math.exp(-t * 5); swing = .22 * Math.sin(t * 7.5) * Math.exp(-t * 2.4); }
+      else if (hookDrop && hk01 > 0 && hk01 < 1) swing = -.08 * hk01;
+      if (hk01 >= 1 && carRoot) sag = .16 * (1 - lk);
+      hookG.position.set(x + swing * .5, y, 0); hookG.rotation.z = swing + (carRoot ? -.1 * lk : 0);
+      const mid = [(top[0] + x + swing * .5) / 2 - sag, (top[1] + y) / 2 - sag * .4, 0];
+      setSeg(cable[0], [top[0], top[1], 0], mid); setSeg(cable[1], mid, [x + swing * .5, y, 0]);
