@@ -187,3 +187,28 @@ register('tow-truck', {
     put(mv, G.box(.38, .02, 1.98), chrome, { x: 1.7, y: 3.06, noInk: true });
     // the wrecker: turret, boom arm, ram, pulley
     put(mv, G.rbox(.8, .7, 1.0, .06), yellow, { x: -.35, y: 1.33 });
+    const B0 = [-.3, 1.62], B1 = [TT.tipX, TT.tipY + .15], bl = Math.hypot(B1[0] - B0[0], B1[1] - B0[1]), ba = Math.atan2(B1[1] - B0[1], B1[0] - B0[0]);
+    const boom = group(mv, { x: B0[0], y: B0[1], rz: ba }); put(boom, G.rbox(bl, .34, .38, .06), yellow, { x: bl / 2 });
+    put(boom, G.rbox(bl * .5, .26, .3, .05), toon(0xe0a820), { x: bl * .76, y: .02 });
+    put(boom, G.plane(.8, .3), glow(0xffffff, { map: ctex(256, 96, (x, w, h) => { for (let i = 0; i < 9; i++) { x.fillStyle = i % 2 ? '#16141c' : '#f5c84a'; x.beginPath(); x.moveTo(i * 32 - 20, h); x.lineTo(i * 32 + 12, 0); x.lineTo(i * 32 + 44, 0); x.lineTo(i * 32 + 12, h); x.fill(); } }, { key: 'boomhaz' }) }), { x: bl - .5, z: .195, noInk: true });
+    put(boom, G.plane(1.3, .24), glow(0xffffff, { map: ctex(512, 96, (x, w, h) => { x.fillStyle = '#f5c84a'; x.fillRect(0, 0, w, h); x.fillStyle = NAVY; x.font = '900 70px Helvetica'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('HALE', w / 2, h / 2 + 4); }, { key: 'boomname' }) }), { x: bl * .38, z: .195, noInk: true });
+    const ramA = [.15, 1.2], ramB = [B0[0] + Math.cos(ba) * bl * .45, B0[1] + Math.sin(ba) * bl * .45];
+    put(mv, G.cyl(.07, .07, Math.hypot(ramB[0] - ramA[0], ramB[1] - ramA[1]), 12), chrome, { x: (ramA[0] + ramB[0]) / 2, y: (ramA[1] + ramB[1]) / 2, rz: Math.atan2(ramB[1] - ramA[1], ramB[0] - ramA[0]) - Math.PI / 2 });
+    put(mv, G.cyl(.22, .22, .3, 20), dark, { x: TT.tipX, y: TT.tipY + .12, rx: Math.PI / 2 }); put(mv, G.cyl(.12, .12, .32, 14), chrome, { x: TT.tipX, y: TT.tipY + .12, rx: Math.PI / 2, noInk: true });
+    put(mv, G.cyl(.25, .25, .4, 18), toon(0x3c4058), { x: -.35, y: 1.85, z: 0, rx: Math.PI / 2 });   // the winch drum on the turret
+    // wheels: front single, rear tandem; each a group that spins about z
+    const wheels = [];
+    const wheel = (x, z) => { const w = group(mv, { x, y: .5, z }); put(w, G.cyl(.5, .5, .38, 28), tyre, { rx: Math.PI / 2 }); put(w, G.cyl(.3, .3, .39, 20), chrome, { rx: Math.PI / 2, noInk: true });
+      const s = Math.sign(z); put(w, G.cyl(.12, .12, .41, 14), toon(0xff8a1f), { rx: Math.PI / 2, noInk: true });
+      for (let i = 0; i < 5; i++) { const a = i * Math.PI * 2 / 5; put(w, G.cyl(.03, .03, .42, 8), dark, { x: Math.cos(a) * .2, y: Math.sin(a) * .2, rx: Math.PI / 2, noInk: true }); }
+      put(w, G.box(.5, .06, .4), toon(0x9aa0b0), { noInk: true }); wheels.push(w); return w; };
+    for (const s of [-1, 1]) { wheel(2.3, s * 1.0); wheel(-1.4, s * 1.0); wheel(-2.4, s * 1.0); put(mv, new THREE.CylinderGeometry(.62, .62, .5, 24, 1, true, Math.PI / 2, Math.PI), orange, { x: 2.3, y: .62, z: s * 1.0, rx: Math.PI / 2, noInk: true }); }
+    // wheel lift: arm from the rear deck, a cross bar and two L fingers at the cradle
+    const wl = group(mv), wlArm = put(wl, G.box(1, .16, .3), steel, {}), cradle = group(wl);
+    put(cradle, G.box(.18, .14, 2.0), steel, {}); for (const s of [-1, 1]) { put(cradle, G.box(.7, .1, .14), toon(0xf5c84a), { x: -.0, y: .02, z: s * .85 }); put(cradle, G.box(.12, .2, .16), steel, { x: -.36, y: .06, z: s * .85 }); }
+    put(mv, G.rbox(.3, .5, 1.2, .05), steel, { x: -3.2, y: .7 });   // the lift's housing under the rear
+    for (const s of [-1, 1]) { put(mv, G.box(.05, .14, .25), glow(0xff3a30), { x: -3.27, y: 1.2, z: s * .95, noInk: true }); }
+    // the hook: cable top at the hook group origin, the C under it (its bottom about .42 below)
+    const hookG = group(mv), hm = toon(0x6a7088), hk = group(hookG);
+    put(hk, G.rbox(.12, .2, .1, .03), toon(0xf5c84a), { y: -.1 }); put(hk, G.cyl(.04, .04, .12, 10), hm, { y: -.24 });
+    put(hk, G.torus(.15, .05, 18, Math.PI * 1.45), hm, { y: -.42, rz: Math.PI * .78 }); put(hk, G.sph(.065, 12, 10), hm, { x: .13, y: -.33 });
