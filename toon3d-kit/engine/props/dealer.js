@@ -40,3 +40,28 @@ function drawLoan(x, w, h, o) {
   x.fillStyle = NAVY; x.font = '900 104px Helvetica'; x.fillText(o.borrower, 46, 258, w - 90);
   x.fillStyle = '#6a7090'; x.font = 'bold 44px Helvetica'; x.fillText('BALANCE', 46, 340);
   x.fillStyle = '#16141c'; x.font = '900 168px Helvetica'; x.fillText(o.balance, 40, 446, w - 70);
+  x.fillStyle = '#e8862a'; x.beginPath(); x.roundRect(40, 530, w - 80, 86, 22); x.fill();
+  x.fillStyle = '#ffffff'; x.font = '900 56px Helvetica'; x.textAlign = 'center'; x.fillText(o.status, w / 2, 575, w - 120);
+}
+function drawCars(x, w, h, seed) {
+  const r = rng(seed); x.fillStyle = '#152060'; x.fillRect(0, 0, w, h); x.fillStyle = GOLD; x.font = '900 60px Helvetica'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('INVENTORY', w / 2, 56);
+  const cols = ['#e2463b', '#1f6fff', '#f5c84a', '#f8f6f0', '#2f8f86', '#8a5ad8'];
+  for (let i = 0; i < 6; i++) { const cx = 30 + (i % 3) * 328, cy = 110 + Math.floor(i / 3) * 262;
+    x.fillStyle = '#26337e'; x.beginPath(); x.roundRect(cx, cy, 304, 240, 18); x.fill();
+    x.fillStyle = cols[(i + seed) % 6]; x.beginPath(); x.roundRect(cx + 40, cy + 70, 224, 56, 22); x.fill(); x.beginPath(); x.roundRect(cx + 90, cy + 40, 120, 50, 22); x.fill();
+    x.fillStyle = '#16141c'; for (const wx of [cx + 90, cx + 214]) { x.beginPath(); x.arc(wx, cy + 128, 22, 0, 7); x.fill(); }
+    x.fillStyle = '#ffffff'; x.font = '900 46px Helvetica'; x.fillText('$' + (20 + Math.floor(r() * 130)) + ',000', cx + 152, cy + 200); }
+}
+register('sales-desk', {
+  tags: ['dealership', 'desk', 'office', 'cars', 'rich-system'], aliases: ['salesman-desk', 'dealer-desk'],
+  desc: 'A car salesman\'s desk: white top with a gold edge on chrome legs, a teal front panel, a monitor, keyboard and mouse, a gold nameplate facing the customer, a pen cup, a little plant, a pile of brochures. Origin at the floor under the desk centre; top at y .76, 0.9 deep (x) by 1.7 wide (z). The customer side faces -x, the salesman side +x. The monitor stands on the -z end with its screen facing +z (turned 10 degrees toward the salesman), so a camera over the customer\'s shoulder from the +z side or a side camera reads it. The loan screen: HALE MOTORS ACCOUNTS, BORROWER TYLER, a big BALANCE $58,000 and an orange status row; flagAt blinks a big red PAST DUE flag over it. chairs: true adds the salesman\'s swivel chair (seat top y .5 at local x .78, z 0: a seated bean of height .86 sits at local [.78, .242, 0] with ry -PI/2) and a red guest chair at local [-.88, 0, .42] facing +x; a standing customer goes at local [-1.0, 0, -.25] with ry PI/2.',
+  opts: { name: "nameplate text ('BRAD')", screen: "'loan' | 'cars' (default) | 'off'", flagAt: '[t0, t1]: the red PAST DUE flag blinks on over the screen (on, off, on in about half a second), stays on, and is gone after t1',
+    balance: "'$58,000'", borrower: "'TYLER'", status: "the orange status row ('3 PAYMENTS MISSED')", screenScale: 'monitor size multiplier (1); 1.4 or so for close-ups', chairs: 'true = add the salesman chair and a guest chair (default false)', seed: 'brochure / inventory variety (1)' },
+  inkWidth: .009,
+  build: ({ name = 'BRAD', screen = 'cars', flagAt = null, balance = '$58,000', borrower = 'TYLER', status = '3 PAYMENTS MISSED', screenScale = 1, chairs = false, seed = 1 } = {}) => {
+    const g = g0(), chrome = toon(0xd9dce6), white = toon(0xf8f6f0), gold = toon(0xe6c25a), dark = toon(0x2a2c38), H = .76;
+    put(g, G.rbox(.92, .05, 1.72, .02), white, { y: H - .025 }); put(g, G.box(.93, .02, 1.73), gold, { y: H - .055, noInk: true });
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) put(g, G.cyl(.022, .022, H - .06, 10), chrome, { x: sx * .4, y: (H - .06) / 2, z: sz * .78 });
+    for (const sz of [-1, 1]) put(g, G.box(.82, .03, .03), chrome, { y: .08, z: sz * .78 });
+    put(g, G.box(.03, .48, 1.6), toon(0x0f5560), { x: -.42, y: .44 }); put(g, G.box(.035, .05, 1.6), gold, { x: -.42, y: .6, noInk: true });
+    put(g, G.plane(.5, .14), glow(0xffffff, { transparent: true, map: ctex(512, 140, (x, w, h) => { x.clearRect(0, 0, w, h); x.fillStyle = GOLD; x.font = '900 96px Georgia, serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('HALE', w / 2, h / 2 + 6); }, { key: 'deskhale' }) }), { x: -.44, y: .38, ry: -Math.PI / 2, noInk: true });
