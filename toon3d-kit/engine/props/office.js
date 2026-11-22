@@ -34,3 +34,25 @@ register('computer', {
   },
 });
 
+register('laptop', {
+  tags: ['office', 'tech'], desc: 'Open laptop.', opts: { screen: 'code|dashboard|chart|chat' },
+  build: ({ screen = 'dashboard', seed = 2 } = {}) => {
+    const g = g0(); put(g, G.rbox(.42, .02, .3, .008), toon(0xb8bcc8), { y: .01 }); put(g, G.box(.36, .005, .16), toon(0x55586a), { y: .022, z: .03 });
+    const lid = group(g, { y: .02, z: -.15, rx: -.25 }); put(lid, G.rbox(.42, .28, .015, .008), toon(0xb8bcc8), { y: .14 });
+    put(lid, G.plane(.38, .24), glow(0xffffff, { map: screenTex(screen, seed) }), { y: .14, z: .009, noInk: true }); return g;
+  },
+});
+
+register('office-chair', {
+  tags: ['office', 'furniture', 'chair'], aliases: ['chair'], desc: 'Swivel office chair. Seat "seat" (cast seat: { prop }).', opts: { color: 'seat color' },
+  build: ({ color = 0x2b2e44 } = {}) => {
+    const g = g0(), m = toon(color), k = toon(PAL.black);
+    for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2; put(g, G.box(.32, .03, .05), k, { x: Math.cos(a) * .16, y: .06, z: Math.sin(a) * .16, ry: -a }); put(g, G.sph(.035, 10, 8), k, { x: Math.cos(a) * .3, y: .035, z: Math.sin(a) * .3 }); }
+    put(g, G.cyl(.03, .03, .38, 10), k, { y: .25 }); put(g, G.rbox(.5, .08, .48, .03), m, { y: .47 }); put(g, G.rbox(.48, .55, .07, .04), m, { y: .8, z: -.22, rx: -.1 });
+    g.userData.seats = { seat: { at: [0, .52, .24], depth: .42, backH: .56, width: .5 } }; return g;
+  },
+});
+
+register('mug', { tags: ['office', 'kitchen', 'small'], aliases: ['coffee', 'cup'], desc: 'Coffee mug.', opts: { color: '' },
+  build: ({ color = PAL.offwhite } = {}) => { const g = g0(); put(g, G.cyl(.05, .045, .11, 18), toon(color), { y: .055 }); put(g, G.torus(.032, .013, 12), toon(color), { x: .055, y: .06, ry: Math.PI / 2 }); put(g, G.cyl(.044, .044, .005, 18), toon(0x4a2a18), { y: .1 }); return g; } });
+
