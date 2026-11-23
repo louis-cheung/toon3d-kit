@@ -98,3 +98,4 @@ register('restaurant-front', {
       spots: { booth: [0, 0, -1.2], walk: [-1.0, 0, 1.6], door: [3.7, 0, .4], lamp: [-2.6, 0, 2.4] },
       keys: { default: { kind: 'spot', at: [-2.6, 3.6, 2.3], target: [-2.4, 0, 1.8] } } };
   },
+});

@@ -36,3 +36,28 @@ export function toon(color, opts = {}) {
 /** Unlit material for screens, signs, glowing strips, skyline windows. */
 export function glow(color, opts = {}) { return new THREE.MeshBasicMaterial({ color: hex(color), toneMapped: false, ...opts }); }
 
+// ---------- glossy toon (2026-11-14, ring set + practical-light kit) ----------
+// The same 3-tone cel material plus a HARD specular highlight: a clean white spot or streak that slides over the surface
+// as the camera or light moves, the way an illustrator paints a shine on a hat brim, a glass or a ring box. Matte things
+// (cloth, wood, skin) stay on toon(); shiny things (glass, cutlery, metal, lacquer, satin boxes) use toonGloss().
+// gloss: highlight strength (1), cut: how tight the highlight is (.955; .9 is a broad sheen, .985 a pin point).
+const TOON_GLOSS_PARS = `varying vec3 vViewPosition;
+uniform float glossAmt; uniform float glossCut;
+struct ToonMaterial { vec3 diffuseColor; };
+void RE_Direct_Toon( const in IncidentLight directLight, const in vec3 geometryPosition, const in vec3 geometryNormal, const in vec3 geometryViewDir, const in vec3 geometryClearcoatNormal, const in ToonMaterial material, inout ReflectedLight reflectedLight ) {
+  vec3 irradiance = getGradientIrradiance( geometryNormal, directLight.direction ) * directLight.color;
+  reflectedLight.directDiffuse += irradiance * BRDF_Lambert( material.diffuseColor );
+  float hv = dot( normalize( directLight.direction + geometryViewDir ), geometryNormal );
+  reflectedLight.directSpecular += min( directLight.color, vec3( 1.6 ) ) * smoothstep( glossCut, glossCut + .012, hv ) * glossAmt;
+}
+void RE_IndirectDiffuse_Toon( const in vec3 irradiance, const in vec3 geometryPosition, const in vec3 geometryNormal, const in vec3 geometryViewDir, const in vec3 geometryClearcoatNormal, const in ToonMaterial material, inout ReflectedLight reflectedLight ) {
+  reflectedLight.indirectDiffuse += irradiance * BRDF_Lambert( material.diffuseColor );
+}
+#define RE_Direct RE_Direct_Toon
+#define RE_IndirectDiffuse RE_IndirectDiffuse_Toon`;
+const glossCache = new Map();
+/** Cel material with a hard, moving specular highlight (glossy). Same color + opts returns the same material. */
+export function toonGloss(color, opts = {}) {
+  const { gloss = 1, cut = .955, ...rest } = opts;
+  const key = hex(color) + ':' + gloss + ':' + cut + JSON.stringify(rest, (k, v) => (v && v.isTexture ? v.uuid : v));
+  if (!rest.map && glossCache.has(key)) return glossCache.get(key);
