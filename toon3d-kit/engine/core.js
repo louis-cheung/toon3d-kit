@@ -152,3 +152,28 @@ export function ctex(w, h, draw, opts = {}) {
   if (opts.repeat) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(...opts.repeat); }
   if (opts.key) texCache.set(opts.key, t); return t;
 }
+/** Text on a sign texture. */
+export function textTex(text, o = {}) {
+  const { w = 1024, h = 256, bg = null, fg = '#ffffff', font = 'bold 150px Helvetica, Arial', border = null, align = 'center' } = o;
+  return ctex(w, h, (x) => {
+    if (bg) { x.fillStyle = bg; x.fillRect(0, 0, w, h); }
+    if (border) { x.strokeStyle = border; x.lineWidth = 16; x.strokeRect(8, 8, w - 16, h - 16); }
+    x.fillStyle = fg; x.font = font; x.textAlign = align; x.textBaseline = 'middle';
+    const lines = String(text).split('\n'), lh = h / (lines.length + .3);
+    lines.forEach((l, i) => x.fillText(l, align === 'center' ? w / 2 : 40, h / 2 + (i - (lines.length - 1) / 2) * lh));
+  }, { key: o.key });
+}
+/** Screen content presets: code, dashboard, chart, chat, blank, logo:<text> */
+export function screenTex(kind = 'code', seed = 1) {
+  return ctex(512, 320, (x, w, h) => {
+    const r = rng(seed); x.fillStyle = '#0f1530'; x.fillRect(0, 0, w, h);
+    const C = ['#5fd4ff', '#9cf29a', '#f3c56b', '#c9a4ff', '#ff8f8f'];
+    if (kind === 'code') for (let i = 0; i < 14; i++) { x.fillStyle = C[i % 4]; x.fillRect(24 + (i % 3) * 22, 18 + i * 21, 60 + r() * 260, 9); }
+    if (kind === 'dashboard') {
+      x.fillStyle = '#1d2650'; x.fillRect(0, 0, w, 40); x.fillStyle = '#5fd4ff'; x.fillRect(16, 14, 90, 12);
+      for (let i = 0; i < 6; i++) { x.fillStyle = '#e8ecff'; x.fillRect(24, 64 + i * 40, 150 + r() * 80, 10); x.fillStyle = C[i % 3]; x.fillRect(330, 58 + i * 40, 140, 22); }
+    }
+    if (kind === 'chart') {
+      x.strokeStyle = '#2a3566'; x.lineWidth = 2; for (let i = 1; i < 6; i++) { x.beginPath(); x.moveTo(0, i * 55); x.lineTo(w, i * 55); x.stroke(); }
+      x.strokeStyle = '#9cf29a'; x.lineWidth = 8; x.beginPath(); let y = 270; x.moveTo(20, y);
+      for (let i = 1; i <= 10; i++) { y = Math.max(30, y - 10 - r() * 40 + (i === 5 ? 50 : 0)); x.lineTo(20 + i * 47, y); } x.stroke();
