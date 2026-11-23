@@ -3,6 +3,7 @@
 import * as L from '../engine/index.js';
 import {resolveTiming, captionAt} from './timing.mjs';
 import { drawPingOverlay, drawPingTag } from '../engine/props/n06-ping.js';   // N-06 (2026-11-18, off by default): shot.ping (the card overlay) and shot.pingTag (the compact tag on a world point)
+import { drawWrappedTurkeyIcon } from '../engine/props/turkey-screens.js';   // The Turkey rewrite (2026-11-22, off by default): texts[].icon 'wrapped-turkey'
 const { THREE } = L;
 
 const TRANSITION_FRAMES = 7;

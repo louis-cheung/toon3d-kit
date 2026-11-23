@@ -61,3 +61,28 @@ export function toonGloss(color, opts = {}) {
   const { gloss = 1, cut = .955, ...rest } = opts;
   const key = hex(color) + ':' + gloss + ':' + cut + JSON.stringify(rest, (k, v) => (v && v.isTexture ? v.uuid : v));
   if (!rest.map && glossCache.has(key)) return glossCache.get(key);
+  const m = new THREE.MeshToonMaterial({ color: hex(color), gradientMap: G3, ...rest });
+  m.onBeforeCompile = (sh) => {
+    sh.uniforms.glossAmt = { value: gloss }; sh.uniforms.glossCut = { value: cut };
+    sh.fragmentShader = sh.fragmentShader.replace('#include <lights_toon_pars_fragment>', TOON_GLOSS_PARS)
+      .replace('vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + totalEmissiveRadiance;',
+        'vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + totalEmissiveRadiance;');
+  };
+  m.customProgramCacheKey = () => 'toonGloss1';
+  m.userData.gloss = true;
+  if (!rest.map) glossCache.set(key, m); return m;
+}
+
+// ---------- ink outline (inverted hull, constant-ish screen width) ----------
+export const INK = { width: 0.016 };
+const inkMat = new THREE.ShaderMaterial({
+  side: THREE.BackSide, fog: true,
+  uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { w: { value: INK.width }, c: { value: new THREE.Color(PAL.ink) } }]),
+  vertexShader: `uniform float w;
+    #include <fog_pars_vertex>
+    void main(){ vec4 mvPosition = modelViewMatrix*vec4(position,1.); vec3 n = normalize(normalMatrix*normal);
+    mvPosition.xyz += n * w * (1. + (-mvPosition.z) * 0.12); gl_Position = projectionMatrix*mvPosition;
+    #include <fog_vertex>
+    }`,
+  fragmentShader: `uniform vec3 c;
+    #include <fog_pars_fragment>
