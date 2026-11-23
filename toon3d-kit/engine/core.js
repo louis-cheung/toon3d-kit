@@ -107,3 +107,23 @@ export function inkAll(obj, width, color) {
   return obj;
 }
 
+// ---------- geometry shortcuts ----------
+export const G = {
+  box: (w, h, d) => new THREE.BoxGeometry(w, h, d),
+  cyl: (rt, rb, h, s = 24) => new THREE.CylinderGeometry(rt, rb, h, s),
+  sph: (r, w = 28, h = 20) => new THREE.SphereGeometry(r, w, h),
+  cap: (r, l, s = 20) => new THREE.CapsuleGeometry(r, l, 8, s),
+  cone: (r, h, s = 24) => new THREE.ConeGeometry(r, h, s),
+  torus: (R, r, s = 24, arc = Math.PI * 2) => new THREE.TorusGeometry(R, r, 10, s, arc),
+  plane: (w, h) => new THREE.PlaneGeometry(w, h),
+  /** Rounded box (soft corners read more "cartoon" than sharp boxes). */
+  rbox: (w, h, d, r = 0.04) => {
+    const s = new THREE.Shape(), x = -w / 2 + r, y = -h / 2 + r, W = w - 2 * r, H = h - 2 * r;
+    s.moveTo(x, y - r); s.lineTo(x + W, y - r); s.quadraticCurveTo(x + W + r, y - r, x + W + r, y); s.lineTo(x + W + r, y + H);
+    s.quadraticCurveTo(x + W + r, y + H + r, x + W, y + H + r); s.lineTo(x, y + H + r); s.quadraticCurveTo(x - r, y + H + r, x - r, y + H);
+    s.lineTo(x - r, y); s.quadraticCurveTo(x - r, y - r, x, y - r);
+    const g = new THREE.ExtrudeGeometry(s, { depth: d - 2 * r, bevelEnabled: true, bevelSize: r * .6, bevelThickness: r, bevelSegments: 3, curveSegments: 6 });
+    g.translate(0, 0, -(d - 2 * r) / 2); return g;
+  },
+};
+
