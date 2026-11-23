@@ -127,3 +127,28 @@ export const G = {
   },
 };
 
+/** Add a mesh to a parent. o: {x,y,z, rx,ry,rz, s (number or [x,y,z]), shadow, noInk} */
+export function put(parent, geo, mat, o = {}) {
+  const m = new THREE.Mesh(geo, mat);
+  m.position.set(o.x || 0, o.y || 0, o.z || 0); m.rotation.set(o.rx || 0, o.ry || 0, o.rz || 0);
+  if (o.s != null) Array.isArray(o.s) ? m.scale.set(...o.s) : m.scale.setScalar(o.s);
+  m.castShadow = o.shadow !== false; m.receiveShadow = true; if (o.noInk) m.userData.noInk = true;
+  parent.add(m); return m;
+}
+export function group(parent, o = {}) {
+  const g = new THREE.Group(); g.position.set(o.x || 0, o.y || 0, o.z || 0); g.rotation.set(o.rx || 0, o.ry || 0, o.rz || 0);
+  if (o.s != null) g.scale.setScalar(o.s); if (parent) parent.add(g); return g;
+}
+
+// ---------- canvas textures ----------
+const texCache = new Map();
+/** Draw a texture with a 2D canvas. key caches it. opts: {pixel, repeat:[x,y]} */
+export function ctex(w, h, draw, opts = {}) {
+  if (opts.key && texCache.has(opts.key)) return texCache.get(opts.key);
+  const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d'); x.lineCap = x.lineJoin = 'round';
+  draw(x, w, h);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+  if (opts.pixel) t.magFilter = t.minFilter = THREE.NearestFilter;
+  if (opts.repeat) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(...opts.repeat); }
+  if (opts.key) texCache.set(opts.key, t); return t;
+}
