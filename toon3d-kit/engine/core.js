@@ -177,3 +177,28 @@ export function screenTex(kind = 'code', seed = 1) {
       x.strokeStyle = '#2a3566'; x.lineWidth = 2; for (let i = 1; i < 6; i++) { x.beginPath(); x.moveTo(0, i * 55); x.lineTo(w, i * 55); x.stroke(); }
       x.strokeStyle = '#9cf29a'; x.lineWidth = 8; x.beginPath(); let y = 270; x.moveTo(20, y);
       for (let i = 1; i <= 10; i++) { y = Math.max(30, y - 10 - r() * 40 + (i === 5 ? 50 : 0)); x.lineTo(20 + i * 47, y); } x.stroke();
+    }
+    if (kind === 'chat') for (let i = 0; i < 5; i++) { const me = i % 2; x.fillStyle = me ? '#3c7be0' : '#e8ecff'; x.beginPath(); x.roundRect(me ? 200 : 24, 20 + i * 58, 280, 44, 20); x.fill(); }
+    if (kind.startsWith('logo:')) { x.fillStyle = '#e8ecff'; x.font = 'bold 120px Helvetica'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(kind.slice(5), w / 2, h / 2); }
+  }, { key: 'screen:' + kind + seed });
+}
+/** Building facade with lit windows. */
+export function windowsTex(seed = 1, o = {}) {
+  const { base = '#232a6e', lit = ['#f3e1a0', '#9fd6ff'], density = .35, cols = 6, rows = 16 } = o;
+  return ctex(256, 512, (x, w, h) => {
+    const r = rng(seed); x.fillStyle = base; x.fillRect(0, 0, w, h);
+    const cw = w / cols, rh = h / rows;
+    for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+      x.fillStyle = r() < density ? lit[r() < .75 ? 0 : 1] : 'rgba(0,0,0,.25)';
+      x.fillRect(i * cw + cw * .22, j * rh + rh * .25, cw * .56, rh * .45);
+    }
+  }, { key: 'win' + seed + JSON.stringify(o) });
+}
+/** Tiled floor. */
+export function tileTex(a = '#2a3570', b = '#1b2350', n = 4, rep = 5) {
+  return ctex(512, 512, (x, w) => {
+    x.fillStyle = a; x.fillRect(0, 0, w, w); x.strokeStyle = b; x.lineWidth = 6; const s = w / n;
+    for (let i = 0; i <= w; i += s) { x.beginPath(); x.moveTo(i, 0); x.lineTo(i, w); x.stroke(); x.beginPath(); x.moveTo(0, i); x.lineTo(w, i); x.stroke(); }
+    x.fillStyle = 'rgba(255,255,255,.05)'; x.fillRect(s, 2 * s, s, s); x.fillRect(3 * s, 0, s, s);
+  }, { repeat: [rep, rep], key: 'tile' + a + b + n + rep });
+}
