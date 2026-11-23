@@ -86,3 +86,24 @@ const inkMat = new THREE.ShaderMaterial({
     }`,
   fragmentShader: `uniform vec3 c;
     #include <fog_pars_fragment>
+    void main(){ gl_FragColor = vec4(c,1.);
+    #include <fog_fragment>
+    }`,
+});
+const hullCache = new WeakMap();
+function hullOf(geo) {
+  if (hullCache.has(geo)) return hullCache.get(geo);
+  const g = geo.clone(); for (const k of Object.keys(g.attributes)) if (k !== 'position') g.deleteAttribute(k);
+  const m = mergeVertices(g, 1e-4); m.computeVertexNormals(); hullCache.set(geo, m); return m;
+}
+const FLAT = /Plane|Circle|Ring|Shape/;
+/** Add black outlines to every mesh in an object (skips flat planes and anything with userData.noInk). */
+export function inkAll(obj, width, color) {
+  const list = []; obj.traverse((o) => { if (o.isMesh && !o.userData.noInk && !o.userData.isInk && !FLAT.test(o.geometry.type)) list.push(o); });
+  for (const m of list) {
+    const mat = (width || color != null) ? inkMat.clone() : inkMat; if (width) mat.uniforms.w.value = width; if (color != null) mat.uniforms.c.value = new THREE.Color(color);
+    const h = new THREE.Mesh(hullOf(m.geometry), mat); h.userData.isInk = true; h.castShadow = false; m.add(h);
+  }
+  return obj;
+}
+
