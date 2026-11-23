@@ -7,7 +7,8 @@ Usage (from toon3d-kit/):
 
 Each argument is one thing the script needs; words inside quotes are searched together. It scores every catalog
 entry (assets/catalog.json) on name, aliases, tags and description, and prints the best hits with the line in
-ASSETS.md where the full entry lives, so only those lines need reading. No hit means it has to be built: ask Louis
+ASSETS.md where the full entry lives, so only those lines need reading. Realistic-style assets (tag 'real', RULES L2) rank first
+and are marked [current style]. No hit means it has to be built: ask Louis
 for a reference first if it is a new kind of asset.
 """
 import argparse

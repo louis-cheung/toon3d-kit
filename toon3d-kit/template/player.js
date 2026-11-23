@@ -10,6 +10,8 @@ const TRANSITION_FRAMES = 7;
 
 export async function loadEpisode(path) {
   const ep = await import(path);
+  // sets that declare preload (the realistic sets, 2026-11-23) load their models and textures before the first frame; no other set has one
+  for (const n of new Set(ep.SHOTS.map((s) => s.set).filter(Boolean))) { const sp = L.find(n); if (sp?.preload) await sp.preload(); }
   const fps = ep.META.fps || 30; let start = 0;
   // voice/built.json (written by tools/voice.py) makes shot lengths, captions and mouths follow the real audio
   let built = null; try { const r = await fetch(path.replace(/[^/]+$/, 'voice/built.json'), { cache: 'no-store' }); if (r.ok) built = await r.json(); } catch (e) { /* not voiced yet */ }
