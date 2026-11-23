@@ -73,3 +73,28 @@ register('restaurant-front', {
     // inside, seen through the glass
     put(g, G.plane(16, 4), toon(0xffffff, { map: ctex(256, 256, (x, w) => { x.fillStyle = '#6a3a2a'; x.fillRect(0, 0, w, w); x.strokeStyle = '#4a2418'; x.lineWidth = 6; for (let i = 0; i < 8; i++) { x.beginPath(); x.moveTo(0, i * 32); x.lineTo(w, i * 32); x.stroke(); } }, { key: 'frontInFloor', repeat: [8, 2] }) }), { rx: -Math.PI / 2, y: .01, z: -2, noInk: true, shadow: false });
     put(g, G.box(16, 5, .2), toon(0xffffff, { map: wallpaperTex() }), { y: 2.5, z: -3.3 }); put(g, G.box(16, 1.0, .1), toon(0x2e4d3f), { y: .5, z: -3.18 });
+    for (const x of [-7.8, 7.8]) put(g, G.box(.2, 5, 3.4), toon(0xe9b98a), { x, y: 2.5, z: -1.6 });
+    put(g, G.box(16, .2, 3.4), toon(0x3a2218), { y: 4.6, z: -1.6 });   // ceiling
+    for (let i = 0; i < 22; i++) { const t = i / 21, x = -4.5 + t * 9, y = 3.1 - Math.abs(Math.sin(t * Math.PI * 3)) * .25; put(g, G.sph(.05, 8, 6), glow(0xfff0d8), { x, y, z: -3.15, noInk: true, shadow: false }); }
+    [[-3.2, 2.2, 3], [3.4, 2.1, 7]].forEach(([x, y, sd]) => { put(g, G.box(.9, 1.1, .06), toon(0x3a2218), { x, y, z: -3.16 }); put(g, G.plane(.76, .96), glow(0xffffff, { map: ctex(128, 160, (c, w, h) => { const P = ['#e86a6a', '#7ed3a0', '#b79cf0', '#f0a07c'], r = rng(sd); c.fillStyle = '#f4eadf'; c.fillRect(0, 0, w, h); for (let i = 0; i < 5; i++) { c.fillStyle = P[i % 4]; c.beginPath(); c.arc(20 + r() * 90, 20 + r() * 120, 14 + r() * 26, 0, 7); c.fill(); } }, { key: 'frontArt' + sd }) }), { x, y, z: -3.12, noInk: true, shadow: false }); });
+    for (const x of [-1.2, 1.2]) { const L = raw('pendant-lamp', { drop: 1.1, color: 0xd9603a }); L.position.set(x, 4.5, -1.2); g.add(L); }
+    // other diners at the back, a cafe table each side of the booth
+    for (const x of [-4.6, 5.2]) g.add(raw('cafe-table', { at: [x, 0, -2.2] }));
+    // outside: sidewalk, curb, road, the far side
+    put(g, G.plane(40, 3.4), toon(0xffffff, { map: sidewalkTex() }), { rx: -Math.PI / 2, y: .001, z: 1.7, noInk: true, shadow: false }).receiveShadow = true;
+    put(g, G.box(40, .16, .25), toon(0x9a9cb4), { y: .02, z: 3.48 });
+    put(g, G.plane(40, 8), toon(0xffffff, { map: roadTex() }), { rx: -Math.PI / 2, y: -.05, z: 7.5, noInk: true, shadow: false });
+    put(g, G.plane(40, 4), toon(0xffffff, { map: sidewalkTex() }), { rx: -Math.PI / 2, y: .001, z: 13.5, noInk: true, shadow: false });
+    put(g, G.plane(60, 22), new THREE.MeshBasicMaterial({ map: streetBackTex(), toneMapped: false }), { y: 9, z: 18, ry: Math.PI, noInk: true, shadow: false });   // faces -z, toward the restaurant (shots looking out)
+    // behind the camera when looking at the restaurant: nothing needed; a backdrop above the roofline, seen in low shots
+    put(g, G.plane(60, 14), new THREE.MeshBasicMaterial({ map: streetBackTex(), toneMapped: false }), { y: 12, z: -4, noInk: true, shadow: false });
+    const lamp = raw('street-lamp', { h: 3.8 }); lamp.position.set(-2.6, 0, 3.0); lamp.rotation.y = Math.PI / 2; g.add(lamp);   // its head reaches over the sidewalk toward the facade
+    const cone = raw('spotlight-cone', { h: 3.6, r: 1.25, color: 0xffe2a0 }); cone.position.set(-2.6, 3.62, 2.3); g.add(cone);
+    const hyd = group(g, { x: 4.6, z: 3.0 }); put(hyd, G.cyl(.13, .15, .55, 14), toon(0xd8342a), { y: .28 }); put(hyd, G.sph(.13, 12, 8), toon(0xd8342a), { y: .56 }); put(hyd, G.cyl(.05, .05, .32, 8), toon(0xd8342a), { y: .38, rz: Math.PI / 2 });
+    if (car) { const c = raw('car', { color: 0x3a7be0 }); c.position.set(5.6, 0, 4.6); c.scale.setScalar(1.25); g.add(c); }
+    const lights = [(s) => pointLight(s, 0, 3.4, -1.6, 0xffc890, 9, 7), (s) => pointLight(s, -2.6, 3.3, 2.3, 0xffe2a0, 8, 7), (s) => pointLight(s, 3.7, 2.2, .8, 0xffcf8a, 4, 4)];
+    return { root: g, light: 'night', shadowSize: 14, lights,
+      cameras: { main: { pos: [0, 1.7, 8.5], look: [0, 1.5, 0], fov: 46 }, sidewalk: { pos: [-.6, 1.55, 5.6], look: [-.3, 1.45, 0], fov: 44 } },
+      spots: { booth: [0, 0, -1.2], walk: [-1.0, 0, 1.6], door: [3.7, 0, .4], lamp: [-2.6, 0, 2.4] },
+      keys: { default: { kind: 'spot', at: [-2.6, 3.6, 2.3], target: [-2.4, 0, 1.8] } } };
+  },
