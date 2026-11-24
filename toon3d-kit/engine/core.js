@@ -327,3 +327,28 @@ export function moodLights(scene, lit, setLights, keys, m = MOOD) {
   });
 }
 
+/** Let anything animate as a pure function of time, even inside a set or added straight to the scene (the player only calls
+ *  update(sec) on cast and props). The player turns every userData.spin object to rotation.y = sec * .4 before each render;
+ *  an invisible tick reads that back and calls fn(sec) once per frame. Same trick as sets/rich.js. */
+export function timeHook(root, fn) {
+  const clock = new THREE.Object3D(); clock.userData.spin = true; root.add(clock);
+  // the tick is an opaque, invisible mesh drawn before everything else (renderOrder), so what fn moves is in place for this frame
+  const tick = new THREE.Mesh(new THREE.PlaneGeometry(.001, .001), new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false, depthTest: false }));
+  tick.frustumCulled = false; tick.renderOrder = -1e9; tick.castShadow = false; tick.userData.noInk = true; tick.userData.practical = true; root.add(tick);
+  let last = null; tick.onBeforeRender = () => { const sec = clock.rotation.y / .4; if (sec !== last) { last = sec; fn(sec); root.updateMatrixWorld(true); } }; fn(0);
+}
+
+// ---------- practical-light kit (2026-11-14; nothing here runs unless a set option, a prop or a mood key asks) ----------
+// What makes Rick's Clips' rooms read rich: you can SEE the light. A lamp throws a soft cone, dust floats in it, and it lands
+// on the table as a warm pool, while the corners stay cool. These three builders make that, all pure functions of time.
+const BEAM_V = `varying vec2 vUv; varying vec3 vN; varying vec3 vV; varying float vD;
+  void main(){ vUv = uv; vec4 mv = modelViewMatrix * vec4(position, 1.); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); vD = -mv.z; gl_Position = projectionMatrix * mv; }`;
+const BEAM_F = `uniform vec3 color; uniform float strength, soft, t0, t1, streaks, time, falloff, nearFade;
+  varying vec2 vUv; varying vec3 vN; varying vec3 vV; varying float vD;
+  void main(){
+    float t = 1. - vUv.y;                                               // 0 at the lamp, 1 where the beam lands
+    float edge = pow(abs(dot(normalize(vN), normalize(vV))), soft);     // the middle of the cone (seen face on) is brightest, the rim fades out
+    float ends = smoothstep(0., t0, t) * (1. - smoothstep(1. - t1, 1., t));
+    float rays = 1. - streaks * (.5 + .5 * sin(vUv.x * 6.2832 * 9. + time * .35)) * (.6 + .4 * sin(vUv.x * 6.2832 * 4. - time * .2));
+    float a = strength * edge * ends * mix(1., falloff, t) * rays * smoothstep(nearFade * .25, nearFade, vD);   // fades out when the camera is close or inside it
+    gl_FragColor = vec4(color, a);
