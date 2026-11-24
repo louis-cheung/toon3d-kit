@@ -477,3 +477,28 @@ export function applyDOF(r, scene, cam, o) {
     const U = { tC: { value: color }, tD: { value: rt.depthTexture }, tB: { value: half.texture }, px: { value: new THREE.Vector2(1 / size.x, 1 / size.y) },
       near: { value: .05 }, far: { value: 500 }, focus: { value: 3 }, blur: { value: 10 }, band: { value: DOF.band }, maxR: { value: 20 }, step_: { value: 2 } };
     const base = { toneMapped: false, depthTest: false, depthWrite: false, uniforms: U, vertexShader: DOF_VERT };
+    const gather = new THREE.ShaderMaterial({ ...base, fragmentShader: `precision highp float; varying vec2 vUv; uniform sampler2D tC, tD; uniform vec2 px; uniform float step_; ${DOF_COC}
+        void main(){
+          float cz = texture2D(tD, vUv).x, cs = cocOf(cz); vec3 col = texture2D(tC, vUv).rgb; float tot = 1., rad = 1., ang = 0.;
+          for (int i = 0; i < 80; i++) { if (rad >= maxR) break;
+            vec2 uv = vUv + vec2(cos(ang), sin(ang)) * px * rad; float sz = texture2D(tD, uv).x, ss = cocOf(sz);
+            if (sz > cz) ss = clamp(ss, 0., cs * 2.);                  // something behind a sharp object never smears over it
+            float m = smoothstep(rad - .5, rad + .5, ss); col += mix(col / tot, texture2D(tC, uv).rgb, m); tot += 1.;
+            rad += step_ / rad; ang += 2.39996323; }
+          gl_FragColor = vec4(col / tot, 1.); }` });
+    const mix = new THREE.ShaderMaterial({ ...base, fragmentShader: `precision highp float; varying vec2 vUv; uniform sampler2D tC, tD, tB; ${DOF_COC}
+        void main(){ float c = cocOf(texture2D(tD, vUv).x);
+          gl_FragColor = vec4(mix(texture2D(tC, vUv).rgb, texture2D(tB, vUv).rgb, smoothstep(.4, 2.2, c)), 1.); }` });
+    const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), gather); quad.frustumCulled = false; const qs = new THREE.Scene(); qs.add(quad);
+    dofKit = { w: size.x, h: size.y, rt, half, color, U, gather, mix, quad, qs, qc: new THREE.Camera() };
+  }
+  const K = dofKit, u = K.U;
+  r.copyFramebufferToTexture(new THREE.Vector2(0, 0), K.color);                       // the finished picture
+  const auto = r.shadowMap.autoUpdate; r.shadowMap.autoUpdate = false;
+  r.setRenderTarget(K.rt); r.render(scene, cam); r.shadowMap.autoUpdate = auto;       // same scene again, kept only for its depth
+  u.near.value = cam.near; u.far.value = cam.far; u.focus.value = o.focus; u.blur.value = o.blur; u.band.value = o.band ?? DOF.band;
+  u.maxR.value = o.blur * DOF.maxMul; u.step_.value = Math.max(1, u.maxR.value * u.maxR.value / 120);   // about 60 samples whatever the size
+  K.quad.material = K.gather; r.setRenderTarget(K.half); r.render(K.qs, K.qc);
+  K.quad.material = K.mix; r.setRenderTarget(null); r.render(K.qs, K.qc);
+}
+
