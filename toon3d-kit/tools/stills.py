@@ -1,6 +1,7 @@
 """Render review stills: first, middle and last frame of every shot (or chosen shots), plus contact sheets.
   .venv/bin/python tools/stills.py episodes/<slug>/episode.js                       # all shots, 3 frames each
   .venv/bin/python tools/stills.py episodes/<slug>/episode.js --shots 3,4 --pts .1,.5,.9
+  .venv/bin/python tools/stills.py episodes/<slug>/episode.js --mute                # the sound-off test: no captions, tags or texts
 Writes episodes/<slug>/stills/s<shot>_<k>.jpg, sheet_mid.jpg (middle frames) and sheet_ends.jpg (first and last frames).
 """
 import sys, base64, argparse, threading, http.server, functools, pathlib

@@ -427,3 +427,28 @@ export function moodDim(root, keys, m = MOOD) {
   });
 }
 /** The grade for a mood shot: GRADE plus a stronger vignette, a touch more contrast, the black floor lifted toward the shadow colour. */
+export function moodGrade(m = MOOD) {
+  const sh = MOOD_SHADOWS[m.shadow];
+  const floor = sh ? sh[2] : (() => { const c = new THREE.Color(hex(m.shadow)).multiplyScalar(.35); return [c.r, c.g, c.b].map((v) => Math.round(v * 255)).join(','); })();
+  return { ...GRADE, contrast: m.contrast, vignette: m.vignette, vignetteStart: m.vignetteStart, blackFloor: floor, floorAmount: m.floorAmount ?? GRADE.floorAmount };
+}
+
+// ---------- renderer ----------
+export let RENDERER = null;   // the most recent renderer, so an asset can render a small picture of another scene into a texture (stage-screen 'room')
+export function makeRenderer(canvas, w = 1080, h = 1920) {
+  const r = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true }); RENDERER = r;
+  r.setSize(w, h, false); r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFSoftShadowMap;
+  r.outputColorSpace = THREE.SRGBColorSpace; r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.05; return r;
+}
+/** Smooth easing used by every camera move. */
+export const ease = {
+  linear: (t) => t,
+  out2: (t) => 1 - (1 - t) * (1 - t),   // softer ease-out: still moving near the end
+  smooth: (t) => t * t * t * (t * (t * 6 - 15) + 10),
+  out: (t) => 1 - Math.pow(1 - t, 3),
+  in: (t) => t * t * t,
+  back: (t) => { const c = 1.70158; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); },
+};
+export const clamp01 = (t) => Math.max(0, Math.min(1, t));
+export const lerp = (a, b, t) => a + (b - a) * t;
+

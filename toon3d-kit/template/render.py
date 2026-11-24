@@ -1,7 +1,9 @@
 """Render an episode.
   python3 template/render.py episodes/<slug>/episode.js --stills        # one still per shot + contact sheet (fast check)
   python3 template/render.py episodes/<slug>/episode.js                 # all frames -> out.mp4 (refused until tools/gate.py is open)
-Options: --scale 0.5 (draft resolution), --audio voice.mp3 (muxed in), --out <dir>, --frames 0-120, --gpu (on a Mac with a real GPU)
+Options: --scale 0.5 (draft resolution), --audio voice.mp3 (muxed in), --out <dir>, --frames 0-120, --cpu (software drawing, for a machine with no GPU)
+The GPU is the default (2026-11-24): before this, headless Chrome silently fell back to SwiftShader (CPU) even with --gpu, so a
+frame took about 0.8 to 1.1 s; on the Mac's Metal GPU it takes about 0.05 s. The renderer in use is printed at the start.
 """
 import sys, os, base64, argparse, threading, http.server, functools, pathlib, subprocess, time
 from playwright.sync_api import sync_playwright
@@ -16,7 +18,9 @@ class Q(http.server.SimpleHTTPRequestHandler):
     def log_message(self, *a): pass
 srv = http.server.ThreadingHTTPServer(('127.0.0.1', 0), functools.partial(Q, directory=str(ROOT))); threading.Thread(target=srv.serve_forever, daemon=True).start()
 rel = '/' + str(ep.relative_to(ROOT))
-args = [] if A.gpu else ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist']
+GPU_ARGS = ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist'] if sys.platform == 'darwin' else ['--enable-gpu', '--ignore-gpu-blocklist']   # without these, headless Chrome draws on the CPU (SwiftShader)
+CPU_ARGS = ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist']
+args = CPU_ARGS if A.cpu else GPU_ARGS
 def save(d, p): pathlib.Path(p).write_bytes(base64.b64decode(d.split(',')[1]))
 with sync_playwright() as p:
     b = p.chromium.launch(args=args); pg = b.new_page(); errs = []
@@ -24,6 +28,8 @@ with sync_playwright() as p:
     pg.goto(f'http://127.0.0.1:{srv.server_address[1]}/template/player.html?ep={rel}&scale={A.scale}')
     try: pg.wait_for_function('window.ready===true', timeout=90000)
     except Exception: print('\n'.join(errs)); raise
+    gpu = pg.evaluate('(()=>{const c=document.createElement("canvas").getContext("webgl2");const e=c&&c.getExtension("WEBGL_debug_renderer_info");return e?c.getParameter(e.UNMASKED_RENDERER_WEBGL):"unknown"})()'); print('renderer:', gpu)
+    if not A.cpu and 'SwiftShader' in gpu: print('WARNING: no GPU, drawing on the CPU (about 15x slower)')
     info = pg.evaluate('info'); print(f"{info['total']} frames, {info['total']/info['fps']:.1f}s, {len(info['shots'])} shots, {info['w']}x{info['h']}")
     if A.stills:
         picks = [s['start'] + s['n'] // 2 for s in info['shots']]
