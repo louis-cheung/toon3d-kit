@@ -29,7 +29,14 @@ with sync_playwright() as p:
     pick = [int(x) for x in A.shots.split(',')] if A.shots else range(len(info['shots']))
     for i in pick:
         s = info['shots'][i]
-        for k, fr in enumerate(pts):
+        fps = info['fps']; dur = (s['n'] - 1) / fps
+        for old in out.glob(f's{i:02d}_*.jpg'): old.unlink()   # a shot's frame count can change between runs
+        if A.cuts:   # start, the middle of every camera span, end
+            edges = [0.0] + sorted(c for c in (s.get('cuts') or []) if 0 < c < dur) + [dur]
+            fr_list = [pts[0]] + [((a + b) / 2) / max(dur, 1e-3) for a, b in zip(edges, edges[1:])] + [pts[-1]]
+            if len(edges) == 2: fr_list = pts
+        else: fr_list = pts
+        for k, fr in enumerate(fr_list):
             f = s['start'] + min(s['n'] - 1, int(fr * (s['n'] - 1)))
             pathlib.Path(out / f's{i:02d}_{k}.jpg').write_bytes(base64.b64decode(pg.evaluate(f'frame({f})').split(',')[1]))
     for e in errs[:10]: print('ERR', e)
