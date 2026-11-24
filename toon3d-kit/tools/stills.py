@@ -23,7 +23,7 @@ args = (['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist'] if sys.p
 with sync_playwright() as p:
     b = p.chromium.launch(args=args); pg = b.new_page(); errs = []
     pg.on('pageerror', lambda e: errs.append(str(e))); pg.on('console', lambda m: m.type == 'error' and errs.append(m.text))
-    pg.goto(f'http://127.0.0.1:{srv.server_address[1]}/template/player.html?ep={rel}&scale={A.scale}')
+    pg.goto(f'http://127.0.0.1:{srv.server_address[1]}/template/player.html?ep={rel}&scale={A.scale}' + (('&mute=all' if A.mute_all else '&mute=1') if A.mute else ''))
     pg.wait_for_function('window.ready===true', timeout=90000); info = pg.evaluate('info')
     print(f"{info['total']} frames, {info['total']/info['fps']:.1f}s, {len(info['shots'])} shots")
     pick = [int(x) for x in A.shots.split(',')] if A.shots else range(len(info['shots']))
@@ -41,5 +41,6 @@ def sheet(name, ks, cols, w=270, h=480):
         im = Image.open(out / f's{i:02d}_{k}.jpg').resize((w, h)); S.paste(im, ((j % cols) * w, (j // cols) * h)); d.text(((j % cols) * w + 6, (j // cols) * h + 6), f'{i}.{k}', fill=(255, 255, 255))
     S.save(out / name, quality=88)
 mid = len(pts) // 2
+if A.cuts: print('stills ->', out); raise SystemExit(0)
 sheet('sheet_mid.jpg', [mid], 7); sheet('sheet_ends.jpg', [0, len(pts) - 1], 8)
 print('stills ->', out)
