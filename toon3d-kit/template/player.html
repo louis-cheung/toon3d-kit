@@ -7,7 +7,7 @@ const q = new URLSearchParams(location.search); const ep = await loadEpisode(q.g
 const sc = parseFloat(q.get('scale') || '1'); ep.meta.w = Math.round(1080 * sc / 2) * 2; ep.meta.h = Math.round(1920 * sc / 2) * 2;
 if (q.get('wide')) { [ep.meta.w, ep.meta.h] = [ep.meta.h, ep.meta.w]; ep.meta.aspect = 16 / 9; }   // ?wide=1 (2026-11-23): a 16:9 still check of a set (captions and overlays keep their 9:16 layout)
 const P = makePlayer(ep, document.getElementById('gl'), document.getElementById('out'));
-window.info = { total: P.total, fps: ep.meta.fps, w: ep.meta.w, h: ep.meta.h, shots: ep.shots.map(s => ({ start: s.start, n: s.n, set: s.set })) };
+window.info = { total: P.total, fps: ep.meta.fps, w: ep.meta.w, h: ep.meta.h, shots: ep.shots.map(s => ({ start: s.start, n: s.n, set: s.set, cuts: (s.cuts || []).map(c => c.at) })) };   // cuts (2026-11-24): each camera cut's shot second, for stills.py --cuts
 window.frame = (f) => P.renderFrame(f).toDataURL('image/jpeg', .92);
 window.ready = true;
 </script></body></html>
