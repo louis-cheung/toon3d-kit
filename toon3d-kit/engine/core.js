@@ -502,3 +502,44 @@ export function applyDOF(r, scene, cam, o) {
   K.quad.material = K.mix; r.setRenderTarget(null); r.render(K.qs, K.qc);
 }
 
+// ---------- grade (the "premium" pass: contrast, saturation, warm-lifted blacks, vignette) ----------
+// Measured against references/style-b-toon3d/ with tools/look_metrics.py: our raw render reads flat because
+// MeshToonMaterial's gradient map tops out at low contrast and nothing tints the shadows or darkens the corners.
+// This is a 2D-canvas grade (same idea as a game's post-process LUT), applied once per frame after the 3D
+// layer is composited and before captions, so captions stay crisp. Tune the numbers here, not per-episode.
+export const GRADE = {
+  enabled: true,
+  contrast: 1.07, // >1 sharpens the tone curve; CSS filter contrast()
+  saturation: 1.28, // >1 richer colour; CSS filter saturate() -- set high because the floor-lift below eats some back
+  blackFloor: '30,18,20', // warm near-black: floor for the darkest pixels (screen blend) -- never pure #000
+  floorAmount: 0.4, // 0-0.6ish: how strongly the floor lift applies (screen blend alpha)
+  vignette: 0.045, // 0-0.15ish: corner darkening strength (multiply blend) -- scenes already vignette a bit from geometry
+  vignetteStart: 0.5, // normalized radius (0 center, 1 corner) where falloff begins
+};
+let gradeCanvas = null;
+/** Apply GRADE to a canvas in place. Call after drawing the 3D layer, before any UI overlay (captions, tags). */
+export function applyGrade(canvas, g = GRADE) {
+  if (!g.enabled) return;
+  const w = canvas.width, h = canvas.height, ctx = canvas.getContext('2d');
+  if (!gradeCanvas) gradeCanvas = document.createElement('canvas');
+  if (gradeCanvas.width !== w || gradeCanvas.height !== h) { gradeCanvas.width = w; gradeCanvas.height = h; }
+  const gctx = gradeCanvas.getContext('2d');
+  // 1. contrast + saturation (CSS filter only applies when drawing, so round-trip through a second canvas)
+  gctx.filter = `contrast(${g.contrast}) saturate(${g.saturation})`;
+  gctx.drawImage(canvas, 0, 0);
+  gctx.filter = 'none';
+  ctx.drawImage(gradeCanvas, 0, 0);
+  // 2. warm black floor: a soft 'screen' lift (not a hard per-channel 'lighten' max, which flattened chroma
+  //    on coloured shadows) so dark pixels warm up without crushing to pure #000 (the #1 "AI slop" tell).
+  if (g.blackFloor && g.floorAmount > 0) {
+    ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.fillStyle = `rgba(${g.blackFloor},${g.floorAmount})`;
+    ctx.fillRect(0, 0, w, h); ctx.restore();
+  }
+  // 3. vignette, applied last so it darkens toward (not below) the lifted black floor
+  if (g.vignette > 0) {
+    const r = Math.sqrt(w * w + h * h) / 2;
+    const grad = ctx.createRadialGradient(w / 2, h / 2, r * g.vignetteStart, w / 2, h / 2, r);
+    grad.addColorStop(0, 'rgba(0,0,0,0)'); grad.addColorStop(1, `rgba(0,0,0,${g.vignette})`);
+    ctx.save(); ctx.globalCompositeOperation = 'multiply'; ctx.fillStyle = grad; ctx.fillRect(0, 0, w, h); ctx.restore();
+  }
+}
