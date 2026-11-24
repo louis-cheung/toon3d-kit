@@ -452,3 +452,28 @@ export const ease = {
 export const clamp01 = (t) => Math.max(0, Math.min(1, t));
 export const lerp = (a, b, t) => a + (b - a) * t;
 
+// ---------- depth of field (lens blur) ----------
+// A second pass over the finished picture: things far from the focus distance get blurred, the way a real lens does.
+// It runs after the normal render, so colours, ink and glow are exactly what they were; only sharpness changes.
+// Numbers are pixels at 1920 high (the player scales them). Close-ups 12-14, mediums 8-10, wides 0 (STYLE.md section 6b).
+export const DOF = { close: 14, closeAt: 2.5, offAt: 6.5, band: .7, maxMul: 1.7 };
+/** Blur strength for a focus distance in metres: full on close-ups, fading to nothing on wides. */
+export function dofAuto(dist) { const k = clamp01((dist - DOF.closeAt) / (DOF.offAt - DOF.closeAt)); return DOF.close * (1 - k * k * (3 - 2 * k)); }
+let dofKit = null;
+const DOF_COC = `uniform float near, far, focus, blur, band, maxR;
+  float cocOf(float d){ float z = near * far / (far - d * (far - near)); return min(maxR, blur * max(0., abs(z - focus) - band) / max(z, .05)); }`;
+const DOF_VERT = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0., 1.); }';
+/** Blur the frame just rendered to the canvas. o: { focus: metres from the lens, blur: px, band: metres kept sharp either side }
+ *  Three steps: copy the finished picture, render the scene once more only for its depth, then blur. The blur is gathered at
+ *  half size (about 8x cheaper, and blur hides the difference) and mixed back over the sharp picture by how out of focus each pixel is. */
+export function applyDOF(r, scene, cam, o) {
+  if (!(o.blur > .3)) return;
+  const size = r.getDrawingBufferSize(new THREE.Vector2());
+  if (!dofKit || dofKit.w !== size.x || dofKit.h !== size.y) {
+    dofKit?.rt.dispose(); dofKit?.half.dispose(); dofKit?.color.dispose();
+    const rt = new THREE.WebGLRenderTarget(size.x, size.y, { depthTexture: new THREE.DepthTexture(size.x, size.y) });
+    const half = new THREE.WebGLRenderTarget(Math.ceil(size.x / 2), Math.ceil(size.y / 2), { depthBuffer: false });
+    const color = new THREE.FramebufferTexture(size.x, size.y); color.minFilter = color.magFilter = THREE.LinearFilter;
+    const U = { tC: { value: color }, tD: { value: rt.depthTexture }, tB: { value: half.texture }, px: { value: new THREE.Vector2(1 / size.x, 1 / size.y) },
+      near: { value: .05 }, far: { value: 500 }, focus: { value: 3 }, blur: { value: 10 }, band: { value: DOF.band }, maxR: { value: 20 }, step_: { value: 2 } };
+    const base = { toneMapped: false, depthTest: false, depthWrite: false, uniforms: U, vertexShader: DOF_VERT };

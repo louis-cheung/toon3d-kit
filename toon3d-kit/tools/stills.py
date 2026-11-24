@@ -3,18 +3,23 @@
   .venv/bin/python tools/stills.py episodes/<slug>/episode.js --shots 3,4 --pts .1,.5,.9
   .venv/bin/python tools/stills.py episodes/<slug>/episode.js --mute                # the sound-off test: no captions, tags or texts
 Writes episodes/<slug>/stills/s<shot>_<k>.jpg, sheet_mid.jpg (middle frames) and sheet_ends.jpg (first and last frames).
+--mute (2026-11-24) passes ?mute=1 to the player (captions, speaker tags and overlays off; the story text and in-world screens stay) and
+writes to stills-mute/ instead. --mute-all also drops the story text (shot.texts).
+tools/mutetest.py packs those for a fresh reader.
+--cuts (2026-11-24) also renders the middle of every camera cut inside a shot (an insert on a hand, a pov), so a shot's frames are its start,
+the middle of each camera, and its end (k = 0..n); a shot with no cuts gets the usual three. The contact sheets are skipped with --cuts.
 """
 import sys, base64, argparse, threading, http.server, functools, pathlib
 from playwright.sync_api import sync_playwright
 from PIL import Image, ImageDraw
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-a = argparse.ArgumentParser(); a.add_argument('episode'); a.add_argument('--shots'); a.add_argument('--pts', default='.03,.5,.97'); a.add_argument('--scale', type=float, default=1.0); a.add_argument('--gpu', action='store_true'); A = a.parse_args()
-ep = pathlib.Path(A.episode).resolve(); out = ep.parent / 'stills'; out.mkdir(exist_ok=True)
+a = argparse.ArgumentParser(); a.add_argument('episode'); a.add_argument('--shots'); a.add_argument('--pts', default='.03,.5,.97'); a.add_argument('--scale', type=float, default=1.0); a.add_argument('--gpu', action='store_true'); a.add_argument('--mute', action='store_true'); a.add_argument('--mute-all', action='store_true'); a.add_argument('--cuts', action='store_true'); A = a.parse_args()
+ep = pathlib.Path(A.episode).resolve(); A.mute = A.mute or A.mute_all; out = ep.parent / ('stills-mute' if A.mute else 'stills'); out.mkdir(exist_ok=True)
 class Q(http.server.SimpleHTTPRequestHandler):
     def log_message(self, *a): pass
 srv = http.server.ThreadingHTTPServer(('127.0.0.1', 0), functools.partial(Q, directory=str(ROOT))); threading.Thread(target=srv.serve_forever, daemon=True).start()
 rel = '/' + str(ep.relative_to(ROOT)); pts = [float(x) for x in A.pts.split(',')]
-args = [] if A.gpu else ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist']
+args = (['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist'] if sys.platform == 'darwin' else ['--enable-gpu', '--ignore-gpu-blocklist'])   # GPU always (2026-11-24): without these flags headless Chrome draws on the CPU (SwiftShader), ~20x slower
 with sync_playwright() as p:
     b = p.chromium.launch(args=args); pg = b.new_page(); errs = []
     pg.on('pageerror', lambda e: errs.append(str(e))); pg.on('console', lambda m: m.type == 'error' and errs.append(m.text))
