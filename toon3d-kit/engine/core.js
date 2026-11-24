@@ -252,3 +252,28 @@ export function lighting(scene, preset = 'night', o = {}) {
 }
 /** Warm practical light (lamp, screen glow). */
 export function pointLight(scene, x, y, z, color = 0xffd59a, power = 5, dist = 6) { const l = new THREE.PointLight(color, power, dist, 1.6); l.position.set(x, y, z); scene.add(l); return l; }
+/** Sky stops multiplied toward a darker shade (k = 1 or undefined returns them untouched). */
+function dimStops(stops, k) {
+  if (k == null || k === 1) return stops;
+  return stops.map(([p, c]) => [p, '#' + new THREE.Color(c).multiplyScalar(k).getHexString()]);
+}
+
+// ---------- mood light (one motivated key, the room falls off into coloured shadow) ----------
+// Per shot `mood: { key: 'lamp' }` (template/player.js resolves it). Off unless a shot or META asks, so old episodes are unchanged.
+// What it does: the set's sky/fill/ambient and its own practicals drop to a low coloured floor (deep blue or plum, never black),
+// one or more key lights are added at a practical (phone, lamp, window, stage spot) with a real inverse-square falloff,
+// unlit glowing set pieces (posters lit by nothing, curtains, string-light halos) dim by their distance from the key, flat
+// characters get a flat 2D tint (cool in the dark, a touch of the key colour near it), and the grade gets a stronger vignette.
+export const MOOD = {
+  ambient: .13, sun: .14, fill: .04, others: .07,   // multipliers on the set's own hemi / sun (moon) / fill / practical lights
+  glowFloor: .42,                                    // unlit set glows far from every key keep this much of their on-screen brightness
+  sky: .35,                                          // backdrop gradient multiplier
+  shadow: 'blue',                                    // the colour the room falls into: 'blue' | 'plum' | 'navy' | a hex
+  vignette: .26, vignetteStart: .28, contrast: 1.1, floorAmount: .6,   // grade overrides for mood shots only (floorAmount: how hard the darkest pixels lift toward the shadow colour)
+};
+export const MOOD_SHADOWS = {                        // [ambient light colour, flat-character shadow tint, grade floor rgb]
+  blue: [0x5a6cff, 0xa3abeb, '20,30,100'], plum: [0xb06ad8, 0xd2a8de, '62,20,72'], navy: [0x4656d8, 0x9aa2de, '16,22,76'],
+};
+/** Built-in key kinds. A key = { kind, at, color, power, reach, dist, type: 'point'|'spot', target, angle, penumbra, shadow, face }.
+ *  reach: metres at which the key has fallen to half (drives glow dimming and character tint; the 3D light falls off by itself). */
+export const MOOD_KEYS = {
