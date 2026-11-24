@@ -277,3 +277,28 @@ export const MOOD_SHADOWS = {                        // [ambient light colour, f
 /** Built-in key kinds. A key = { kind, at, color, power, reach, dist, type: 'point'|'spot', target, angle, penumbra, shadow, face }.
  *  reach: metres at which the key has fallen to half (drives glow dimming and character tint; the 3D light falls off by itself). */
 export const MOOD_KEYS = {
+  phone: { color: 0xc8dcff, power: .45, reach: .6, dist: 4, face: true },
+  lamp: { color: 0xffa24a, power: 2.2, reach: 1.1, dist: 8 },
+  window: { color: 0xa8c4ff, power: 14, reach: 2.2, dist: 10 },
+  screen: { color: 0x9fd8ff, power: 5, reach: 1.3, dist: 7 },
+  spot: { type: 'spot', color: 0xffeede, power: 260, reach: 2.0, dist: 16, angle: .21, penumbra: .45, shadow: true },
+};
+/** Fill in a key from its kind. */
+export function moodKey(k) {
+  const q = { ...(MOOD_KEYS[k.kind || 'lamp'] || MOOD_KEYS.lamp), ...k };
+  if (q.type === 'spot') { const t = q.target || [q.at[0], 0, q.at[2]]; q.pool ??= [t[0], t[1] + .9, t[2]]; }   // a spot lights a pool round its target, not round the lamp
+  return q;
+}
+const kAt = (k) => k.pool || k.at;
+/** How lit a world point is by the keys, 0..1 (the same curve the glow dimming and character tint use). */
+export function moodLevel(p, keys) {
+  let best = 0;
+  for (const k of keys) { const a = kAt(k), d = Math.hypot(p[0] - a[0], p[1] - a[1], p[2] - a[2]) / k.reach; best = Math.max(best, (k.weight ?? 1) / (1 + d * d)); }
+  return Math.min(1, best);
+}
+/** The flat 2D tint for a character at world point p: shadow tint in the dark, white with a little key colour near a key. */
+export function moodTint(p, keys, m = MOOD) {
+  const shadow = new THREE.Color(m.tintShadow ?? (MOOD_SHADOWS[m.shadow] || MOOD_SHADOWS.blue)[1]);
+  let near = keys[0], nd = 1e9; for (const k of keys) { const a = kAt(k), d = Math.hypot(p[0] - a[0], p[1] - a[1], p[2] - a[2]) / k.reach; if (d < nd) { nd = d; near = k; } }
+  const lit = new THREE.Color(0xffffff).lerp(new THREE.Color(near?.color ?? 0xffffff), m.tintKey ?? .14);
+  const lv = Math.pow(moodLevel(p, keys), .6);
