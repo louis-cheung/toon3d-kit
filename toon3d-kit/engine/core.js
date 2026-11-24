@@ -402,3 +402,28 @@ export function dustMotes(o = {}) {
       col.set([base.r * k, base.g * k, base.b * k], i * 3); }
     geo.attributes.position.needsUpdate = true; geo.attributes.color.needsUpdate = true;
   };
+  pts.userData.update(0); return pts;
+}
+const poolTexCache = new Map();
+/** A soft pool of light lying on a surface (a table, the floor): an additive radial glow, so it reads as light, not paint.
+ *  o: { at: [x, y, z] (the surface point), r (radius .9), color, strength (.55), sx / sz (stretch, 1), rx (tilt, flat by default), hard (0..1, a firmer edge) } */
+export function lightPool(o = {}) {
+  const hard = o.hard ?? 0, key = 'pool' + hard; let t = poolTexCache.get(key);
+  if (!t) { t = ctex(256, 256, (x, W) => { const r = x.createRadialGradient(W / 2, W / 2, 0, W / 2, W / 2, W / 2); r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(.35 + hard * .35, `rgba(255,255,255,${.7 + hard * .2})`); r.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = r; x.fillRect(0, 0, W, W); }); poolTexCache.set(key, t); }
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(2 * (o.r ?? .9), 2 * (o.r ?? .9)), new THREE.MeshBasicMaterial({ map: t, color: hex(o.color ?? 0xffc98a), transparent: true, opacity: o.strength ?? .55, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
+  if (o.normal) m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), new THREE.Vector3(...o.normal).normalize()); else { m.rotation.x = o.rx ?? -Math.PI / 2; if (o.ry) m.rotation.z = o.ry; }   // normal: [x, y, z] the surface faces (a wall)
+  m.scale.set(o.sx ?? 1, o.sz ?? 1, 1); m.position.set(...(o.at || [0, 0, 0]));
+  m.renderOrder = 4; m.castShadow = false; m.userData.noInk = true; m.userData.practical = true; return m;
+}
+/** Dim the unlit (MeshBasic) glows under root by distance from the keys: far ones keep m.glowFloor of their colour.
+ *  Skips ink and anything marked userData.practical (a light source that should stay bright wherever it is). */
+export function moodDim(root, keys, m = MOOD) {
+  root.updateMatrixWorld(true); const p = new THREE.Vector3();
+  root.traverse((o) => {
+    if (!o.isMesh || o.userData.isInk || o.userData.practical) return;
+    const mat = o.material; if (!mat || Array.isArray(mat) || !mat.isMeshBasicMaterial) return;
+    o.getWorldPosition(p); const f = m.glowFloor + (1 - m.glowFloor) * moodLevel(p.toArray(), keys); if (f > .99) return;
+    o.material = mat.clone(); o.material.color.multiplyScalar(Math.pow(f, 2.2));   // f is perceptual (on screen); colours are stored linear
+  });
+}
+/** The grade for a mood shot: GRADE plus a stronger vignette, a touch more contrast, the black floor lifted toward the shadow colour. */

@@ -17,7 +17,7 @@ class Q(http.server.SimpleHTTPRequestHandler):
 srv = http.server.ThreadingHTTPServer(('127.0.0.1', 0), functools.partial(Q, directory=str(ROOT))); threading.Thread(target=srv.serve_forever, daemon=True).start()
 rel = '/' + str(ep.relative_to(ROOT)); pts = [float(x) for x in A.pts.split(',')]; names = A.names.split(',')
 COL = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 0, 255), (0, 255, 255), (255, 255, 0)]
-args = [] if A.gpu else ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist']
+args = (['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist'] if sys.platform == 'darwin' else ['--enable-gpu', '--ignore-gpu-blocklist'])   # GPU always (2026-11-24): without these flags headless Chrome draws on the CPU (SwiftShader), ~20x slower
 with sync_playwright() as p:
     b = p.chromium.launch(args=args); pg = b.new_page()
     pg.goto(f'http://127.0.0.1:{srv.server_address[1]}/template/player.html?ep={rel}&scale=1&faces=1')
