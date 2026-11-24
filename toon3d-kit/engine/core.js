@@ -202,3 +202,53 @@ export function tileTex(a = '#2a3570', b = '#1b2350', n = 4, rep = 5) {
     x.fillStyle = 'rgba(255,255,255,.05)'; x.fillRect(s, 2 * s, s, s); x.fillRect(3 * s, 0, s, s);
   }, { repeat: [rep, rep], key: 'tile' + a + b + n + rep });
 }
+/** Vertical sky gradient as a scene background. */
+export function skyTex(stops) {
+  return ctex(8, 512, (x) => { const g = x.createLinearGradient(0, 0, 0, 512); stops.forEach(([p, c]) => g.addColorStop(p, c)); x.fillStyle = g; x.fillRect(0, 0, 8, 512); }, { key: 'sky' + JSON.stringify(stops) });
+}
+
+// ---------- lighting presets ----------
+export const SKIES = {
+  night: [[0, '#141c55'], [.55, '#4a3f86'], [.85, '#c98a86'], [1, '#f0b98e']],
+  dusk: [[0, '#2a3a8a'], [.5, '#a07ab0'], [.8, '#f0a07c'], [1, '#ffd39a']],
+  day: [[0, '#5ea8ef'], [.6, '#a8d6ff'], [1, '#e8f5ff']],
+  studio: [[0, '#2b2f55'], [1, '#14152a']],
+  white: [[0, '#f4f5fa'], [1, '#dfe2ec']],
+  restaurant: [[0, '#6a3f33'], [1, '#c98a5e']],
+  stage: [[0, '#2a1850'], [1, '#6a2a70']],
+  bednight: [[0, '#10143a'], [1, '#232a66']],
+  bedroomNight: [[0, '#16205e'], [1, '#2a3a8c']],   // never black: the darkest backdrop is deep navy
+  bedroomWarm: [[0, '#5a2a6a'], [1, '#c45a7a']],
+  splitNight: [[0, '#141c58'], [.55, '#3a3a96'], [1, '#7a5aa8']],
+};
+/** Adds lights + background. preset: night | dusk | day | studio | white | bedroomNight | bedroomWarm | splitNight, or an object
+ *  { base: 'bedroomNight', hemi: [sky, ground, i], sun: [color, i, [x, y, z]], fill: [color, i], sky: [[stop, color], ...] } that overrides parts of a preset
+ *  (a set can aim the moon through its own window this way). Returns {sun, hemi, fill}. */
+export function lighting(scene, preset = 'night', o = {}) {
+  let over = null; if (preset && typeof preset === 'object') { over = preset; preset = preset.base || 'night'; }
+  const P0 = {
+    night: { hemi: [0xb9c4ff, 0x2a2350, 1.1], sun: [0xffcfa5, 2.0, [2.5, 6, -8]], fill: [0x9fb4ff, .9] },
+    dusk: { hemi: [0xffd9c0, 0x4a3060, 1.2], sun: [0xffb98a, 2.6, [-6, 5, -4]], fill: [0xa8b8ff, .7] },
+    day: { hemi: [0xffffff, 0x8a9a7a, 1.4], sun: [0xfff2dc, 2.6, [5, 9, 4]], fill: [0xcfe0ff, .5] },
+    studio: { hemi: [0xc8ccff, 0x2a2840, 1.2], sun: [0xffffff, 2.2, [3, 6, 5]], fill: [0xa0b0ff, .8] },
+    white: { hemi: [0xffffff, 0xd0d4e4, 1.6], sun: [0xffffff, 2.0, [4, 8, 5]], fill: [0xffffff, .6] },
+    restaurant: { hemi: [0xfff1e0, 0x8a5a48, 1.7], sun: [0xffe6c4, 1.9, [-3, 7, 6]], fill: [0xffe0c8, 1.0] },   // warm indoor: bright enough that near-white skin stays near-white
+    stage: { hemi: [0xe6d8ff, 0x3a2058, 1.35], sun: [0xfff0f4, 2.3, [2, 8, 6]], fill: [0xd8b8ff, .9] },
+    bednight: { hemi: [0x8ea2ff, 0x2a2466, .95], sun: [0xa9c2ff, 1.5, [3.2, 5.5, -9]], fill: [0x7f8cff, .5] },   // dark bedroom: cool moonlight through the window, practicals do the rest
+    bedroomNight: { hemi: [0x8fa4ff, 0x3a2f8a, 1.05], sun: [0xb4c8ff, 2.4, [2.6, 5.2, -9]], fill: [0x6f7cff, .55] },   // saturated cold blue room: moon key through the window, lamp + phone do the warm and the faces
+    bedroomWarm: { hemi: [0xffb0c8, 0x6a2a7a, .9], sun: [0x9cc4ff, 1.9, [-2.6, 5.2, -9]], fill: [0xff8fb0, .45] },    // Mia: pink and coral room, one cool blue moon key through her window
+    splitNight: { hemi: [0xc0b8ff, 0x4a3080, 1.0], sun: [0xd8d0ff, 1.5, [0, 7, 9]], fill: [0x9fa8ff, .45] },             // dollhouse cut: soft front key, each room's practicals give its colour
+  };
+  const P = { ...P0[preset], ...(over || {}) };
+  if (o.background !== false) scene.background = skyTex(dimStops(over?.sky || SKIES[preset], o.skyDim));   // skyDim (mood light only): darken the backdrop
+  const hemi = new THREE.HemisphereLight(...P.hemi);
+  const sun = new THREE.DirectionalLight(P.sun[0], P.sun[1]); sun.position.set(...P.sun[2]); sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048); const S = o.shadowSize || 8;
+  Object.assign(sun.shadow.camera, { left: -S, right: S, top: S, bottom: -S, near: .5, far: 60 }); sun.shadow.bias = -.0006; sun.shadow.normalBias = .02;
+  const fill = new THREE.DirectionalLight(P.fill[0], P.fill[1]); fill.position.set(3, 4, 7);
+  scene.add(hemi, sun, sun.target, fill);
+  if (o.fog) scene.fog = new THREE.Fog(o.fog[0], o.fog[1], o.fog[2]);
+  return { sun, hemi, fill };
+}
+/** Warm practical light (lamp, screen glow). */
+export function pointLight(scene, x, y, z, color = 0xffd59a, power = 5, dist = 6) { const l = new THREE.PointLight(color, power, dist, 1.6); l.position.set(x, y, z); scene.add(l); return l; }
