@@ -352,3 +352,28 @@ const BEAM_F = `uniform vec3 color; uniform float strength, soft, t0, t1, streak
     float rays = 1. - streaks * (.5 + .5 * sin(vUv.x * 6.2832 * 9. + time * .35)) * (.6 + .4 * sin(vUv.x * 6.2832 * 4. - time * .2));
     float a = strength * edge * ends * mix(1., falloff, t) * rays * smoothstep(nearFade * .25, nearFade, vD);   // fades out when the camera is close or inside it
     gl_FragColor = vec4(color, a);
+    #include <colorspace_fragment>
+  }`;
+/** A visible light beam: a soft cone (or a square shaft for a window) from `from` toward `to`.
+ *  o: { from, to, len (else the distance), r0 (radius at the lamp .12), r1 (radius where it lands .9), color, strength (.32),
+ *       soft (edge softness 1.4), shape: 'cone' | 'shaft' (window: 4 sides), aspect (shaft x/z ratio 1), streaks (.35),
+ *       falloff (brightness left at the far end .45), ends: [fade-in, fade-out] fractions ([.04, .3]), dust: n motes (0), dustSize,
+ *       nearFade (metres from the lens inside which it fades away, 2.4, so a beam right by the camera never washes the frame) }
+ *  Returns a Group whose update(sec) drifts the rays and the dust. Marked practical, so mood dimming leaves it alone. */
+export function lightBeam(o = {}) {
+  const from = o.from || [0, 3, 0], to = o.to || [from[0], 0, from[2]];
+  const d = new THREE.Vector3(to[0] - from[0], to[1] - from[1], to[2] - from[2]), len = o.len ?? d.length(); d.normalize();
+  const r0 = o.r0 ?? .12, r1 = o.r1 ?? .9, shaft = o.shape === 'shaft', ends = o.ends || [.04, .3];
+  const g = new THREE.Group(); g.position.set(...from); g.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), d);
+  const geo = new THREE.CylinderGeometry(r0, r1, len, shaft ? 4 : 40, 1, true); geo.translate(0, -len / 2, 0); if (shaft) geo.rotateY(Math.PI / 4);
+  const U = { color: { value: new THREE.Color(hex(o.color ?? 0xffd9a0)) }, strength: { value: o.strength ?? .32 }, soft: { value: o.soft ?? 1.4 }, t0: { value: ends[0] }, t1: { value: ends[1] },
+    streaks: { value: o.streaks ?? .35 }, time: { value: 0 }, falloff: { value: o.falloff ?? .45 }, nearFade: { value: o.nearFade ?? 2.4 } };
+  const m = new THREE.Mesh(geo, new THREE.ShaderMaterial({ uniforms: U, vertexShader: BEAM_V, fragmentShader: BEAM_F, transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, toneMapped: false }));
+  if (shaft && o.aspect) m.scale.set(o.aspect, 1, 1);
+  m.renderOrder = 5; m.castShadow = false; m.userData.noInk = true; m.userData.practical = true; g.add(m);
+  let dust = null; if (o.dust) { dust = dustMotes({ n: o.dust, len, r0, r1, color: o.dustColor ?? o.color ?? 0xffe6b8, size: o.dustSize, seed: o.seed, ends }); g.add(dust); }
+  const upd = (sec) => { U.time.value = sec; dust?.userData.update(sec); };
+  timeHook(g, upd); g.userData.beam = m; return g;   // animates itself in a set, a prop or a mood key
+}
+let dotTex = null;
+function softDot() { if (dotTex) return dotTex; const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), r = x.createRadialGradient(32, 32, 0, 32, 32, 32);
