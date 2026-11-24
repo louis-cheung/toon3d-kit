@@ -302,3 +302,28 @@ export function moodTint(p, keys, m = MOOD) {
   let near = keys[0], nd = 1e9; for (const k of keys) { const a = kAt(k), d = Math.hypot(p[0] - a[0], p[1] - a[1], p[2] - a[2]) / k.reach; if (d < nd) { nd = d; near = k; } }
   const lit = new THREE.Color(0xffffff).lerp(new THREE.Color(near?.color ?? 0xffffff), m.tintKey ?? .14);
   const lv = Math.pow(moodLevel(p, keys), .6);
+  return shadow.lerp(lit, lv).getHex();
+}
+/** Turn a lit scene into a mood-lit one. lit = what lighting() returned, setLights = the set's own practicals.
+ *  Adds the key lights to the scene and returns them (resolved, with world positions). */
+export function moodLights(scene, lit, setLights, keys, m = MOOD) {
+  const sh = MOOD_SHADOWS[m.shadow] || null, amb = new THREE.Color(sh ? sh[0] : hex(m.shadow));
+  lit.hemi.intensity *= m.ambient; lit.hemi.color.lerp(amb, .75); lit.hemi.groundColor.lerp(amb.clone().multiplyScalar(.5), .75);
+  lit.sun.intensity *= m.sun; lit.fill.intensity *= m.fill; lit.fill.color.lerp(amb, .6);
+  for (const l of setLights) l.intensity *= m.others;
+  return keys.map((k) => {
+    let l;
+    if (k.type === 'spot') {
+      l = new THREE.SpotLight(k.color, k.power, k.dist, k.angle, k.penumbra, 2); l.target.position.set(...(k.target || [k.at[0], 0, k.at[2]])); scene.add(l.target);
+      if (k.shadow) { l.castShadow = true; l.shadow.mapSize.set(1024, 1024); l.shadow.bias = -.0008; l.shadow.normalBias = .02; }
+    } else { l = new THREE.PointLight(k.color, k.power, k.dist, 2); if (k.shadow) { l.castShadow = true; l.shadow.mapSize.set(512, 512); l.shadow.bias = -.002; } }
+    l.position.set(...k.at); scene.add(l);
+    // beam (2026-11-14, off unless the key asks): the key's light made visible, a soft cone from the key to its target with dust in it.
+    //   beam: true | { r0, r1, strength, color, soft, dust: n, glow: true (a warm pool decal where it lands), len }
+    if (k.beam) { const b = k.beam === true ? {} : k.beam, to = k.target || [k.at[0], 0, k.at[2]];
+      scene.add(lightBeam({ from: k.at, to, color: k.color, dust: 40, ...b }));
+      if (b.glow) scene.add(lightPool({ at: [to[0], to[1] + .005, to[2]], r: b.r1 ?? 1, color: k.color, ...(typeof b.glow === 'object' ? b.glow : {}) })); }
+    return l;
+  });
+}
+
