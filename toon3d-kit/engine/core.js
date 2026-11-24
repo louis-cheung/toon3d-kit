@@ -377,3 +377,28 @@ export function lightBeam(o = {}) {
 }
 let dotTex = null;
 function softDot() { if (dotTex) return dotTex; const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), r = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+  r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(.35, 'rgba(255,255,255,.75)'); r.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = r; x.fillRect(0, 0, 64, 64);
+  dotTex = new THREE.CanvasTexture(c); return dotTex; }
+/** Floating dust motes inside a cone volume (local: from the origin down -y for len metres, radius r0 to r1).
+ *  o: { n (60), len, r0, r1, color, size (metres, .014), seed, ends, drift (1) }. Motes wander, sink and rise slowly and twinkle,
+ *  brightest in the middle of the beam. Pure function of time (update(sec)). Use it alone (box: [w, h, d]) for a dusty room. */
+export function dustMotes(o = {}) {
+  const n = o.n ?? 60, len = o.len ?? 2.5, r0 = o.r0 ?? .12, r1 = o.r1 ?? .9, r = rng(o.seed ?? 11), box = o.box, drift = o.drift ?? 1, ends = o.ends || [.04, .3];
+  const P = []; for (let i = 0; i < n; i++) P.push({ s: ends[0] + r() * (1 - ends[0] - ends[1] * .5), q: Math.sqrt(r()) * .82, a: r() * Math.PI * 2, ph: r() * 9, sp: .4 + r() * .9, v: (r() - .5) * .025, b: .45 + r() * .55, bx: r(), by: r(), bz: r() });
+  const pos = new Float32Array(n * 3), col = new Float32Array(n * 3), geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  const base = new THREE.Color(hex(o.color ?? 0xffe6b8));
+  const pts = new THREE.Points(geo, new THREE.PointsMaterial({ size: o.size ?? .014, map: softDot(), vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false, sizeAttenuation: true }));
+  pts.frustumCulled = false; pts.renderOrder = 6; pts.userData.noInk = true; pts.userData.practical = true;
+  pts.userData.update = (t) => {
+    for (let i = 0; i < n; i++) { const p = P[i], w = Math.sin(t * p.sp * .5 + p.ph) * .04 * drift;
+      let x, y, z, fade = 1;
+      if (box) { x = (p.bx - .5) * box[0] + Math.sin(t * .23 * p.sp + p.ph) * .12 * drift; y = ((p.by + t * p.v * .4) % 1 + 1) % 1 * box[1]; z = (p.bz - .5) * box[2] + Math.cos(t * .19 * p.sp + p.ph) * .12 * drift; }
+      else { const s = ((p.s + t * p.v * drift) % 1 + 1) % 1, rad = (r0 + (r1 - r0) * s) * p.q, a = p.a + t * .06 * p.sp * drift;
+        x = Math.cos(a) * rad + w; y = -s * len + Math.sin(t * p.sp * .7 + p.ph * 2) * .03 * drift; z = Math.sin(a) * rad - w;
+        fade = Math.min(1, s / .08) * (1 - Math.max(0, (s - .82) / .18)) * (1 - p.q * .55); }
+      pos.set([x, y, z], i * 3);
+      const tw = .55 + .45 * Math.sin(t * (1.3 + p.sp * 2.2) + p.ph * 3), k = Math.max(0, fade) * p.b * tw;
+      col.set([base.r * k, base.g * k, base.b * k], i * 3); }
+    geo.attributes.position.needsUpdate = true; geo.attributes.color.needsUpdate = true;
+  };

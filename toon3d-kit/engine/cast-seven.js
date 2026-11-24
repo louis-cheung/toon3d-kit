@@ -8,7 +8,7 @@
 import { THREE, put, hex, ctex } from './core.js';
 import { register, find } from './registry.js';
 import { NORA_LOOKS } from './cast-turkey.js';
-import { makeBean, EXPRESSIONS, RICH_FLAT_POSES, addPoses } from './character.js';
+import { makeBean, EXPRESSIONS, RICH_FLAT_POSES, addPoses, ANIME_FACES } from './character.js';
 
 const css = (c) => '#' + new THREE.Color(hex(c)).getHexString();
 const shade = (c, k) => '#' + new THREE.Color(hex(c)).multiplyScalar(k).getHexString();
