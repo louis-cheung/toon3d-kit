@@ -27,3 +27,22 @@ export async function loadEpisode(path) {
   return { meta: { fps, w: 1080, h: 1920, ...ep.META }, shots, total: start };
 }
 
+/** A shot with `lines: [{who, text}]` gets its length, caption words and talk track from the voice.
+ *  Before the voice exists (or if the text changed since), lengths are estimated from the text so stills still work. */
+function withVoice(s, b) {
+  if (!s.lines?.length) return s;
+  const same = b && b.lines.length === s.lines.length && b.lines.every((l, k) => l.words.map((w) => w[0]).join(' ') === s.lines[k].text.split(/\s+/).join(' '));
+  if (s.cues && (!same || !b.cues)) throw new Error('Voice cues need a current voice build. Run tools/voice.py.');
+  let talk, sec;
+  if (same) { talk = b.lines.map((l, k) => ({ ...l, expr: s.lines[k].expr, ...(s.lines[k].think ? { think: true } : {}), ...(s.lines[k].lipsync ? { lipsync: s.lines[k].lipsync } : {}) })); sec = b.sec; }   // think (Ep 3 v2): a line he only thinks; lipsync: see the cast loop
+  else {
+    let t = s.lead ?? .12; talk = s.lines.map((l) => { const ws = l.text.split(/\s+/), dur = .0652 * l.text.replace(/[^A-Za-z0-9]/g, '').length + .567;
+      const o = { who: l.who, start: t, dur, expr: l.expr, ...(l.think ? { think: true } : {}), ...(l.lipsync ? { lipsync: l.lipsync } : {}), words: ws.map((w, k) => [w, k / ws.length * dur * .92]) }; t += dur + (l.pauseAfter ?? .16); return o; });
+    sec = Math.max(t + .12, s.minSec || 0);
+  }
+  return { ...resolveTiming(s, b?.cues || {}), sec, talk, caption: s.lines.map((l) => l.text).join(' '), words: talk.flatMap((l) => l.words.map(([w, t]) => [w, l.start + t])) };
+}
+
+function resolveCam(c, set) { if (!c) return set.cameras.main; if (typeof c === 'string') return set.cameras[c] || set.cameras.main; return { ...set.cameras.main, ...c }; }
+function resolveAt(a, set) { if (!a) return [0, 0, 0]; if (typeof a === 'string') return set.spots[a] || [0, 0, 0]; return a; }
+
