@@ -98,3 +98,28 @@ function splitPicture() {
   const cw = R.domElement.width, ch = R.domElement.height; let rw = Math.min(cw, 1080), rh = Math.round(rw / 1.5); if (rh > ch) { rh = ch; rw = Math.round(ch * 1.5); }
   const cam = new THREE.PerspectiveCamera(30, 1.5, .1, 200); cam.position.set(0, 1.9, 9.6); cam.lookAt(0, 1.45, -1);
   R.setScissorTest(true); R.setViewport(0, 0, rw, rh); R.setScissor(0, 0, rw, rh); R.render(scene, cam);
+  const c = document.createElement('canvas'); c.width = rw; c.height = rh; c.getContext('2d').drawImage(R.domElement, 0, ch - rh, rw, rh, 0, 0, rw, rh);
+  R.setScissorTest(false); R.setViewport(0, 0, cw, ch);
+  splitCanvas = c; return c;
+}
+function drawScreen(x, W, H, view, k, mood) {
+  if (view === 'split') { const sc = splitPicture(); if (sc) { x.drawImage(sc, 0, 0, W, H); tagBubble(x, W * .2, H * .16, 'A', OPT_A); tagBubble(x, W * .8, H * .16, 'B', OPT_B); return; } view = 'ab'; }
+  if (view === 'room') { const rc = roomPicture(); if (rc) { x.drawImage(rc, 0, 0, W, H); return; } view = 'table'; }
+  if (view === 'table') {
+    const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#2a3a8a'); g.addColorStop(.55, '#a07ab0'); g.addColorStop(1, '#f0a07c'); x.fillStyle = g; x.fillRect(0, 0, W, H);
+    x.fillStyle = '#c9c6d4'; x.fillRect(0, H * .66, W, H * .34);
+    tableScene(x, W / 2, H * .68, .8, null);
+  } else if (view === 'ab') {
+    x.fillStyle = '#1b2160'; x.fillRect(0, 0, W, H);
+    x.fillStyle = '#26337e'; x.fillRect(W / 2 - 4, 40, 8, H - 80);
+    tableScene(x, W * .25, H * .64, .95, mood ? 'flat' : null); tableScene(x, W * .75, H * .64, .95, mood ? 'happy' : null);
+    tagBubble(x, W * .25, H * .17, 'A', OPT_A); tagBubble(x, W * .75, H * .17, 'B', OPT_B);
+  } else if (view === 'idle') {
+    const g = x.createLinearGradient(0, 0, W, H); g.addColorStop(0, '#2a1a5e'); g.addColorStop(.5, '#4a2a86'); g.addColorStop(1, '#1b1450'); x.fillStyle = g; x.fillRect(0, 0, W, H);
+    x.globalAlpha = .10; x.fillStyle = '#ffffff'; for (let i = -2; i < 8; i++) { x.beginPath(); x.moveTo(i * 260, 0); x.lineTo(i * 260 + 120, 0); x.lineTo(i * 260 + 120 + 420, H); x.lineTo(i * 260 + 420, H); x.fill(); } x.globalAlpha = 1;
+  } else {
+    x.fillStyle = '#1b2160'; x.fillRect(0, 0, W, H);
+    const base = H * .76, top = H * .1, scale = (base - top) / 60, bw = W * .25, cxA = W * .3, cxB = W * .7;
+    x.strokeStyle = '#3a4590'; x.lineWidth = 3; for (let v = 10; v <= 60; v += 10) { x.beginPath(); x.moveTo(W * .08, base - v * scale); x.lineTo(W * .92, base - v * scale); x.stroke(); }
+    x.strokeStyle = '#f3f3f6'; x.lineWidth = 8; x.beginPath(); x.moveTo(W * .08, base); x.lineTo(W * .92, base); x.stroke();
+    const hA = 37 * scale * k, hB = 51 * scale * k;
