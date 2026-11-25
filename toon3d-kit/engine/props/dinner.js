@@ -123,3 +123,28 @@ function drawScreen(x, W, H, view, k, mood) {
     x.strokeStyle = '#3a4590'; x.lineWidth = 3; for (let v = 10; v <= 60; v += 10) { x.beginPath(); x.moveTo(W * .08, base - v * scale); x.lineTo(W * .92, base - v * scale); x.stroke(); }
     x.strokeStyle = '#f3f3f6'; x.lineWidth = 8; x.beginPath(); x.moveTo(W * .08, base); x.lineTo(W * .92, base); x.stroke();
     const hA = 37 * scale * k, hB = 51 * scale * k;
+    const bar = (cx, h, color) => { x.fillStyle = color; x.strokeStyle = INK; x.lineWidth = 10; x.beginPath(); x.roundRect(cx - bw / 2, base - h, bw, Math.max(h, 1), [16, 16, 0, 0]); x.fill(); if (h > 6) x.stroke(); };
+    bar(cxA, hA, OPT_A); bar(cxB, hB, OPT_B);
+    if (k > .85) { x.setLineDash([22, 16]); x.strokeStyle = '#f3f3f6'; x.lineWidth = 6; x.beginPath(); x.moveTo(cxA + bw / 2, base - hA); x.lineTo(cxB + bw / 2 + 30, base - hA); x.stroke(); x.setLineDash([]); }
+    const num = (cx, h, v) => { x.font = '900 150px Helvetica, Arial'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.lineJoin = 'round'; x.lineWidth = 22; x.strokeStyle = INK; x.fillStyle = '#ffffff'; x.strokeText(String(Math.round(v * k)), cx, base - h - 82); x.fillText(String(Math.round(v * k)), cx, base - h - 82); };
+    num(cxA, hA, 37); num(cxB, hB, 51);
+    x.font = '900 84px Helvetica, Arial'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillStyle = '#ffffff'; x.lineWidth = 14; x.strokeStyle = INK; x.lineJoin = 'round';
+    x.strokeText('PAY YOUR OWN', cxA, base + 74); x.fillText('PAY YOUR OWN', cxA, base + 74); x.strokeText('SPLIT IT', cxB, base + 74); x.fillText('SPLIT IT', cxB, base + 74);
+    if (k > .9) {
+      const p = clamp01((k - .9) / .1), tx = cxB + bw / 2 - 20, ty = base - hB - 60 - 70 * 0; x.save(); x.translate(tx, ty - 120); x.scale(.6 + .4 * p, .6 + .4 * p); x.rotate(.12);
+      x.fillStyle = '#e2463b'; x.strokeStyle = INK; x.lineWidth = 10; x.beginPath(); x.roundRect(-150, -62, 300, 124, 40); x.fill(); x.stroke();
+      x.fillStyle = '#ffffff'; x.font = '900 100px Helvetica, Arial'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('+36%', 0, 6); x.restore();
+    }
+    x.fillStyle = '#d6d9f2'; x.font = 'bold 62px Helvetica, Arial'; x.textAlign = 'center'; x.fillText('real restaurant study, 2004, per person', W / 2, H * .945);
+  }
+}
+register('stage-screen', {
+  tags: ['stage', 'screen', 'studio', 'chart', 'infographic', 'explain', 'dinner'], aliases: ['big-screen', 'stage-display'],
+  desc: 'Big stage screen for the studio set, on two legs. view "split": the two bedrooms side by side (Leo cold blue left, Mia warm pink right, both frozen staring at their phones) with an A badge on his side and a B badge on hers. view "room": a real picture of the restaurant with the six people at the long table (rendered from the same set). view "idle": soft purple light sweep, nothing on it (end card behind pills). view "table": far, small dinner table at dusk. "ab": two tables side by side tagged A (cyan) and B (yellow). "chart": two bars, cyan PAY YOUR OWN to 37 and yellow SPLIT IT to 51, a +36% tag on yellow, small caption "real restaurant study, 2004, per person". The bars grow with the shot clock (update(t)).',
+  opts: { view: 'table | ab | chart | idle | room | split', w: 'screen width (3.4)', lift: 'height of the screen bottom (1.3)', grow: '[startSec, durSec] for the chart bars (0.4, 1.8)', mood: 'ab view only: true shows plain faces on A and smiling faces on B', bulbs: 'marquee bulbs around the frame (true)' },
+  build: ({ view = 'table', w = 3.4, lift = 1.3, grow = [.4, 1.8], mood = false, bulbs = true } = {}) => {
+    const g = g0(), h = w * 2 / 3, W = 1536, H = 1024;
+    const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const x = cv.getContext('2d'); x.lineCap = x.lineJoin = 'round';
+    const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+    drawScreen(x, W, H, view, 1, mood); tex.needsUpdate = true;
+    put(g, G.rbox(w + .24, h + .24, .14, .07), toon(0x15162b), { y: lift + h / 2 });
