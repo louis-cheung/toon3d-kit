@@ -148,3 +148,28 @@ register('stage-screen', {
     const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
     drawScreen(x, W, H, view, 1, mood); tex.needsUpdate = true;
     put(g, G.rbox(w + .24, h + .24, .14, .07), toon(0x15162b), { y: lift + h / 2 });
+    put(g, G.plane(w, h), new THREE.MeshBasicMaterial({ map: tex, toneMapped: false }), { y: lift + h / 2, z: .075, noInk: true, shadow: false });
+    for (const s of [-1, 1]) put(g, G.box(.12, lift, .1), toon(0x3a3f66), { x: s * w * .3, y: lift / 2, z: -.02 });
+    if (bulbs) { const bm = glow(0xfff4f8), n = Math.round((w + h) * 2 / .22);   // marquee bulbs around the frame
+      for (let i = 0; i < n; i++) { const t = i / n * (w + h) * 2, hw = w / 2 + .1, hh = h / 2 + .1; let bx, by;
+        if (t < w + .2) { bx = -hw + t; by = hh; } else if (t < w + h + .4) { bx = hw; by = hh - (t - w - .2); } else if (t < 2 * w + h + .6) { bx = hw - (t - w - h - .4); by = -hh; } else { bx = -hw; by = -hh + (t - 2 * w - h - .6); }
+        put(g, G.sph(.032, 8, 6), bm, { x: bx, y: lift + h / 2 + by, z: .1, noInk: true, shadow: false }); } }
+    let last = -1;
+    g.userData.update = (sec) => { if (view !== 'chart') return; const k = clamp01((sec - grow[0]) / grow[1]), e = 1 - Math.pow(1 - k, 3); if (Math.abs(e - last) < .002) return; last = e; drawScreen(x, W, H, view, e, mood); tex.needsUpdate = true; };
+    return g;
+  },
+});
+
+// ---------- A/B choice pill ----------
+register('ab-pill', {
+  kind: 'fx', tags: ['ui', 'choice', 'option', 'poll', 'label', 'ask'], aliases: ['choice-pill', 'option-pill'],
+  desc: 'Rounded pill with a letter badge and two or three words, always faces the camera. A is cyan #3fd0ff "PAY YOUR OWN" (two lines), B is yellow #ffd23f "SPLIT IT". Optional second line (sub), for example "$55 EACH". tall: true forces the two-line height so A and B match. Cyan and yellow are reserved for these two options.',
+  opts: { letter: 'A or B (picks the color)', text: 'words on the pill, \\n splits lines', sub: 'optional second line', w: 'width in meters (1.6)', tall: 'true = always the two-line height' },
+  build: ({ letter = 'A', text, sub = '', w = 1.6, tall = false } = {}) => {
+    const B = letter === 'B', color = B ? OPT_B : OPT_A, label = text || (B ? 'SPLIT IT' : 'PAY YOUR\nOWN'), W = 1024;
+    const lines = label.split('\n').concat(sub ? [sub] : []), H = (tall || lines.length > 1) ? 340 : 230;
+    const t = ctex(W, H, (x) => {
+      x.fillStyle = color; x.strokeStyle = INK; x.lineWidth = 16; x.beginPath(); x.roundRect(14, 14, W - 28, H - 28, Math.min(150, (H - 28) / 2)); x.fill(); x.stroke();
+      const r = Math.min(104, (H - 28) * .36), bx = 14 + 40 + r; x.fillStyle = INK; x.beginPath(); x.arc(bx, H / 2, r, 0, 7); x.fill();
+      x.fillStyle = '#ffffff'; x.font = '900 ' + Math.round(r * 1.35) + 'px Helvetica, Arial'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(letter, bx, H / 2 + r * .06);
+      const x0 = bx + r + 36, x1 = W - 62, cx = (x0 + x1) / 2; x.fillStyle = INK; x.textAlign = 'center';
