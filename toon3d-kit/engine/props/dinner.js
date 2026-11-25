@@ -243,3 +243,24 @@ register('long-table', {
       for (const sz of [-1, 1]) put(root, G.box(wid + .06, .3, .02), cl, { z: sz * (len / 2 + .04), y: .61 });
     } else if (runner) put(root, G.box(wid * .5, .008, len * .92), toon(0xf3ece4), { y: .762, noInk: true });
     if (stools) {
+      const custom = !broad && (seats !== 6 || ends), n = seats / 2, sp = n > 1 ? Math.min(1.4, (len - 1.0) / (n - 1)) : 0;
+      const sx = wid / 2 + .35, longSeats = custom ? [...Array(n)].flatMap((_, i) => [[-sx, ((n - 1) / 2 - i) * sp], [sx, ((n - 1) / 2 - i) * sp]]) : LONG_SEATS;   // custom: front to back, left then right
+      const endSeats = !broad && ends ? [[0, -(len / 2 + .5), 'head'], ...(ends === 'both' ? [[0, len / 2 + .5, 'foot']] : [])] : [];
+      const list = broad ? BROAD_SEATS.map(([x, z]) => [x, z, z < 0]) : longSeats.map(([x, z]) => [x, z, true]);
+      g.userData.seats = broad ? BROAD_SEATS.map((q) => q.slice()) : [...longSeats.map(([x, z]) => [x, z, x < 0 ? Math.PI / 2 : -Math.PI / 2]), ...endSeats.map(([x, z, e]) => [x, z, e === 'head' ? 0 : Math.PI])];
+      for (const [x, z, e] of endSeats) { const st = group(root, { x, z, ry: e === 'head' ? 0 : Math.PI });
+        put(st, G.cyl(.25, .23, .07, 24), toon(0x4a2a48), { y: .445 }); put(st, G.cyl(.255, .255, .02, 24), toon(0x2f1a30), { y: .41 });
+        for (let i = 0; i < 4; i++) { const b = i * Math.PI / 2 + Math.PI / 4; put(st, G.cyl(.022, .026, .4, 8), dark, { x: Math.cos(b) * .17, z: Math.sin(b) * .17, y: .2 }); }
+        put(st, G.rbox(.5, .5, .06, .03), toon(0x4a2a48), { y: .82, z: -.27 }); }
+      for (const [x, z, back] of list) {
+        const st = broad ? group(g, { x, z, ry: z < 0 ? 0 : Math.PI }) : group(root, { x, z, ry: x < 0 ? Math.PI / 2 : -Math.PI / 2 });
+        put(st, G.cyl(.25, .23, .07, 24), toon(0x4a2a48), { y: .445 });
+        put(st, G.cyl(.255, .255, .02, 24), toon(0x2f1a30), { y: .41 });
+        for (let i = 0; i < 4; i++) { const b = i * Math.PI / 2 + Math.PI / 4; put(st, G.cyl(.022, .026, .4, 8), dark, { x: Math.cos(b) * .17, z: Math.sin(b) * .17, y: .2 }); }
+        if (back) put(st, G.rbox(.46, .3, .05, .02), toon(0x4a2a48), { y: .72, z: -.27 });
+      }
+    }
+    return g;
+  },
+});
+

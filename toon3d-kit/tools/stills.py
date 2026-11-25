@@ -36,6 +36,7 @@ with sync_playwright() as p:
             fr_list = [pts[0]] + [((a + b) / 2) / max(dur, 1e-3) for a, b in zip(edges, edges[1:])] + [pts[-1]]
             if len(edges) == 2: fr_list = pts
         else: fr_list = pts
+        last = None
         for k, fr in enumerate(fr_list):
             f = s['start'] + min(s['n'] - 1, int(fr * (s['n'] - 1)))
             pathlib.Path(out / f's{i:02d}_{k}.jpg').write_bytes(base64.b64decode(pg.evaluate(f'frame({f})').split(',')[1]))
