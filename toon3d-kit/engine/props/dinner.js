@@ -48,3 +48,28 @@ function person(x, cx, cy, s, color, face) {
     x.stroke();
   }
 }
+function tableScene(x, cx, cy, s, mood) {
+  const pos = [[-1, -1], [0, -1.15], [1, -1], [-1.25, .1], [1.25, .1], [0, 1.1]];   // far row, sides, near
+  const draw = (list) => list.forEach(([i, p]) => person(x, cx + p[0] * 150 * s, cy + p[1] * 70 * s - 40 * s, s * .95, PEOPLE[i], mood));
+  const idx = pos.map((p, i) => [i, p]);
+  draw(idx.filter(([, p]) => p[1] < 0));
+  x.lineWidth = 8 * s; x.strokeStyle = INK; x.fillStyle = '#b98552'; x.beginPath(); x.ellipse(cx, cy, 150 * s, 62 * s, 0, 0, 7); x.fill(); x.stroke();
+  x.fillStyle = '#f3f3f6'; for (const [px, py] of [[-70, -4], [-20, 14], [40, 8], [78, -6], [-8, -18]]) { x.beginPath(); x.ellipse(cx + px * s, cy + py * s, 17 * s, 7 * s, 0, 0, 7); x.fill(); }
+  x.fillStyle = '#e2463b'; x.beginPath(); x.ellipse(cx + 40 * s, cy + 8 * s, 8 * s, 3.5 * s, 0, 0, 7); x.fill();
+  draw(idx.filter(([, p]) => p[1] >= 0));
+}
+function tagBubble(x, cx, cy, letter, color) {
+  x.fillStyle = color; x.strokeStyle = INK; x.lineWidth = 12; x.beginPath(); x.arc(cx, cy, 78, 0, 7); x.fill(); x.stroke();
+  x.fillStyle = INK; x.font = '900 112px Helvetica, Arial'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(letter, cx, cy + 6);
+}
+// A real picture of the restaurant: the same set, table and six people as the dinner shots, rendered once from a fixed camera
+// into a 3:2 canvas (draws into a corner of the main canvas, copies it out, restores the viewport).
+let roomCanvas = null;
+function roomPicture() {
+  if (roomCanvas) return roomCanvas;
+  const R = RENDERER; if (!R) return null;
+  const scene = new THREE.Scene(); lighting(scene, 'restaurant', { shadowSize: 10 });
+  const set = asset('restaurant', { rug: false }); scene.add(set.root); (set.lights || []).forEach((f) => f(scene));
+  scene.add(asset('long-table', { layout: 'broad', cloth: true }));
+  const names = ['bean-jade', 'bean-max', 'bean', 'bean', 'bean', 'bean'];
+  BROAD_SEATS.forEach(([x, z, ry], k) => {
