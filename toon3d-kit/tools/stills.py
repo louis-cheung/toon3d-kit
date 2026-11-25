@@ -39,6 +39,11 @@ with sync_playwright() as p:
         last = None
         for k, fr in enumerate(fr_list):
             f = s['start'] + min(s['n'] - 1, int(fr * (s['n'] - 1)))
+            # replay (2026-11-25): the player carries pose state from the frames it drew before (it skips pose keys while a character
+            # walks), so a still drawn out of order can keep a stale pose. Draw every frame from the shot start (or the last still
+            # in this shot) up to f, the way the render does, so the still matches the video.
+            for w in range(last + 1 if last is not None else s['start'], f): pg.evaluate(f'frame({w})')
+            last = f
             pathlib.Path(out / f's{i:02d}_{k}.jpg').write_bytes(base64.b64decode(pg.evaluate(f'frame({f})').split(',')[1]))
     for e in errs[:10]: print('ERR', e)
     b.close()

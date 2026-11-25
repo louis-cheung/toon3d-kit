@@ -94,3 +94,28 @@ register('pennant-banner', { kind: 'fx', tags: ['thanksgiving', 'party', 'banner
       const tex = ctex(128, 160, (x, W, H) => { x.fillStyle = col; x.strokeStyle = '#2a1620'; x.lineWidth = 7; x.beginPath(); x.moveTo(6, 6); x.lineTo(W - 6, 6); x.lineTo(W / 2, H - 6); x.closePath(); x.fill(); x.stroke();
         x.fillStyle = '#fff8ec'; x.font = '900 78px Helvetica, Arial'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(c, W / 2, 56); }, { key: 'pennant' + c + col });
       put(g, G.plane(size * .8, size), new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: .4, side: THREE.DoubleSide, toneMapped: false }), { x: (t - .5) * w, y: -Math.sin(t * Math.PI) * sag - size / 2, z: .01, rz: (t - .5) * -.25, noInk: true, shadow: false }); });
+    return g;
+  } });
+
+register('juice-box', { inkWidth: .0025, tags: ['drink', 'kids', 'juice', 'thanksgiving', 'party', 'red-flag-tea'], aliases: ['kids-juice', 'juicebox'],
+  desc: 'A little juice box with a bendy straw: a bright carton with a drawn apple and the word JUICE. About 11 cm tall. Origin at the bottom; for a hand, attach to holdR at about [0, -.05, .04]. squish: sec it crumples a little (the clink).',
+  opts: { color: "carton colour ('#ef4a6a')", squish: 'sec of a small squeeze' },
+  build: ({ color = '#ef4a6a', squish = null } = {}) => {
+    const g = g0(), b = group(g), t = ctex(128, 192, (x, W, H) => { x.fillStyle = color; x.fillRect(0, 0, W, H); x.fillStyle = '#fff8ec'; x.fillRect(0, 0, W, 34);
+      x.fillStyle = '#e2463b'; x.beginPath(); x.arc(W / 2, H * .55, 30, 0, 7); x.fill(); x.lineWidth = 5; x.strokeStyle = '#2a1620'; x.stroke(); x.fillStyle = '#5e9c55'; x.beginPath(); x.ellipse(W / 2 + 12, H * .55 - 34, 12, 6, -.5, 0, 7); x.fill();
+      x.fillStyle = '#fff8ec'; x.font = '900 32px Helvetica, Arial'; x.textAlign = 'center'; x.fillText('JUICE', W / 2, H - 22); }, { key: 'juice' + color });
+    const m = toon(0xffffff, { map: t }); put(b, G.box(.065, .11, .04), m, { y: .055 });
+    const straw = group(b, { x: .015, y: .11 }); put(straw, G.cyl(.004, .004, .07, 6), toon(0xffffff), { y: .035, rz: -.15 }); put(straw, G.cyl(.004, .004, .035, 6), toon(0xffffff), { x: .012, y: .075, rz: -1.1 });
+    g.userData.update = (sec) => { const k = squish != null ? Math.max(0, 1 - Math.abs(sec - squish - .1) / .18) : 0; b.scale.set(1 - .18 * k, 1 + .05 * k, 1 - .18 * k); }; g.userData.update(0);
+    return g;
+  } });
+
+register('crayon-menu', { inkWidth: .0025, tags: ['kids', 'menu', 'paper', 'crayons', 'restaurant', 'thanksgiving'], aliases: ['kids-menu', 'placemat'],
+  desc: 'A kids\' paper placemat menu lying flat (KIDS MENU, a maze, a turkey to colour in, scribbles) with three crayons beside it. Origin on the table at its centre; the reader sits on +z.',
+  opts: { w: 'width m (.32)', seed: '' },
+  build: ({ w = .32, seed = 3 } = {}) => {
+    const g = g0(), r = rng(seed), t = ctex(384, 288, (x, W, H) => { x.fillStyle = '#fffaf0'; x.fillRect(0, 0, W, H); x.strokeStyle = '#2a1620'; x.lineWidth = 6; x.strokeRect(6, 6, W - 12, H - 12);
+      x.fillStyle = '#2a1620'; x.font = '900 38px Helvetica, Arial'; x.textAlign = 'center'; x.fillText('KIDS MENU', W / 2, 48);
+      x.lineWidth = 4; for (let i = 0; i < 4; i++) { x.strokeRect(24 + i * 12, 76 + i * 12, 140 - i * 24, 160 - i * 24); }   // a maze-ish box
+      x.beginPath(); x.arc(270, 160, 52, 0, 7); x.stroke(); for (let i = 0; i < 5; i++) { const a = -2.6 + i * .35; x.beginPath(); x.ellipse(270 + Math.cos(a) * 70, 160 + Math.sin(a) * 70, 14, 30, a + Math.PI / 2, 0, 7); x.stroke(); }   // turkey to colour
+      for (const [c, k] of [['#e2463b', 0], ['#3c7be0', 1], ['#5e9c55', 2]]) { x.strokeStyle = c; x.lineWidth = 7; x.beginPath(); x.moveTo(220 + k * 20, 130); for (let i = 0; i < 6; i++) x.lineTo(225 + k * 20 + r() * 80, 120 + r() * 90); x.stroke(); }
