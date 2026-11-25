@@ -23,3 +23,28 @@ register('dinner-table', {
     put(g, G.cyl(r * .93, r * .93, .07, 48), dark, { y: .67 });
     put(g, G.cyl(.1, .16, .62, 16), dark, { y: .31 });
     put(g, G.cyl(.5, .56, .05, 32), dark, { y: .025 });
+    if (cloth) put(g, G.cyl(r * .62, r * .62, .006, 40), toon(0xf3f3f6), { y: .763, noInk: true });
+    if (stools) for (const a of SEAT_ANGLES) {
+      const s = group(g, { x: Math.sin(a) * SEAT_R, z: Math.cos(a) * SEAT_R, ry: a + Math.PI });
+      put(s, G.cyl(.25, .23, .07, 24), toon(0x7a3f3a), { y: .445 });          // padded seat
+      put(s, G.cyl(.255, .255, .02, 24), toon(0x5a2c2c), { y: .41 });
+      for (let i = 0; i < 4; i++) { const b = i * Math.PI / 2 + Math.PI / 4; put(s, G.cyl(.022, .026, .4, 8), dark, { x: Math.cos(b) * .17, z: Math.sin(b) * .17, y: .2 }); }
+    }
+    g.userData.seats = SEAT_ANGLES.map((a) => [Math.sin(a) * SEAT_R, 0, Math.cos(a) * SEAT_R]);
+    return g;
+  },
+});
+
+// ---------- stage screen ----------
+const PEOPLE = ['#6a4fc4', '#ef8a3c', '#f08ab0', '#6bbf4a', '#e7e4ee', '#8a2f4a'];   // jade, max, then the four friends
+function person(x, cx, cy, s, color, face) {
+  x.lineWidth = 7 * s; x.strokeStyle = INK; x.fillStyle = color;
+  x.beginPath(); x.ellipse(cx, cy + 46 * s, 34 * s, 46 * s, 0, 0, 7); x.fill(); x.stroke();
+  x.fillStyle = '#f6f6f8'; x.beginPath(); x.arc(cx, cy, 30 * s, 0, 7); x.fill(); x.stroke();
+  if (face) {
+    x.fillStyle = INK; x.beginPath(); x.arc(cx - 10 * s, cy - 3 * s, 3.4 * s, 0, 7); x.arc(cx + 10 * s, cy - 3 * s, 3.4 * s, 0, 7); x.fill();
+    x.lineWidth = 3.4 * s; x.beginPath();
+    if (face === 'happy') x.arc(cx, cy + 4 * s, 11 * s, .15 * Math.PI, .85 * Math.PI); else { x.moveTo(cx - 8 * s, cy + 13 * s); x.lineTo(cx + 8 * s, cy + 13 * s); }
+    x.stroke();
+  }
+}
