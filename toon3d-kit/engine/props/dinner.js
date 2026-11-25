@@ -73,3 +73,28 @@ function roomPicture() {
   scene.add(asset('long-table', { layout: 'broad', cloth: true }));
   const names = ['bean-jade', 'bean-max', 'bean', 'bean', 'bean', 'bean'];
   BROAD_SEATS.forEach(([x, z, ry], k) => {
+    const o = asset(names[k], { pose: 'sit', expression: k === 0 ? 'deadpan' : k === 1 ? 'happy' : 'neutral', ...(k > 1 ? FRIEND_LOOKS[k - 2] : {}) }); o.position.set(x, 0, z); o.rotation.y = ry; scene.add(o);
+  });
+  for (const [name, at, sc, o] of [['lobster-plate', [.5, .77, .35], 1.9], ['salad-bowl', [-.5, .77, .35], 2.6], ['fries', [.15, .77, .05], 2.6], ['receipt', [0, .77, -.28], 2.8]]) { const a = asset(name, o || {}); a.position.set(...at); a.scale.setScalar(sc); scene.add(a); }
+  const cw = R.domElement.width, ch = R.domElement.height; let rw = Math.min(cw, 1080), rh = Math.round(rw / 1.5); if (rh > ch) { rh = ch; rw = Math.round(ch * 1.5); }
+  const cam = new THREE.PerspectiveCamera(30, 1.5, .1, 200); cam.position.set(0, 3.7, 8.6); cam.lookAt(0, .95, -.2);
+  R.setScissorTest(true); R.setViewport(0, 0, rw, rh); R.setScissor(0, 0, rw, rh); R.render(scene, cam);
+  const c = document.createElement('canvas'); c.width = rw; c.height = rh; c.getContext('2d').drawImage(R.domElement, 0, ch - rh, rw, rh, 0, 0, rw, rh);
+  R.setScissorTest(false); R.setViewport(0, 0, cw, ch);
+  roomCanvas = c; return c;
+}
+// The split bedrooms, frozen: Leo cold blue on the left, Mia warm pink on the right, both staring at their phones,
+// rendered once from the bedrooms-split set into a 3:2 canvas (same corner-render trick as roomPicture).
+let splitCanvas = null;
+function splitPicture() {
+  if (splitCanvas) return splitCanvas;
+  const R = RENDERER; if (!R) return null;
+  const scene = new THREE.Scene(), set = asset('bedrooms-split'); lighting(scene, set.light, { shadowSize: 8 }); scene.add(set.root); (set.lights || []).forEach((f) => f(scene));
+  const mia = find('bean-mia') ? ['bean-mia', {}] : ['bean', { body: 0xf07a8a, pattern: 'dots', patternColor: 0xffe4ec, limbs: 0x241726, hair: 'long', hairColor: 0x4a2a1a, faceStyle: 'bold', inkWidth: .03, inkColor: 0x241726 }];
+  for (const [name, o, at] of [['bean-leo', {}, set.spots.leo], [mia[0], mia[1], set.spots.mia]]) {
+    const c = asset(name, { pose: 'sit_phone', expression: 'shock', ...o }); c.position.set(...at); scene.add(c);
+    const ph = asset('phone-chat', { owner: name === 'bean-leo' ? 'leo' : 'mia', light: false, halo: false, h: .26 }); ph.rotation.set(-.3, Math.PI, 0); c.userData.rig.R.hand.add(ph);
+  }
+  const cw = R.domElement.width, ch = R.domElement.height; let rw = Math.min(cw, 1080), rh = Math.round(rw / 1.5); if (rh > ch) { rh = ch; rw = Math.round(ch * 1.5); }
+  const cam = new THREE.PerspectiveCamera(30, 1.5, .1, 200); cam.position.set(0, 1.9, 9.6); cam.lookAt(0, 1.45, -1);
+  R.setScissorTest(true); R.setViewport(0, 0, rw, rh); R.setScissor(0, 0, rw, rh); R.render(scene, cam);
