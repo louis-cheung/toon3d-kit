@@ -218,3 +218,28 @@ register('lettuce-leaf', { inkWidth: .004,
   },
 });
 
+// ---------- long dinner table ----------
+// Rectangular table, 4.4 m long and 1.5 m wide, top at y = 0.76, three stools a side (seat top 0.48). Built for a camera at one end:
+// the long axis is z, so the people stagger in depth and every face shows. Seats in local coordinates (x, z):
+export const LONG_SEATS = [[-1.1, 1.4], [1.1, 1.4], [-1.1, 0], [1.1, 0], [-1.1, -1.4], [1.1, -1.4]];
+// layout 'broad': the table runs left to right across the frame (axis x). Four friends sit on the far side, all facing the camera in a
+// row (faces never overlap), Jade and Max on the near side turned toward the camera. Seats (x, z, facing ry), in order jade, max, F1 to F4:
+export const BROAD_SEATS = [[-1.0, 1.05, .45], [1.0, 1.05, -.45], [-1.35, -1.05, .25], [-.45, -1.05, .1], [.45, -1.05, -.1], [1.35, -1.05, -.25]];
+export const FRIEND_LOOKS = [{ body: 0xf08ab0, hair: 'long', hairColor: 0x2b1b12 }, { body: 0x6bbf4a, hair: 'spiky', hairColor: 0x1f1a2e }, { body: 0x2f8f86, hat: 'cap', hatColor: 0xe2463b, glasses: true }, { body: 0x8a2f4a, hair: 'swoop', hairColor: 0x4a2a1a, glasses: true }];
+register('long-table', {
+  tags: ['table', 'dinner', 'restaurant', 'furniture', 'seats-six', 'group', 'long'], aliases: ['long-dinner-table'],
+  desc: 'Long restaurant table that seats six. layout "long": three a side running away from the camera (axis z). layout "broad": runs across the frame (axis x), four far-side seats at x -1.35, -0.45, 0.45, 1.35 (z -1.05) and two near-side seats at x -1, 1 (z 1.05, no backs so the people can turn to camera). cloth: true puts a white tablecloth on it. Top 0.77 m, stool seats 0.48 m.',
+  opts: { layout: "'long' or 'broad'", len: 'length (4.4, broad 4.2)', wid: 'width (1.5)', top: 'top color', cloth: 'true = white tablecloth', runner: 'false = no cream table runner (long, no cloth)', stools: 'false = table only',
+    seats: "long only (2026-11-14): seats along the sides, an even number (default 6 = the original layout); 8 needs len 5.8. userData.seats lists [x, z, ry] (ry = which way a seated bean faces)", ends: "long only: 'head' adds a seat at the far end (z -), 'both' at both ends", clothColor: 'tablecloth colour (white)' },
+  build: ({ layout = 'long', len, wid = 1.5, top = 0xc08a55, cloth = false, runner = true, stools = true, seats = 6, ends = null, clothColor = 0xf8f5ef } = {}) => {
+    const broad = layout === 'broad'; len = len ?? (broad ? 4.2 : 4.4);
+    const g = g0(), root = broad ? group(g, { ry: Math.PI / 2 }) : g, dark = toon(PAL.woodDark);   // build along z, then turn for broad
+    put(root, G.box(wid, .06, len), toon(top), { y: .73 });
+    put(root, G.box(wid * .94, .08, len * .96), dark, { y: .66 });
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) put(root, G.cyl(.06, .08, .66, 12), dark, { x: sx * (wid / 2 - .12), z: sz * (len / 2 - .2), y: .33 });
+    if (cloth) {
+      const cl = toon(clothColor); put(root, G.box(wid + .06, .02, len + .06), cl, { y: .76 });
+      for (const sx of [-1, 1]) put(root, G.box(.02, .3, len + .06), cl, { x: sx * (wid / 2 + .04), y: .61 });
+      for (const sz of [-1, 1]) put(root, G.box(wid + .06, .3, .02), cl, { z: sz * (len / 2 + .04), y: .61 });
+    } else if (runner) put(root, G.box(wid * .5, .008, len * .92), toon(0xf3ece4), { y: .762, noInk: true });
+    if (stools) {
