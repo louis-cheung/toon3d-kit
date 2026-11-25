@@ -173,3 +173,48 @@ register('ab-pill', {
       const r = Math.min(104, (H - 28) * .36), bx = 14 + 40 + r; x.fillStyle = INK; x.beginPath(); x.arc(bx, H / 2, r, 0, 7); x.fill();
       x.fillStyle = '#ffffff'; x.font = '900 ' + Math.round(r * 1.35) + 'px Helvetica, Arial'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(letter, bx, H / 2 + r * .06);
       const x0 = bx + r + 36, x1 = W - 62, cx = (x0 + x1) / 2; x.fillStyle = INK; x.textAlign = 'center';
+      const px0 = lines.length > 1 ? 128 : 150; const fit = lines.map((ln) => { x.font = '900 ' + px0 + 'px Helvetica, Arial'; const m = x.measureText(ln).width; return Math.min(px0, Math.floor(px0 * (x1 - x0) / m)); });
+      const px = Math.min(...fit), step = Math.min(px * 1.06, (H - 70) / lines.length); x.font = '900 ' + px + 'px Helvetica, Arial';
+      lines.forEach((ln, k) => x.fillText(ln, cx, H / 2 + (k - (lines.length - 1) / 2) * step + px * .04));
+    }, { key: 'abpill2:' + letter + label + sub + H });
+    const g = g0(); put(g, G.plane(w, w * H / W), new THREE.MeshBasicMaterial({ map: t, transparent: true, side: THREE.DoubleSide, toneMapped: false }), { y: w * H / W / 2, noInk: true, shadow: false });
+    g.userData.billboard = true; return g;
+  },
+});
+
+// ---------- pay card ----------
+register('pay-card', { inkWidth: .004,
+  tags: ['money', 'pay', 'card', 'restaurant', 'bill', 'ui'], aliases: ['card', 'credit-card'],
+  desc: 'Small payment card with a chip and tap waves. Optional floating amount label above it (always faces the camera), for the "each friend pays their own number" beats. Generic card, no real brand.',
+  opts: { amount: 'text of the floating label ($38), empty for none', tagH: 'label height above the card (0.2)', color: 'card color', w: 'label width (0.62)' },
+  build: ({ amount = '', tagH = .2, color = PAL.teal, w = .62 } = {}) => {
+    const g = g0(), c = group(g, { y: .0 });
+    put(c, G.rbox(.17, .11, .014, .012), toon(color), {}); put(c, G.box(.17, .02, .016), toon(PAL.black), { y: .03 });
+    put(c, G.box(.04, .03, .017), toon(PAL.steel), { x: -.045, y: -.012 });
+    for (let i = 0; i < 3; i++) put(c, G.torus(.014 + i * .011, .0035, 16, Math.PI), toon(0xffffff), { x: .045, y: -.014, z: .008, rz: -Math.PI / 2, noInk: true });
+    if (amount) {
+      const W = 512, H = 256, t = ctex(W, H, (x) => { x.fillStyle = '#26337e'; x.strokeStyle = INK; x.lineWidth = 14; x.beginPath(); x.roundRect(14, 14, W - 28, H - 28, 60); x.fill(); x.stroke();
+        x.fillStyle = '#ffffff'; x.font = '900 150px Helvetica, Arial'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(amount, W / 2, H / 2 + 8); }, { key: 'pay:' + amount });
+      const lab = group(g, { y: tagH }); put(lab, G.plane(w, w / 2), new THREE.MeshBasicMaterial({ map: t, transparent: true, side: THREE.DoubleSide, toneMapped: false }), { y: w / 4, noInk: true, shadow: false });
+      lab.userData.billboard = true;
+    }
+    return g;
+  },
+});
+
+// ---------- lettuce leaf ----------
+register('lettuce-leaf', { inkWidth: .004,
+  tags: ['food', 'restaurant', 'cheap', 'healthy', 'salad', 'prop'], aliases: ['leaf', 'lettuce'],
+  desc: 'One big ruffled lettuce leaf, about 0.26 m long. For the "that is all I had" beat. Hold it up between two fingers.',
+  opts: {},
+  build: () => {
+    const g = g0(), light = toon(0x9bd96b), mid = toon(0x7bbf5a), dark = toon(0x5e9c55);
+    put(g, G.sph(.1, 20, 12), light, { y: .006, z: -.01, s: [.95, .09, 1.25] });                         // blade
+    for (let i = 0; i < 9; i++) { const a = -Math.PI * .5 + i / 8 * Math.PI * 1.8 + .2, rx = .1 * .95, rz = .1 * 1.25;                         // ruffled rim
+      put(g, G.sph(.032, 10, 8), i % 2 ? mid : dark, { x: Math.sin(a) * rx * .95, z: -.01 + Math.cos(a) * rz * .95, y: .008, s: [1, .32, 1], ry: a, noInk: true }); }
+    put(g, G.box(.01, .004, .18), toon(0xe9f7cf), { y: .017, z: -.015, noInk: true });                    // center rib
+    for (const s of [-1, 1]) for (const k of [-1, 0, 1]) put(g, G.box(.005, .004, .05), toon(0xe9f7cf), { x: s * .035, y: .017, z: -.015 + k * .06, ry: s * .7, noInk: true });
+    return g;
+  },
+});
+

@@ -5,6 +5,9 @@
   .venv/bin/python tools/review.py episodes/<slug>/episode.js --ref ../references/be-honest-refs
 
 Writes review/sheet_1.jpg (and sheet_2.jpg past 12 shots): the middle frame of every shot with a big shot number.
+--cuts (2026-11-25, Ghosted v3): after `tools/stills.py --cuts`, a shot with camera cuts inside it shows one tile per camera
+(8a, 8b, ...: the middle of each camera span) instead of one middle frame, so an insert or a reaction cut inside a long
+shot reaches the verifier. Without --cuts the sheets are exactly as before.
 Writes review/ref.jpg when --ref points at a folder of reference frames (what a 10 looks like).
 Writes review/BRIEF.md: the rubric, the line each shot must show, the machine numbers, and the answer format.
 
