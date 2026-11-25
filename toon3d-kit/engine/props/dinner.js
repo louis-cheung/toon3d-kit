@@ -264,3 +264,44 @@ register('long-table', {
   },
 });
 
+// ---------- show sign ----------
+register('show-sign', {
+  kind: 'fx', tags: ['stage', 'gameshow', 'sign', 'logo', 'show', 'title'], aliases: ['show-logo', 'a-or-b-sign'],
+  desc: 'Our show mark: a marquee sign reading "A or B?" with the A in cyan #3fd0ff and the B in yellow #ffd23f (the two reserved colors, used for the show name only).',
+  opts: { w: 'width (3.2)' },
+  build: ({ w = 3.2 } = {}) => {
+    const g = g0(), h = w * .38, W = 1024, H = 390;
+    const t = ctex(W, H, (x) => {
+      x.fillStyle = '#1a1038'; x.beginPath(); x.roundRect(8, 8, W - 16, H - 16, 60); x.fill(); x.strokeStyle = '#0f0d17'; x.lineWidth = 14; x.stroke();
+      x.fillStyle = '#fff4f8'; for (let i = 0; i < 30; i++) { const a = i / 30; const px = 50 + a * (W - 100); for (const py of [32, H - 32]) { x.beginPath(); x.arc(px, py, 9, 0, 7); x.fill(); } }
+      for (let i = 0; i < 9; i++) { const py = 70 + i / 8 * (H - 140); for (const px of [30, W - 30]) { x.beginPath(); x.arc(px, py, 9, 0, 7); x.fill(); } }
+      x.textBaseline = 'middle'; x.lineJoin = 'round'; x.lineWidth = 22; x.strokeStyle = '#0f0d17';
+      const word = (t, px, col, size) => { x.font = '900 ' + size + 'px Helvetica, Arial'; x.textAlign = 'center'; x.strokeText(t, px, H / 2 + 8); x.fillStyle = col; x.fillText(t, px, H / 2 + 8); };
+      word('A', 190, OPT_A, 330); word('or', 435, '#ffffff', 150); word('B', 690, OPT_B, 330); word('?', 900, '#ffffff', 300);
+    }, { key: 'showsign' });
+    put(g, G.plane(w, h), new THREE.MeshBasicMaterial({ map: t, transparent: true, toneMapped: false }), { y: h / 2, z: .03, noInk: true, shadow: false });
+    put(g, G.box(w * .96, h * .9, .05), toon(0x1a1038), { y: h / 2, z: -.01 });
+    return g;
+  },
+});
+
+// ---------- audience row ----------
+register('audience-row', {
+  kind: 'fx', tags: ['stage', 'audience', 'crowd', 'foreground', 'silhouette', 'gameshow'], aliases: ['crowd-row'],
+  desc: 'A row of dark audience heads and shoulders seen from behind, for foreground depth in the host stage shots. Different hair shapes so the row does not look copied. Stays dark so the hosts pop.',
+  opts: { n: 'heads (9)', gap: 'center gap in meters (0.9)', spread: 'half width (3.4)', seed: '' },
+  build: ({ n = 9, gap = .9, spread = 3.4, seed = 3 } = {}) => {
+    const g = g0(), r = rng(seed), m = toon(0x1c1634), m2 = toon(0x2a2050);
+    for (let i = 0; i < n; i++) {
+      let x = -spread + i / (n - 1) * spread * 2; if (Math.abs(x) < gap) x += x < 0 ? -gap : gap;
+      const p = group(g, { x, y: 0, z: (r() - .5) * .5 }), hgt = .75 + r() * .15;
+      put(p, G.cap(.3, .25, 14), i % 2 ? m : m2, { y: hgt - .5, s: [1.15, 1, .8] });
+      put(p, G.sph(.26, 18, 14), m, { y: hgt + .12 });
+      const k = Math.floor(r() * 4);
+      if (k === 0) put(p, G.sph(.13, 12, 8), m2, { y: hgt + .42 });                         // bun
+      if (k === 1) put(p, G.sph(.285, 16, 10), m2, { y: hgt + .16, s: [1, .8, 1] });         // big hair
+      if (k === 2) for (let q = 0; q < 5; q++) put(p, G.cone(.06, .18, 6), m2, { x: (q - 2) * .09, y: hgt + .36, rz: (q - 2) * -.2 });   // spikes
+    }
+    return g;
+  },
+});
