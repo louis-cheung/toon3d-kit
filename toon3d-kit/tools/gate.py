@@ -8,14 +8,15 @@
 The gate opens only when all of this is true for the episode file exactly as it is now:
   1. tools/review.py ran its clip check on it and found no clipping (it writes review/gate.json),
   2. three fresh verifiers' seven scores (STYLE.md 10b) were recorded here (one --scores each, run in parallel on the
-     same stills), and the median of each area is 6 or more (Louis, 2026-11-24: "let's switch to 3"),
-  3. no fix was marked blocking by 2 or more of them.
+     same stills; Louis, 2026-11-24: "let's switch to 3"). The medians are recorded for comparison but never block
+     (RULES 20, 23; 2026-11-27: scores check clarity and craft, never taste),
+  3. no fix was marked blocking by 2 or more of them (blocking = a viewer can't follow or read it).
 Editing episode.js shuts it again: re-run tools/stills.py and tools/review.py, then record the new scores.
 There is no override flag. Stills (render.py --stills, tools/stills.py) are never gated.
 """
 import argparse, hashlib, json, pathlib, re, statistics, sys, time
 
 AREAS = ['story', 'staging', 'characters', 'colour', 'depth', 'variety', 'continuity']
-MIN = 6
-VERIFIERS = 3   # RULES P9, 2026-11-24: three fresh verifiers per round; the gate reads the median of each area
+MIN = 6   # shown as a warning only since 2026-11-27; it no longer shuts the gate
+VERIFIERS = 3   # RULES 20, 2026-11-24: three fresh verifiers per round; the gate reads the median of each area
 

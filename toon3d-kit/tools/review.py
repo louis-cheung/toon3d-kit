@@ -17,7 +17,7 @@ this script exit 1. Clipping fails the stills: fix it before the scored review a
 
 Then a FRESH agent (never the one that built the episode) reads BRIEF.md and the sheets and answers with seven
 scores and at most five fixes. It costs two or three images and about 200 words, once per episode at the stills
-stage. Run it a second time only if a score came back under 6. Everything frame-by-frame stays with the free
+stage. Run it a second time only if a fix came back BLOCKING (scores are recorded, never blocking; RULES 20, 23). Everything frame-by-frame stays with the free
 scripts (tools/qa_frames.py, tools/look_metrics.py); this is the one step that needs eyes.
 """
 import argparse, json, pathlib, re, subprocess, tempfile, shutil

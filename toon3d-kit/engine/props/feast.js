@@ -119,3 +119,27 @@ register('crayon-menu', { inkWidth: .0025, tags: ['kids', 'menu', 'paper', 'cray
       x.lineWidth = 4; for (let i = 0; i < 4; i++) { x.strokeRect(24 + i * 12, 76 + i * 12, 140 - i * 24, 160 - i * 24); }   // a maze-ish box
       x.beginPath(); x.arc(270, 160, 52, 0, 7); x.stroke(); for (let i = 0; i < 5; i++) { const a = -2.6 + i * .35; x.beginPath(); x.ellipse(270 + Math.cos(a) * 70, 160 + Math.sin(a) * 70, 14, 30, a + Math.PI / 2, 0, 7); x.stroke(); }   // turkey to colour
       for (const [c, k] of [['#e2463b', 0], ['#3c7be0', 1], ['#5e9c55', 2]]) { x.strokeStyle = c; x.lineWidth = 7; x.beginPath(); x.moveTo(220 + k * 20, 130); for (let i = 0; i < 6; i++) x.lineTo(225 + k * 20 + r() * 80, 120 + r() * 90); x.stroke(); }
+    }, { key: 'kidsmenu' + seed });
+    put(g, G.plane(w, w * .75), toon(0xffffff, { map: t }), { y: .002, rx: -Math.PI / 2, noInk: true, shadow: false });
+    ['#e2463b', '#3c7be0', '#f5c84a'].forEach((c, i) => { const cr = group(g, { x: w * .58, y: .007, z: -.05 + i * .035, ry: .2 * i }); put(cr, G.cyl(.006, .006, .08, 8), toon(c), { rz: Math.PI / 2 }); put(cr, G.cone(.006, .014, 8), toon(c), { x: .047, rz: -Math.PI / 2 }); });
+    return g;
+  } });
+
+register('kids-table', { inkWidth: .006,
+  tags: ['kids', 'table', 'thanksgiving', 'party', 'restaurant', 'furniture', 'red-flag-tea'], aliases: ['childrens-table', 'little-table'],
+  desc: 'The kids\' table: a small low round table (top .5 m) with a paper cloth, crayon menus, juice boxes and a pie, three little stools (seat .3 m) and one more little stool for the grown-up who got sent there. userData.seats lists [x, z, ry] for kid 0..2 and the grown-up (last).',
+  opts: { r: 'table radius (.55)', grownup: 'true = a fourth little stool for an adult (default true)', menus: 'true = crayon menus (default)' },
+  build: ({ r = .55, grownup = true, menus = true } = {}) => {
+    const g = g0(), top = .5, wood = toon(0xd8b07a);
+    put(g, G.cyl(r, r * .96, .04, 36), wood, { y: top - .02 }); put(g, G.cyl(r * 1.01, r * 1.01, .006, 36), toon(0xfff4e0), { y: top + .002, noInk: true });
+    for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2 + .6; put(g, G.cyl(.025, .03, top - .03, 8), toon(0xb98552), { x: Math.cos(a) * r * .6, y: (top - .03) / 2, z: Math.sin(a) * r * .6 }); }
+    const seats = [[0, r + .3, Math.PI], [-(r + .28), .1, Math.PI / 2], [r + .28, .1, -Math.PI / 2]]; if (grownup) seats.push([0, -(r + .32), 0]);
+    const cols = [0xe2463b, 0x3c7be0, 0x5e9c55, 0xf5c84a];
+    seats.forEach(([x, z], i) => { const st = group(g, { x, z }); put(st, G.cyl(.16, .15, .05, 18), toon(cols[i % cols.length]), { y: .28 }); for (let k = 0; k < 3; k++) { const b = k * Math.PI * 2 / 3; put(st, G.cyl(.016, .02, .27, 6), toon(0xb98552), { x: Math.cos(b) * .1, z: Math.sin(b) * .1, y: .13 }); } });
+    seats.slice(0, 3).forEach(([x, z], i) => { const a = Math.atan2(x, z), d = r * .55;
+      if (menus) { const m = raw('crayon-menu', { seed: i + 2, w: .26 }); m.position.set(Math.sin(a) * d, top + .004, Math.cos(a) * d); m.rotation.y = a; g.add(m); }
+      const jb = raw('juice-box', { color: ['#ef4a6a', '#3fa0e0', '#f0a63a'][i] }); jb.position.set(Math.sin(a + .5) * d * 1.1, top + .004, Math.cos(a + .5) * d * 1.1); jb.scale.setScalar(.9); g.add(jb); });
+    const pie = raw('harvest-pie'); pie.position.set(.06, top, -.08); g.add(pie);
+    g.userData.seats = seats.map(([x, z, ry]) => [x, z, ry]); g.userData.top = top;
+    return g;
+  } });
