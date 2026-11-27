@@ -93,3 +93,28 @@ register('sports-car', {
         x.fillStyle = '#2a1830'; x.fillRect(0, h * .78, w, h * .22); x.strokeStyle = '#241726'; x.lineWidth = 6; x.strokeRect(3, 3, w - 6, h - 6); }, { key: 'cardoorhole' }) }), { x: -.1, y: .5, z: zs, ry: sd > 0 ? 0 : Math.PI, noInk: true });
       tornHinge(hole, .64, zs, sd);
       const pivot = group(g, { x: .65, y: .48, z: sd * (W / 2 - .02) }); pivot.scale.z = sd; pivot.add(carDoor(color, 0));   // mirrored on the -z side so the outside face points out
+      const sparks = [], sparkM = new THREE.MeshBasicMaterial({ color: 0xffd36a, toneMapped: false, transparent: true });
+      for (let i = 0; i < 9; i++) { const m = put(g, G.box(.12, .018, .018), sparkM, { x: .7, y: .5, z: sd * (W / 2 + .05), noInk: true, shadow: false }); m.visible = false; sparks.push([m, hash3(i, 2, 3), hash3(i, 5, 1)]); }
+      const set = (sec) => {
+        const k = doorGone ? 2 : doorOff ? (sec - doorOff[0]) / Math.max(.01, doorOff[1] - doorOff[0]) : -1;
+        hole.visible = k >= .3; pivot.visible = k < (fly ? 1 : .3);
+        if (k < .3) { const a = k < 0 ? 0 : sm(k / .3); pivot.position.set(.65, .48, sd * (W / 2 - .02)); pivot.rotation.set(Math.sin(sec * 50) * .03 * a, sd * .75 * a, 0); }
+        else if (k < 1) { const u = (k - .3) / .7; pivot.position.set(.65 + 9 * u * u + 1.2 * u, .48 + 1.4 * u - 1.6 * u * u, sd * (W / 2 + .3 + 2.2 * u)); pivot.rotation.set(5 * u, sd * (.75 + 3 * u), 2.5 * u); }
+        for (const [m, a, b] of sparks) { const u = (k - .22 - a * .1) / .3; m.visible = u > 0 && u < 1; if (!m.visible) continue;
+          m.position.set(.7 + (a - .3) * 1.4 * u, .5 + (b - .2) * u - 1.2 * u * u, sd * (W / 2 + .05 + 1.1 * u * b)); m.rotation.set(0, a * 6, b * 3); sparkM.opacity = 1 - u * .5; }
+      };
+      set(0); ups.push(set);
+    }
+    if (hazards) {   // orange corner lights blinking at about 2.5 Hz, like an alarm
+      const hm = glow(0xff9a2a), lamps = [];
+      for (const [x, z] of [[L / 2 - .1, .82], [L / 2 - .1, -.82], [-L / 2 + .05, .82], [-L / 2 + .05, -.82]]) lamps.push(put(g, G.sph(.07, 12, 8), hm, { x, y: .62, z, s: [1, .7, .7], noInk: true }));
+      const h0 = typeof hazards === 'number' ? hazards : -1; ups.push((sec) => { const on = sec >= h0 && Math.floor((sec - h0) * 5) % 2 === 0; hm.color.setHex(on ? 0xffb43a : 0x6a3a1a); });
+    }
+    // ---- v3 crash options (2026-11-13). None of this is built unless asked for, so the old car is unchanged. ----
+    const dmgOn = rearDamage > 0 || !!rearDamageAt, dmgMax = rearDamage > 0 ? Math.min(1, rearDamage) : 1, CR = .45;   // CR: metres the rear is pushed in at full damage
+    const dmgAt = (sec) => (!dmgOn ? 0 : rearDamageAt ? dmgMax * sm((sec - rearDamageAt[0]) / Math.max(.01, rearDamageAt[1] - rearDamageAt[0])) : dmgMax);
+    if (dmgOn) {   // folded metal at the new rear face, creases down both flanks, the boot lid sprung up, a smashed tail light
+      const crush = toon(0x9a1c1a), folds = group(g), creases = group(g);
+      for (let i = 0; i < 4; i++) put(folds, G.box(.045, .36 - i * .035, W * (.9 - i * .05)), crush, { x: -.02 - i * .055, y: .47 + (i % 2) * .03, rz: (i % 2 ? -.62 : .62), ry: (i - 1.5) * .07 });   // an accordion: thin plates zigzagging
+      for (const s of [-1, 1]) for (let i = 0; i < 3; i++) put(creases, G.box(.32, .022, .02), dark, { x: -.25 - i * .22, y: .42 + i * .07, z: s * (W / 2 + .012), rz: (i % 2 ? .5 : -.45), noInk: true });
+      for (const [x, ry] of [[-.32, .25], [-.6, -.2]]) put(creases, G.box(.025, .02, W * .85), dark, { x, y: .86, ry, noInk: true });   // buckles across the boot lid
