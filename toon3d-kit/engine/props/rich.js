@@ -143,3 +143,24 @@ register('sports-car', {
           const fall = c01(b / .55), bounce = b > .55 ? Math.sin(c01((b - .55) / .3) * Math.PI) * .045 : 0;
           y = .22 - .155 * fall * fall + bounce; rx = .13 * (1 - fall); rz = .3 + .25 * fall; x = x0 - .28 * sm(b); ry = -.5 - .15 * sm(b); z = -.86 + .1 * sm(b);
         }
+        bp.position.set(x, y, z); bp.rotation.set(rx, ry, rz);
+      };
+      setBump(uAt(0), dmgAt(0)); ups.push((sec) => setBump(uAt(sec), dmgAt(sec)));
+    }
+    if (airbags) {   // driver's from the wheel hub, passenger's from the dash, both blowing back toward the seats (-x)
+      const pop = Array.isArray(airbags) ? airbags : null;
+      for (const [x, y, z, r] of [[.33, .98, -.33, .26], [.5, .84, .33, .27]]) ups.push(airbagParts(g, r, { x, y, z, ry: -Math.PI / 2 }, pop, 1, null));
+    }
+    if (ups.length) { g.userData.update = (sec) => ups.forEach((f) => f(sec)); g.userData.update(0); }
+    return g;
+  },
+});
+
+register('car-door', {
+  tags: ['vehicle', 'car', 'door', 'wreck', 'crash', 'rich-system'], aliases: ['torn-door'],
+  desc: 'Tyler\'s red car door on its own (the one the bus takes off): red panel, top rail, handle, wing mirror, torn hinge shards and a cable at its front end. Origin at the hinge end; the panel runs back along -x 1.5 m, outside face +z. crumpled 0..1 dents and folds it.',
+  opts: { color: 'red', crumpled: '0..1 (0)', hinge: 'false = no torn hinge bits' },
+  inkWidth: .01,
+  build: ({ color = 0xd8322e, crumpled = 0, hinge = true } = {}) => { const g = g0(); g.add(carDoor(color, crumpled)); if (hinge) tornHinge(g, .02, .02, 1); return g; },
+});
+
