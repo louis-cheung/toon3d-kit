@@ -18,3 +18,28 @@ function liveTex(w, h, draw, key) {
 }
 
 
+// ---------- the red car's door (v2, 2026-11-12): one builder for the door on the car, the torn-off door prop and the door on the bus ----------
+// The door is a group whose origin is the hinge (its front edge, +x end); the panel runs back along -x for 1.5 m, outside face +z.
+// crumple 0..1 dents it: vertices pushed in by a fixed noise, the back corner folded, so it reads as a wreck at any size.
+function hash3(x, y, z) { const v = Math.sin(x * 127.1 + y * 311.7 + z * 74.7) * 43758.5453; return v - Math.floor(v); }
+function carDoor(color = 0xd8322e, crumple = 0) {
+  const d = g0(), body = toon(color), dark = toon(0x2a2430), chrome = toon(0xd9dce6), L = 1.5;
+  const geo = new THREE.BoxGeometry(L, .5, .07, 14, 6, 1); geo.translate(-L / 2, 0, 0);
+  if (crumple > 0) { const p = geo.attributes.position;
+    for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i), z = p.getZ(i), u = -x / L;
+      const n = hash3(Math.round(x * 9), Math.round(y * 12), 0) - .5;
+      p.setZ(i, z - crumple * (.07 * n + .16 * Math.sin(u * Math.PI) * (.6 + .4 * Math.cos(y * 9)) + .2 * Math.max(0, u - .7) ** 1.2));
+      p.setY(i, y * (1 - crumple * .1 * Math.sin(u * Math.PI)) - crumple * .12 * Math.max(0, u - .6) * (y + .25)); }
+    geo.computeVertexNormals(); }
+  put(d, geo, body, { y: 0 });
+  put(d, G.rbox(1.6, .14, .14, .06), body, { x: -L / 2 - .05, y: .27 - crumple * .03, rz: crumple * .06 });   // the top rail
+  put(d, G.box(.16, .035, .03), chrome, { x: -L + .32, y: .12, z: .05, noInk: true }); put(d, G.box(.12, .02, .01), dark, { x: -L + .32, y: .12, z: .066, noInk: true });   // handle
+  put(d, G.box(.03, .5, .006), dark, { x: -.02, z: .037, noInk: true });   // seam at the hinge end
+  const mir = group(d, { x: -.12, y: .36, z: .07 }); put(mir, G.cyl(.015, .015, .1, 8), dark, { y: -.03, z: .04, rx: 1.2 }); put(mir, G.rbox(.16, .1, .06, .02), body, { y: .02, z: .1 });
+  put(mir, G.plane(.12, .07), glow(0xbfe0ff), { y: .02, z: .07, ry: Math.PI, noInk: true });
+  return d;
+}
+/** Torn hinge: jagged grey metal shards and a dangling cable, for the front edge of a ripped-off door (on the car or on the door). */
+function tornHinge(parent, x, z, s = 1) {
+  const metal = toon(0xb8bcc8), dark = toon(0x3a3440);
+  for (const [y, len, a] of [[.18, .14, .5], [.02, .11, -.3], [-.14, .16, .2]]) { put(parent, G.cone(.035, len, 4), metal, { x: x - .02, y, z: z + s * .03, rz: Math.PI / 2 + a, ry: s * .3 }); put(parent, G.box(.06, .05, .03), dark, { x: x + .01, y, z }); }
