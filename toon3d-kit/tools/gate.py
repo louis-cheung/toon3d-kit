@@ -1,4 +1,4 @@
-"""The render gate (RULES P9): template/render.py refuses a frame render until the stills have passed.
+"""The render gate (RULES 20): template/render.py refuses a frame render until the stills have passed.
 
   .venv/bin/python tools/gate.py episodes/<slug>/episode.js                                   # show the gate, exit 1 if shut
   .venv/bin/python tools/gate.py episodes/<slug>/episode.js --scores "story 8 | staging 8 | ..." --scores "..." --scores "..."   # three verifiers
