@@ -68,3 +68,28 @@ register('sports-car', {
     for (const s of [-1, 1]) { put(g, G.rbox(.45, .14, .5, .06), seat, { x: -.25, y: .66, z: s * .33 }); put(g, G.rbox(.13, .4, .48, .06), seat, { x: -.5, y: .86, z: s * .33, rz: .2 }); }
     put(g, G.torus(.15, .025, 20), dark, { x: .35, y: .98, z: -.33, ry: Math.PI / 2, rx: .5 }); put(g, G.cyl(.02, .02, .3, 8), dark, { x: .45, y: .88, z: -.33, rz: .9 });
     // windshield frame + glass
+    put(g, G.box(.06, .34, W * .9), chrome, { x: .6, y: .9, rz: -.55 }); put(g, G.box(.04, .3, W * .86), glow(0xbfe6ff, { transparent: true, opacity: .35 }), { x: .62, y: .9, rz: -.55, noInk: true });
+    // wheels with rims
+    for (const [a, b] of [[-1.35, -1], [1.3, -1], [-1.35, 1], [1.3, 1]]) { put(g, G.cyl(.34, .34, .26, 24), toon(0x1c1820), { x: a, y: .34, z: b * (W / 2 - .05), rx: Math.PI / 2 });
+      put(g, G.cyl(.2, .2, .27, 16), chrome, { x: a, y: .34, z: b * (W / 2 - .05), rx: Math.PI / 2, noInk: true }); }
+    // lights, grille, plate, tailpipes
+    for (const s of [-1, 1]) { put(g, G.sph(.12, 16, 10), glow(lights ? 0xfff6d0 : 0xf4f0e0), { x: L / 2 - .08, y: .58, z: s * .62, s: [.5, .8, 1.4], noInk: true }); tails.push(put(g, G.box(.04, .1, .32), glow(0xff4a4a), { x: -L / 2 + .01, y: .6, z: s * .6, noInk: true })); }
+    put(g, G.box(.03, .14, .7), dark, { x: L / 2 + .005, y: .44, noInk: true });
+    const plateM = put(g, G.plane(.52, .14), glow(0xffffff, { map: ctex(256, 70, (x, w, h) => { x.fillStyle = '#f6f2ea'; x.fillRect(0, 0, w, h); x.strokeStyle = INKC; x.lineWidth = 6; x.strokeRect(3, 3, w - 6, h - 6); x.fillStyle = '#1f3c88'; x.font = 'bold 50px Helvetica'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(plate, w / 2, h / 2 + 2); }, { key: 'plate' + plate }) }), { x: -L / 2 - .01, y: .42, ry: -Math.PI / 2, noInk: true });
+    for (const s of [-1, 1]) pipes.push(put(g, G.cyl(.045, .045, .2, 12), chrome, { x: -L / 2 - .02, y: .3, z: s * .35, rz: Math.PI / 2 }));
+    if (dent) {   // crumpled rear: the corner pushed in, a cracked light, a crease
+      put(g, G.rbox(.3, .42, W * .7, .05), toon(0xb02622), { x: -L / 2 + .12, y: .48, z: .2, ry: .25, rz: .12 });
+      put(g, G.box(.02, .3, .02), dark, { x: -L / 2 + .02, y: .55, z: .55, rz: .6, noInk: true });
+    }
+    if (puff) {   // stall smoke: grey puffs swelling up from the bonnet
+      const pm = new THREE.MeshBasicMaterial({ color: 0x8a8794, transparent: true, depthWrite: false, toneMapped: false }), P = [];
+      for (let i = 0; i < 6; i++) { const m = put(g, G.sph(.18, 14, 10), pm.clone(), { x: 1.3 + (i % 3 - 1) * .2, y: .9, z: (i % 2 ? .2 : -.2), noInk: true, shadow: false }); P.push(m); }
+      g.userData.update = (sec) => { const k = c01((sec - puff[0]) / Math.max(.01, puff[1] - puff[0])); P.forEach((m, i) => { const kk = c01(k * 1.4 - i * .08); m.visible = kk > 0; m.scale.setScalar(.4 + kk * 2.2); m.position.y = .9 + kk * (.6 + i * .12); m.material.opacity = .85 * (1 - kk * .6); }); };
+      ups.push(g.userData.update);
+    }
+    if (withDoor) {   // a real door on one side: hinge at its front edge (x .65); when it goes, a dark doorway and a torn hinge stay
+      const sd = doorSide, zs = sd * (W / 2 + .005), hole = group(g);
+      put(hole, G.plane(1.5, .46), glow(0xffffff, { map: ctex(300, 92, (x, w, h) => { x.fillStyle = '#3a2440'; x.fillRect(0, 0, w, h); x.fillStyle = '#d9c3a0'; x.beginPath(); x.roundRect(w * .3, h * .1, w * .34, h * .6, 10); x.fill();
+        x.fillStyle = '#2a1830'; x.fillRect(0, h * .78, w, h * .22); x.strokeStyle = '#241726'; x.lineWidth = 6; x.strokeRect(3, 3, w - 6, h - 6); }, { key: 'cardoorhole' }) }), { x: -.1, y: .5, z: zs, ry: sd > 0 ? 0 : Math.PI, noInk: true });
+      tornHinge(hole, .64, zs, sd);
+      const pivot = group(g, { x: .65, y: .48, z: sd * (W / 2 - .02) }); pivot.scale.z = sd; pivot.add(carDoor(color, 0));   // mirrored on the -z side so the outside face points out
