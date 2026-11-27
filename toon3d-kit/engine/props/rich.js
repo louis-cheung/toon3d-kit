@@ -118,3 +118,28 @@ register('sports-car', {
       for (let i = 0; i < 4; i++) put(folds, G.box(.045, .36 - i * .035, W * (.9 - i * .05)), crush, { x: -.02 - i * .055, y: .47 + (i % 2) * .03, rz: (i % 2 ? -.62 : .62), ry: (i - 1.5) * .07 });   // an accordion: thin plates zigzagging
       for (const s of [-1, 1]) for (let i = 0; i < 3; i++) put(creases, G.box(.32, .022, .02), dark, { x: -.25 - i * .22, y: .42 + i * .07, z: s * (W / 2 + .012), rz: (i % 2 ? .5 : -.45), noInk: true });
       for (const [x, ry] of [[-.32, .25], [-.6, -.2]]) put(creases, G.box(.025, .02, W * .85), dark, { x, y: .86, ry, noInk: true });   // buckles across the boot lid
+      const shards = []; for (let i = 0; i < 4; i++) shards.push(put(g, G.cone(.03, .07, 3), glow(0xff7a6a), { x: -L / 2 + .05, y: .45 + i * .05, z: .62 + (i - 1.5) * .07, rz: Math.PI / 2 + (i - 1.5) * .5, noInk: true }));
+      const setDmg = (k) => {
+        bodyM.scale.x = (L - CR * k) / L; bodyM.position.x = CR * k / 2;
+        deckM.position.set(-1.5 + CR * k * .9, .72 + .05 * k, 0); deckM.rotation.z = .05 - .24 * k;
+        folds.visible = creases.visible = k > .02; folds.position.x = -L / 2 + CR * k; folds.scale.set(1, .4 + .6 * k, 1);
+        creases.position.x = -L / 2 + 1.0 + CR * k * .5; creases.scale.set(k, 1, 1);
+        tails.forEach((m, i) => { m.position.x = -L / 2 + .01 + CR * k; m.material.color.setHex(k > .35 && i === 1 ? 0x4a1620 : 0xff4a4a); m.rotation.z = i === 1 ? .6 * k : 0; });
+        shards.forEach((m) => { m.visible = k > .35; m.position.x = -L / 2 + .03 + CR * k; });
+        plateM.position.x = -L / 2 - .01 + CR * k; plateM.position.y = .42 - .04 * k; plateM.rotation.z = .32 * k;
+        pipes.forEach((m, i) => { m.position.x = -L / 2 - .02 + CR * k; m.rotation.set(0, (i ? .5 : -.3) * k, Math.PI / 2 - .25 * k); });
+      };
+      setDmg(dmgAt(0)); ups.push((sec) => setDmg(dmgAt(sec)));
+    }
+    if (dmgOn || bumperDrop != null) {   // the rear bumper bar: pivots on its driver-side end (-z)
+      const bp = group(g), bar = group(bp); bar.position.z = .86;
+      put(bar, G.rbox(.16, .13, 1.72, .05), body, {}); put(bar, G.box(.02, .04, 1.62), dark, { x: -.08, noInk: true }); put(bar, G.box(.04, .03, 1.5), chrome, { y: .07, noInk: true });
+      const uAt = (sec) => (Array.isArray(bumperDrop) ? c01((sec - bumperDrop[0]) / Math.max(.01, bumperDrop[1] - bumperDrop[0])) : bumperDrop ?? .14 * dmgAt(sec));
+      const setBump = (u, k) => {
+        const x0 = -L / 2 - .05 + CR * k, a = sm(u / .5), b = c01((u - .5) / .5);
+        // phase 1 (u 0..0.5): the +z end lets go, drops to the road and swings out behind the car, with a dying wobble
+        let rx = .13 * a + .05 * Math.sin(u * 44) * a * (1 - a) * 2, ry = -.5 * a, y = .22, x = x0, rz = .3 * a, z = -.86;
+        if (b > 0) {   // phase 2 (u 0.5..1): the other end lets go, the bar falls flat onto the road, bounces once and settles a little further back
+          const fall = c01(b / .55), bounce = b > .55 ? Math.sin(c01((b - .55) / .3) * Math.PI) * .045 : 0;
+          y = .22 - .155 * fall * fall + bounce; rx = .13 * (1 - fall); rz = .3 + .25 * fall; x = x0 - .28 * sm(b); ry = -.5 - .15 * sm(b); z = -.86 + .1 * sm(b);
+        }
