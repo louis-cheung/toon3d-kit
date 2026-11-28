@@ -20,3 +20,23 @@ AREAS = ['story', 'staging', 'characters', 'colour', 'depth', 'variety', 'contin
 MIN = 6   # shown as a warning only since 2026-11-27; it no longer shuts the gate
 VERIFIERS = 3   # RULES 20, 2026-11-24: three fresh verifiers per round; the gate reads the median of each area
 
+def _local_imports(ep, seen=None):
+    """Files the episode imports from its own folder ('./x.js', followed recursively). Engine imports ('../../engine/...') are not included."""
+    ep = pathlib.Path(ep).resolve(); seen = seen if seen is not None else set(); out = []
+    for rel in re.findall(r"""from\s+['"](\./[^'"]+)['"]|import\(\s*['"](\./[^'"]+)['"]""", ep.read_text(errors='ignore')):
+        q = (ep.parent / (rel[0] or rel[1])).resolve()
+        if q.exists() and q not in seen: seen.add(q); out += [q] + _local_imports(q, seen)
+    return out
+def sha(ep):
+    """The episode file's hash, plus every file it imports from its own folder (2026-11-24: editing a shot file like
+    face-blend-test/build.js shut nothing before). With no local imports it is the plain file hash, so old stamps stay valid."""
+    h = hashlib.sha256(pathlib.Path(ep).read_bytes()); extra = sorted(_local_imports(ep))
+    if not extra: return h.hexdigest()
+    for q in extra: h.update(str(q.name).encode()); h.update(q.read_bytes())
+    return h.hexdigest()
+def path(ep): return pathlib.Path(ep).resolve().parent / 'review' / 'gate.json'
+def load(ep):
+    p = path(ep)
+    try: return json.loads(p.read_text()) if p.exists() else {}
+    except ValueError: return {}
+
