@@ -331,3 +331,28 @@ function drawPanel(x, W, H, o, sec) {
       if (r.countdown != null) { const s = Math.max(0, Math.ceil(r.countdown - Math.max(0, sec - (r.countAt || 0)))); const t = `${String(Math.floor(s / 3600)).padStart(2, '0')}:${String(Math.floor(s / 60) % 60).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
         x.textAlign = 'right'; x.fillStyle = '#ff8a7a'; x.font = '900 58px Courier New, monospace'; x.fillText(t, X + w - 34, y + 62); } }
     y += rh + 30;
+  }
+  if (o.footer) { x.textAlign = 'center'; x.fillStyle = Math.floor(sec * 2.4) % 2 ? '#7fe8ff' : '#f4fcff'; x.font = '900 60px Helvetica'; x.fillText(o.footer, W / 2, y + 40); }
+}
+register('system-panel', {
+  kind: 'fx', tags: ['ui', 'system', 'hud', 'game', 'reward', 'rich-system'], aliases: ['system', 'hud-panel'],
+  desc: 'The SYSTEM: a floating blue glass panel with a cyan edge glow, SYSTEM / V1.0 corners, a big title and rows (task with countdown, gold reward that fills, loading bar). Always faces the camera. open [t0,t1] unfolds it from a bright line; flicker [t0,t1] is a ghost flash; out: sec it blinks away.',
+  opts: { w: 'width in m (1.2)', aspect: 'height / width (.75)', kicker: 'small line above the title', title: 'big title, \\n for two lines', rows: "[{kind: 'task'|'reward'|'load', label, text, size, fill: [t0,t1], countdown: sec, countAt, loadAt: [t0,t1]}]", footer: 'blinking line at the bottom', titleSize: 'title font px on the 1024-wide panel (112); bigger for a one-word shout or an emoji (Ep 3)', bob: 'metres of slow up-down float (0)', open: '[t0, t1]', flicker: '[t0, t1]', out: 'sec', opacity: 'max opacity (1)', sparkle: 'true = the fairy twinkle: six small four-point stars (white, pale gold, pink) twinkling on the corners and just above the top edge, clear of the text. Off by default' },
+  build: (o = {}) => {
+    const { w = 1.2, aspect = .75, open = null, flicker = null, out = null, opacity = 1, bob = 0 } = o, W = 1024, H = Math.round(1024 * aspect), g = g0(), card = group(g);
+    const lt = liveTex(W, H, (x, ww, hh, sec) => drawPanel(x, ww, hh, o, sec), (sec) => Math.floor(sec * 12));
+    const m = new THREE.MeshBasicMaterial({ map: lt.tex, transparent: true, depthWrite: false, toneMapped: false, side: THREE.DoubleSide });
+    const face = put(card, G.plane(w, w * aspect), m, { noInk: true, shadow: false }); face.renderOrder = 10;
+    const halo = ctex(256, 192, (x, ww, hh) => { const r = x.createRadialGradient(ww / 2, hh / 2, 10, ww / 2, hh / 2, ww / 2); r.addColorStop(0, 'rgba(110,210,255,.7)'); r.addColorStop(1, 'rgba(110,210,255,0)'); x.fillStyle = r; x.fillRect(0, 0, ww, hh); }, { key: 'panel-halo' });
+    const hm = new THREE.MeshBasicMaterial({ map: halo, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false });
+    const hp = put(card, G.plane(w * 1.6, w * aspect * 1.6), hm, { z: -.01, noInk: true, shadow: false }); hp.renderOrder = 9;
+    const line = put(card, G.plane(w * 1.05, .012), new THREE.MeshBasicMaterial({ color: 0xcff6ff, transparent: true, depthWrite: false, toneMapped: false }), { z: .002, noInk: true, shadow: false }); line.renderOrder = 11;
+    card.userData.billboard = true;
+    const stars = o.sparkle ? panelSparkles(card, w, w * aspect) : null;   // v3: the fairy guide's twinkle, off by default
+    g.userData.update = (sec) => { lt.update(sec); if (bob) card.position.y = bob * Math.sin(sec * 2.2);
+      let sy = 1, a = opacity, la = 0;
+      if (open) { const k = (sec - open[0]) / Math.max(.01, open[1] - open[0]); sy = Math.max(.002, sm(k * 1.2 - .2)); la = k < 0 ? 0 : k < 1 ? 1 - sm(k) : 0; a *= k <= 0 ? 0 : 1; }
+      if (flicker) { const k = (sec - flicker[0]) / Math.max(.01, flicker[1] - flicker[0]); a *= k < 0 || k > 1 ? 0 : (Math.floor(sec * 24) % 3 ? .55 : .15) * Math.sin(Math.PI * k); }
+      if (out != null && sec >= out) { const k = (sec - out) / .25; sy = Math.max(.002, 1 - sm(k)); la = k < 1.2 ? 1 - c01(k - .2) : 0; a *= k < 1 ? 1 : 0; }
+      face.scale.y = sy; hp.scale.y = sy; m.opacity = a; hm.opacity = a * .8; line.material.opacity = la; card.visible = a > .001 || la > .001;
+      if (stars) stars(sec, a * sm((sy - .7) / .3)); };
