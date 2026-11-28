@@ -189,3 +189,52 @@ register('city-bus', {
     for (const s of [-1, 1]) { put(g, G.box(L - 2.2, 1.0, .03), glass, { x: -.6, y: 2.2, z: s * (W / 2 + .02), noInk: true });
       for (let i = 0; i <= 6; i++) put(g, G.box(.08, 1.04, .05), frame, { x: -.6 - (L - 2.2) / 2 + i * (L - 2.2) / 6, y: 2.2, z: s * (W / 2 + .025), noInk: true });
       if (heads) for (let i = 0; i < 6; i++) if ((i + (s > 0 ? 0 : 1)) % 3 !== 2) { const hx = -.6 - (L - 2.2) / 2 + (i + .5) * (L - 2.2) / 6;
+        put(g, G.sph(.17, 14, 10), glow(0x1e2a48), { x: hx, y: 2.2, z: s * (W / 2 - .05), s: [1, 1.15, 1], noInk: true }); put(g, G.box(.5, .25, .1), glow(0x1e2a48), { x: hx, y: 1.85, z: s * (W / 2 - .05), noInk: true }); } }
+    // front: big windshield, destination sign, lights
+    put(g, G.box(.04, 1.5, W - .3), glow(0x3a5a8a), { x: L / 2 + .14, y: 2.0, noInk: true });   // + .14: the rounded body's bevel stands .13 proud of L / 2
+    const sign = ctex(1024, 160, (x, w, h) => { x.fillStyle = '#121018'; x.fillRect(0, 0, w, h); x.fillStyle = '#ffb83a'; x.font = 'bold 110px Courier New, monospace'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(route, w / 2, h / 2 + 6); }, { key: 'bussign' + route });
+    put(g, G.plane(W - .5, .34), glow(0xffffff, { map: sign }), { x: L / 2 + .16, y: 2.9, ry: Math.PI / 2, noInk: true });
+    for (const s of [-1, 1]) put(g, G.sph(.13, 14, 10), glow(0xfff4cc), { x: L / 2 + .15, y: .85, z: s * .95, s: [.4, 1, 1], noInk: true });
+    put(g, G.box(.12, .35, W + .05), dark, { x: L / 2 + .1, y: .55 });   // bumper
+    put(g, G.box(.12, .35, W + .05), dark, { x: -L / 2 + .02, y: .55 });
+    // wheels
+    for (const [a, b] of [[-3.4, -1], [3.2, -1], [-3.4, 1], [3.2, 1]]) { put(g, G.cyl(.52, .52, .34, 24), toon(0x1c1820), { x: a, y: .52, z: b * (W / 2 - .12), rx: Math.PI / 2 }); put(g, G.cyl(.26, .26, .35, 16), toon(0xc9ccd6), { x: a, y: .52, z: b * (W / 2 - .12), rx: Math.PI / 2, noInk: true }); }
+    // front doors on +z: two glass leaves that slide apart
+    const dg = glow(0x456896), leaves = [];
+    for (const s of [-1, 1]) { const lf = group(g, { x: L / 2 - 1.05 + s * .32, y: 1.45, z: W / 2 + .03 }); put(lf, G.box(.62, 2.0, .04), frame, { noInk: true }); put(lf, G.box(.5, 1.8, .05), dg, { noInk: true }); leaves.push([lf, s]); }
+    const setDoors = (k) => { for (const [lf, s] of leaves) { lf.position.x = L / 2 - 1.05 + s * (.32 + .3 * k); lf.position.z = W / 2 + .03 + .12 * k; } };
+    setDoors(doors);
+    if (doorsAt) g.userData.update = (sec) => setDoors(sm((sec - doorsAt[0]) / Math.max(.01, doorsAt[1] - doorsAt[0])));
+    if (hangingDoor) {   // the car door hooked on the bumper by its hinge end, outside face forward (+x), the far end dragging to the road at the corner
+      const hd = group(g, { x: L / 2 + .16, y: .8, z: -hangingSide * .3, ry: Math.PI / 2 }); hd.scale.x = hangingSide;
+      const d = carDoor(0xd8322e, .55); d.rotation.z = .5; hd.add(d); tornHinge(hd, .02, .02, 1);
+    }
+    return g;
+  },
+});
+
+// ---------- farebox ----------
+// screen states: idle (TAP CARD), declined (red), paid (FARE / BALANCE), each over a timeline.
+function drawFare(x, w, h, st) {
+  const bg = st.state === 'declined' ? '#e2463b' : st.state === 'paid' ? '#2f9a5a' : '#173a5a';
+  x.fillStyle = bg; x.fillRect(0, 0, w, h); x.strokeStyle = '#0d0b12'; x.lineWidth = 14; x.strokeRect(7, 7, w - 14, h - 14);
+  x.fillStyle = '#ffffff'; x.textAlign = 'center'; x.textBaseline = 'middle';
+  if (st.state === 'declined') { x.font = '900 96px Helvetica'; x.fillText('DECLINED', w / 2, h * .42); x.font = 'bold 50px Helvetica'; x.fillText('INSUFFICIENT FUNDS', w / 2, h * .72); }
+  else if (st.state === 'paid') { x.font = 'bold 62px Helvetica'; x.textAlign = 'left'; x.fillText('FARE', 40, h * .3); x.fillText('BALANCE', 40, h * .7); x.textAlign = 'right'; x.font = '900 78px Helvetica'; x.fillText(st.fare, w - 40, h * .3); x.fillText(st.balance, w - 40, h * .7); }
+  else { x.font = '900 84px Helvetica'; x.fillText('TAP CARD', w / 2, h * .42); x.font = 'bold 46px Helvetica'; x.fillText('FARE ' + st.fare, w / 2, h * .72); }
+}
+register('farebox', {
+  tags: ['bus', 'transit', 'pay', 'fare', 'rich-system'], aliases: ['fare-machine'],
+  desc: 'Bus farebox on a post: a big readable screen (TAP CARD / DECLINED in red / FARE and BALANCE in green), a card pad and a status light. Screen faces +z, top at y 1.2. screens: [{at, state}] changes it over the shot.',
+  opts: { state: "'idle' | 'declined' | 'paid'", fare: "'$2.75'", balance: "'$0.00'", screens: '[{at: sec, state, fare, balance}]' },
+  inkWidth: .008,
+  build: (o = {}) => {
+    const base = { state: 'idle', fare: '$2.75', balance: '$0.00', ...o }, g = g0(), body = toon(0x3a3e4e), steel = toon(0xa8adbb);
+    put(g, G.cyl(.06, .08, .8, 16), steel, { y: .4 }); put(g, G.rbox(.42, .5, .34, .05), body, { y: .98 });
+    const sc = liveTex(640, 400, (x, w, h, sec) => drawFare(x, w, h, stateAt(base, base.screens, sec)), (sec) => stateAt(base, base.screens, sec).state);
+    put(g, G.plane(.34, .21), glow(0xffffff, { map: sc.tex }), { y: 1.08, z: .2, rx: -.15, noInk: true });
+    put(g, G.rbox(.22, .13, .06, .02), toon(0x26242e), { y: .82, z: .18 });
+    put(g, G.plane(.16, .09), glow(0xffffff, { map: ctex(160, 90, (x, w, h) => { x.fillStyle = '#e8eef6'; x.fillRect(0, 0, w, h); x.strokeStyle = '#3a4a6a'; x.lineWidth = 5; for (const r of [14, 26, 38]) { x.beginPath(); x.arc(w / 2 - 20, h / 2, r, -.8, .8); x.stroke(); } }, { key: 'pad' }) }), { y: .82, z: .212, noInk: true });
+    const lamp = put(g, G.sph(.035, 12, 8), glow(0x7a7f8e), { y: 1.27, noInk: true });
+    g.userData.update = (sec) => { sc.update(sec); const st = stateAt(base, base.screens, sec).state; lamp.material.color.setHex(st === 'declined' ? (Math.floor(sec * 6) % 2 ? 0xff3a30 : 0x7a1a18) : st === 'paid' ? 0x3cff7a : 0x7a7f8e); };
+    g.userData.update(0); return g;
