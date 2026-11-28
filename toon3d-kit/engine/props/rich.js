@@ -306,3 +306,28 @@ function drawPanel(x, W, H, o, sec) {
   const cy = '#7fe8ff', gold = '#ffd36a';
   panelShape(x, 20, 20, W - 40, H - 40, 46); const bg = x.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, 'rgba(18,40,92,.88)'); bg.addColorStop(1, 'rgba(10,22,58,.9)'); x.fillStyle = bg; x.fill();
   x.save(); panelShape(x, 20, 20, W - 40, H - 40, 46); x.clip(); x.strokeStyle = 'rgba(127,232,255,.08)'; x.lineWidth = 2; for (let i = 0; i < W; i += 36) { x.beginPath(); x.moveTo(i, 0); x.lineTo(i, H); x.stroke(); } for (let j = 0; j < H; j += 36) { x.beginPath(); x.moveTo(0, j); x.lineTo(W, j); x.stroke(); }
+  const sweep = ((sec * .5) % 1.6) - .3; const sg = x.createLinearGradient(W * sweep - 200, 0, W * sweep + 200, H * .3); sg.addColorStop(0, 'rgba(255,255,255,0)'); sg.addColorStop(.5, 'rgba(200,240,255,.12)'); sg.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = sg; x.fillRect(0, 0, W, H); x.restore();
+  x.shadowColor = cy; x.shadowBlur = 26; x.strokeStyle = cy; x.lineWidth = 9; panelShape(x, 20, 20, W - 40, H - 40, 46); x.stroke(); x.shadowBlur = 0;
+  x.lineWidth = 3; x.strokeStyle = 'rgba(127,232,255,.6)'; panelShape(x, 40, 40, W - 80, H - 80, 36); x.stroke();
+  x.fillStyle = cy; x.font = 'bold 34px Helvetica'; x.textBaseline = 'middle'; x.textAlign = 'left'; x.fillText('SYSTEM', 80, 84); x.fillRect(80, 106, 160, 3); x.textAlign = 'right'; x.fillText('V1.0', W - 80, 84);
+  let y = 120;
+  if (o.kicker) { x.textAlign = 'center'; x.fillStyle = '#bfefff'; x.font = 'bold 52px Helvetica'; x.fillText(o.kicker, W / 2, y + 40); y += 80; }
+  if (o.title) { const lines = String(o.title).split('\n'); x.textAlign = 'center'; x.shadowColor = cy; x.shadowBlur = 30; x.fillStyle = '#f4fcff'; const tp = o.titleSize || 112, lh = o.titleSize ? tp * 1.05 : 118; x.font = `900 ${tp}px Helvetica`;   // titleSize (Ep 3, default 112): title px on the 1024-wide panel
+    lines.forEach((l, i) => x.fillText(l, W / 2, y + 70 * tp / 112 + i * lh, W - 160)); x.shadowBlur = 0; y += 40 + lines.length * lh;
+    x.strokeStyle = cy; x.lineWidth = 4; x.beginPath(); x.moveTo(W * .2, y); x.lineTo(W * .45, y); x.moveTo(W * .55, y); x.lineTo(W * .8, y); x.stroke();
+    x.fillStyle = cy; x.beginPath(); x.moveTo(W / 2, y - 16); x.lineTo(W / 2 + 18, y); x.lineTo(W / 2, y + 16); x.lineTo(W / 2 - 18, y); x.closePath(); x.fill(); y += 40; }
+  for (const r of o.rows || []) {
+    const isGold = r.kind === 'reward', col = isGold ? gold : cy, rh = r.kind === 'load' ? 150 : 210, X = 80, w = W - 160;
+    x.fillStyle = isGold ? 'rgba(90,64,10,.55)' : 'rgba(20,60,120,.6)'; panelShape(x, X, y, w, rh, 26); x.fill();
+    if (isGold && r.fill) { const k = sm((sec - r.fill[0]) / Math.max(.01, r.fill[1] - r.fill[0])); x.save(); panelShape(x, X, y, w, rh, 26); x.clip(); const fg = x.createLinearGradient(X, 0, X + w, 0); fg.addColorStop(0, 'rgba(255,200,80,.55)'); fg.addColorStop(1, 'rgba(255,230,140,.35)'); x.fillStyle = fg; x.fillRect(X, y, w * k, rh); x.restore(); }
+    x.shadowColor = col; x.shadowBlur = 18; x.strokeStyle = col; x.lineWidth = 6; panelShape(x, X, y, w, rh, 26); x.stroke(); x.shadowBlur = 0;
+    // icon: a gift for rewards, a clipboard for tasks
+    const ix = X + 90, iy = y + rh / 2; x.strokeStyle = col; x.fillStyle = col; x.lineWidth = 7;
+    if (isGold) { x.fillRect(ix - 42, iy - 14, 84, 52); x.fillRect(ix - 50, iy - 34, 100, 22); x.fillStyle = 'rgba(90,64,10,1)'; x.fillRect(ix - 6, iy - 34, 12, 72); x.beginPath(); x.ellipse(ix - 18, iy - 44, 18, 10, -.4, 0, 7); x.ellipse(ix + 18, iy - 44, 18, 10, .4, 0, 7); x.stroke(); }
+    else if (r.kind === 'task') { x.beginPath(); x.roundRect(ix - 38, iy - 50, 76, 100, 10); x.stroke(); x.fillRect(ix - 18, iy - 60, 36, 18); for (let k = 0; k < 3; k++) { x.beginPath(); x.moveTo(ix - 24, iy - 16 + k * 26); x.lineTo(ix - 16, iy - 8 + k * 26); x.lineTo(ix - 4, iy - 24 + k * 26); x.stroke(); x.fillRect(ix + 4, iy - 18 + k * 26, 22, 6); } }
+    if (r.kind === 'load') { const k = r.loadAt ? c01((sec - r.loadAt[0]) / Math.max(.01, r.loadAt[1] - r.loadAt[0])) : .6; x.fillStyle = '#bfefff'; x.font = 'bold 50px Helvetica'; x.textAlign = 'left'; x.fillText(r.label || 'LOADING', X + 40, y + 50);
+      x.strokeStyle = cy; x.lineWidth = 4; x.strokeRect(X + 40, y + 88, w - 80, 34); x.fillStyle = cy; x.fillRect(X + 46, y + 94, (w - 92) * k, 22); }
+    else { x.textAlign = 'left'; x.fillStyle = col; x.font = 'bold 48px Helvetica'; x.fillText(r.label || '', X + 170, y + 62); x.fillStyle = isGold ? '#ffe9a8' : '#f4fcff'; x.font = `900 ${r.size || 70}px Helvetica`; x.fillText(r.text || '', X + 170, y + 140, w - 200);
+      if (r.countdown != null) { const s = Math.max(0, Math.ceil(r.countdown - Math.max(0, sec - (r.countAt || 0)))); const t = `${String(Math.floor(s / 3600)).padStart(2, '0')}:${String(Math.floor(s / 60) % 60).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+        x.textAlign = 'right'; x.fillStyle = '#ff8a7a'; x.font = '900 58px Courier New, monospace'; x.fillText(t, X + w - 34, y + 62); } }
+    y += rh + 30;
