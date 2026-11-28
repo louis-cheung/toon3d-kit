@@ -238,3 +238,46 @@ register('farebox', {
     const lamp = put(g, G.sph(.035, 12, 8), glow(0x7a7f8e), { y: 1.27, noInk: true });
     g.userData.update = (sec) => { sc.update(sec); const st = stateAt(base, base.screens, sec).state; lamp.material.color.setHex(st === 'declined' ? (Math.floor(sec * 6) % 2 ? 0xff3a30 : 0x7a1a18) : st === 'paid' ? 0x3cff7a : 0x7a7f8e); };
     g.userData.update(0); return g;
+  },
+});
+
+// ---------- traffic light ----------
+register('traffic-light', {
+  tags: ['street', 'city', 'road', 'signal', 'rich-system'], aliases: ['stoplight', 'signal'],
+  desc: 'Traffic light on a pole with an arm: red, amber and green lamps. Faces +z. state, or screens: [{at, state}] to switch (red to green).',
+  opts: { state: "'red' | 'amber' | 'green'", screens: '[{at, state}]', arm: 'arm length (1.6)' },
+  build: (o = {}) => {
+    const base = { state: 'red', ...o }, g = g0(), k = toon(0x2e3040), arm = o.arm ?? 1.6;
+    put(g, G.cyl(.07, .09, 4.2, 12), k, { y: 2.1 }); put(g, G.box(arm, .1, .1), k, { x: arm / 2, y: 4.1 });
+    const box = group(g, { x: arm - .1, y: 3.55 }); put(box, G.rbox(.36, 1.0, .3, .06), toon(0xe0b42a));
+    const L = {}; [['red', .3, 0xff3a30], ['amber', 0, 0xffb42a], ['green', -.3, 0x3cff7a]].forEach(([n, y, c]) => { L[n] = [put(box, G.cyl(.12, .12, .04, 18), glow(0x3a3440), { y, z: .16, rx: Math.PI / 2, noInk: true }), c]; put(box, G.box(.3, .04, .14), k, { y: y + .13, z: .2, noInk: true }); });
+    g.userData.update = (sec) => { const st = stateAt(base, base.screens, sec).state; for (const n in L) L[n][0].material.color.setHex(n === st ? L[n][1] : 0x3a3440); };
+    g.userData.update(0); return g;
+  },
+});
+
+// ---------- car showroom ----------
+register('car-showroom', {
+  tags: ['building', 'cars', 'dealership', 'rich', 'street', 'rich-system'], aliases: ['dealership', 'showroom'],
+  desc: 'Glass car showroom front: tall glass wall, a bright white floor, the same red convertible on a turntable in the window, spot lights, a sign on top. Front faces +z, 9 m wide.',
+  opts: { sign: "sign text ('PRESTIGE MOTORS')", carColor: 'colour of the car in the window', price: "price card on a stand beside the car ('$148,000'); off by default", priceAt: '[x, z] of the price stand ([2.3, -1.0])', decal: 'true = the name in gold letters on the glass, low enough to read from a bus window' },
+  inkWidth: .014,
+  build: ({ sign = 'PRESTIGE  MOTORS', carColor = 0xd8322e, price = null, priceAt = [2.3, -1.0], decal = false } = {}) => {
+    const g = g0(), W = 9, H = 4.6, D = 5, frame = toon(0x2a2c38);
+    put(g, G.box(W, .1, D), toon(0xf4f2ee), { y: .05, z: -D / 2 }); put(g, G.box(W, H, .2), toon(0xd8dae4), { y: H / 2, z: -D });
+    for (const s of [-1, 1]) put(g, G.box(.3, H, D), toon(0xd8dae4), { x: s * (W / 2), y: H / 2, z: -D / 2 });
+    put(g, G.box(W + .4, .5, D + .2), toon(0x22242e), { y: H + .2, z: -D / 2 });
+    put(g, G.plane(W - .6, .9), glow(0xffffff, { map: ctex(1600, 160, (x, w, h) => { x.fillStyle = '#16141c'; x.fillRect(0, 0, w, h); x.fillStyle = '#e6c25a'; x.font = 'bold 120px Georgia, serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(sign, w / 2, h / 2 + 6); }, { key: 'showsign' + sign }) }), { y: H + .2, z: .02, noInk: true });
+    put(g, G.box(W, H, .04), glow(0xcfe8ff, { transparent: true, opacity: .16, depthWrite: false }), { y: H / 2, z: 0, noInk: true });
+    for (let i = 0; i <= 4; i++) put(g, G.box(.08, H, .1), frame, { x: -W / 2 + i * W / 4, y: H / 2, noInk: true });
+    put(g, G.cyl(1.9, 1.9, .12, 40), toon(0xeceaf2), { y: .16, z: -2.4 });
+    const car = find('sports-car').build({ color: carColor }); car.position.set(0, .22, -2.4); car.rotation.y = .5; car.traverse((m) => { if (m.isMesh && !m.userData.isInk) m.userData.noInk = false; }); g.add(car);
+    for (const x of [-2.6, 0, 2.6]) put(g, G.cone(.25, .35, 16), glow(0xfff6dc), { x, y: H - .3, z: -1.4, noInk: true });
+    if (decal) put(g, G.plane(2.5, .42), glow(0xffffff, { transparent: true, map: ctex(1400, 200, (x, w, h) => { x.clearRect(0, 0, w, h); x.fillStyle = 'rgba(22,20,28,.72)'; x.fillRect(0, 0, w, h); x.fillStyle = '#e6c25a'; x.font = 'bold 130px Georgia, serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(sign, w / 2, h / 2 + 6, w - 60); }, { key: 'showdecal' + sign }) }), { y: 2.45, z: .04, noInk: true });
+    if (price) {   // a price card on a chrome stand, angled to the street, beside the car
+      const st = group(g, { x: priceAt[0], z: priceAt[1], ry: -.25 * Math.sign(priceAt[0] || 1) }), chrome = toon(0xd9dce6);
+      put(st, G.cyl(.25, .3, .05, 24), chrome, { y: .17 }); put(st, G.cyl(.025, .025, 1.0, 10), chrome, { y: .65 });
+      put(st, G.box(1.0, .66, .04), toon(0x16141c), { y: 1.38 });
+      put(st, G.plane(.94, .6), glow(0xffffff, { map: ctex(940, 600, (x, w, h) => { x.fillStyle = '#fbf6ea'; x.fillRect(0, 0, w, h); x.strokeStyle = '#e6c25a'; x.lineWidth = 18; x.strokeRect(14, 14, w - 28, h - 28);
+        x.fillStyle = '#2b2230'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = 'bold 70px Helvetica'; x.fillText('SPECIAL', w / 2, 130); x.fillStyle = '#d5322c'; x.font = '900 200px Helvetica'; x.fillText(price, w / 2, 340, w - 70); x.fillStyle = '#2b2230'; x.font = 'bold 54px Helvetica'; x.fillText('DRIVE TODAY', w / 2, 500); }, { key: 'price' + price }) }), { y: 1.38, z: .022, noInk: true });
+    }
