@@ -356,3 +356,26 @@ register('system-panel', {
       if (out != null && sec >= out) { const k = (sec - out) / .25; sy = Math.max(.002, 1 - sm(k)); la = k < 1.2 ? 1 - c01(k - .2) : 0; a *= k < 1 ? 1 : 0; }
       face.scale.y = sy; hp.scale.y = sy; m.opacity = a; hm.opacity = a * .8; line.material.opacity = la; card.visible = a > .001 || la > .001;
       if (stars) stars(sec, a * sm((sy - .7) / .3)); };
+    g.userData.update(0); return g;
+  },
+});
+
+// ---------- Ep 1 v2 street props (2026-11-12): the empty bike rack, the cut lock, the bus-zone sign, her building's entrance ----------
+register('cut-lock', {
+  tags: ['bike', 'lock', 'stolen', 'street', 'rich-system'], aliases: ['cut-cable-lock'],
+  desc: 'A cut cable bike lock lying on the ground: a loose coil of blue-sheathed cable, two cut ends showing bright frayed steel, the yellow lock head. Lies on y 0, about 0.5 m across.',
+  opts: { color: 'cable sheath colour (blue)' }, inkWidth: .006,
+  build: ({ color = 0x2f6ad8 } = {}) => {
+    const g = g0(), sheath = toon(color), steel = toon(0xe8ecf4), head = toon(0xf0b43a), dark = toon(0x2a2430);
+    const pts = []; for (let i = 0; i <= 40; i++) { const t = i / 40, a = t * Math.PI * 3.3, r = .2 - .05 * t + .02 * Math.sin(t * 17); pts.push(new THREE.Vector3(Math.cos(a) * r + t * .12, .022 + .01 * Math.sin(a * 2), Math.sin(a) * r * .8)); }
+    const c = new THREE.CatmullRomCurve3(pts); put(g, new THREE.TubeGeometry(c, 90, .018, 8), sheath);
+    for (const [p, tg] of [[pts[0], c.getTangent(0)], [pts[40], c.getTangent(1)]]) {   // cut ends: bright steel stubs and splayed wires
+      const e = group(g, { x: p.x, y: p.y, z: p.z }); e.lookAt(p.x + tg.x * (p === pts[0] ? -1 : 1), p.y, p.z + tg.z * (p === pts[0] ? -1 : 1));
+      put(e, G.cyl(.015, .015, .04, 10), steel, { z: .02, rx: Math.PI / 2 });
+      for (let k = 0; k < 4; k++) put(e, G.cyl(.004, .004, .05, 5), steel, { x: (k - 1.5) * .008, y: (k % 2 - .5) * .01, z: .055, rx: Math.PI / 2 + (k - 1.5) * .25, rz: (k - 1.5) * .3, noInk: true });
+    }
+    const lh = group(g, { x: .05, y: .045, z: .02, ry: .6 }); put(lh, G.rbox(.13, .08, .07, .02), head); put(lh, G.cyl(.022, .022, .075, 14), dark, { x: .04, rx: Math.PI / 2 }); put(lh, G.cyl(.012, .012, .08, 8), steel, { x: .04, noInk: true, rx: Math.PI / 2 });
+    return g;
+  },
+});
+
