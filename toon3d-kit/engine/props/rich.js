@@ -164,3 +164,28 @@ register('car-door', {
   build: ({ color = 0xd8322e, crumpled = 0, hinge = true } = {}) => { const g = g0(); g.add(carDoor(color, crumpled)); if (hinge) tornHinge(g, .02, .02, 1); return g; },
 });
 
+// ---------- the city bus, outside ----------
+function busSideTex(route) {
+  return ctex(2048, 512, (x, w, h) => {
+    x.fillStyle = '#f2f0ea'; x.fillRect(0, 0, w, h);
+    x.fillStyle = '#1f8f86'; x.fillRect(0, h * .78, w, h * .1); x.fillStyle = '#f0b43a'; x.fillRect(0, h * .9, w, h * .04);
+    // a side ad: the delivery app Ethan rides for
+    x.fillStyle = '#ef7d2a'; x.beginPath(); x.roundRect(w * .52, h * .52, w * .3, h * .22, 18); x.fill(); x.strokeStyle = INKC; x.lineWidth = 8; x.stroke();
+    x.fillStyle = '#fff6e8'; x.font = 'bold 74px Helvetica'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('EATS  in 20 min', w * .67, h * .63);
+    x.fillStyle = '#1f3c88'; x.font = 'bold 60px Helvetica'; x.fillText(route, w * .2, h * .62);
+  }, { key: 'busside' + route });
+}
+register('city-bus', {
+  tags: ['vehicle', 'bus', 'transit', 'street', 'city', 'rich-system'], aliases: ['bus'],
+  desc: 'Big city bus seen from outside: white and teal, a row of dark windows with passenger heads, a lit destination sign, front doors on the +z side near the front. Front points +x. doors: 0..1 open, or doorsAt: [t0, t1] to open them.',
+  opts: { route: 'destination sign ("12 DOWNTOWN")', doors: '0..1', doorsAt: '[t0, t1] doors open over this span', heads: 'true = passenger heads in the windows', hangingDoor: "true = Tyler's red car door snagged on the front bumper, dangling (curb-side front corner)", hangingSide: '1 = +z corner (default) | -1' },
+  inkWidth: .014,
+  build: ({ route = '12  DOWNTOWN', doors = 0, doorsAt = null, heads = true, hangingDoor = false, hangingSide = 1 } = {}) => {
+    const g = g0(), L = 11, W = 2.55, H = 3.05, white = toon(0xf2f0ea), side = toon(0xffffff, { map: busSideTex(route) }), dark = toon(0x262838);
+    put(g, G.rbox(L, H - .45, W, .22), white, { y: .45 + (H - .45) / 2 });
+    for (const s of [-1, 1]) put(g, G.plane(L - .4, H - .5), side, { y: .45 + (H - .45) / 2 - .05, z: s * (W / 2 + .005), ry: s > 0 ? 0 : Math.PI, noInk: true });
+    // windows: a dark glass band each side, framed, with heads
+    const glass = glow(0x2c3f6a), frame = toon(0x2a2a36);
+    for (const s of [-1, 1]) { put(g, G.box(L - 2.2, 1.0, .03), glass, { x: -.6, y: 2.2, z: s * (W / 2 + .02), noInk: true });
+      for (let i = 0; i <= 6; i++) put(g, G.box(.08, 1.04, .05), frame, { x: -.6 - (L - 2.2) / 2 + i * (L - 2.2) / 6, y: 2.2, z: s * (W / 2 + .025), noInk: true });
+      if (heads) for (let i = 0; i < 6; i++) if ((i + (s > 0 ? 0 : 1)) % 3 !== 2) { const hx = -.6 - (L - 2.2) / 2 + (i + .5) * (L - 2.2) / 6;
