@@ -281,3 +281,28 @@ register('car-showroom', {
       put(st, G.plane(.94, .6), glow(0xffffff, { map: ctex(940, 600, (x, w, h) => { x.fillStyle = '#fbf6ea'; x.fillRect(0, 0, w, h); x.strokeStyle = '#e6c25a'; x.lineWidth = 18; x.strokeRect(14, 14, w - 28, h - 28);
         x.fillStyle = '#2b2230'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = 'bold 70px Helvetica'; x.fillText('SPECIAL', w / 2, 130); x.fillStyle = '#d5322c'; x.font = '900 200px Helvetica'; x.fillText(price, w / 2, 340, w - 70); x.fillStyle = '#2b2230'; x.font = 'bold 54px Helvetica'; x.fillText('DRIVE TODAY', w / 2, 500); }, { key: 'price' + price }) }), { y: 1.38, z: .022, noInk: true });
     }
+    return g;
+  },
+});
+
+register('cane', { tags: ['old', 'walking', 'prop', 'rich-system'], aliases: ['walking-stick'], desc: 'Wooden walking cane with a curved handle, 0.9 m. Stands on y 0.', opts: {},
+  build: () => { const g = g0(), m = toon(0x6a4630); put(g, G.cyl(.012, .014, .82, 10), m, { y: .41 }); put(g, G.torus(.05, .013, 14, Math.PI), m, { x: .05, y: .82 }); return g; } });
+
+register('tip-sign', { tags: ['bus', 'sign', 'handwritten', 'rich-system'], desc: 'Handwritten cardboard sign taped up by the driver: "TIPS? @bigmike_drives" (no app logos). Faces +z, 0.36 x 0.26 m.',
+  opts: { text: 'two lines, \\n separated' },
+  build: ({ text = 'TIPS?\n@bigmike_drives' } = {}) => { const g = g0();
+    const t = ctex(720, 520, (x, w, h) => { x.fillStyle = '#d9b98a'; x.fillRect(0, 0, w, h); x.fillStyle = '#c9a676'; for (let i = 0; i < 9; i++) x.fillRect(0, i * 60 + 10, w, 4);
+      x.fillStyle = 'rgba(240,240,220,.75)'; x.fillRect(w * .4, -10, 140, 60); x.fillStyle = '#1c1830'; x.textAlign = 'center'; x.textBaseline = 'middle';
+      const L = text.split('\n'); x.font = 'bold 150px "Marker Felt", "Chalkboard SE", "Comic Sans MS", sans-serif'; x.fillText(L[0], w / 2, h * .34);
+      x.font = 'bold 70px "Marker Felt", "Chalkboard SE", "Comic Sans MS", sans-serif'; x.fillText(L[1] || '', w / 2, h * .74, w - 40); }, { key: 'tip' + text });
+    put(g, G.box(.36, .26, .006), toon(0xffffff, { map: t }), { rz: .04 }); return g; } });
+
+// ---------- the SYSTEM panel ----------
+// A floating blue glass HUD (refs 08, 09): cut corners, cyan edge glow, "SYSTEM" and "V1.0" in the corners, a big title,
+// then rows. A reward row is gold and can fill; a task row can carry a countdown; a load row is a progress bar.
+// open: [t0, t1] unfolds it from a bright line; flicker: [t0, t1] a ghost flash (the flash-forward); out: sec it blinks out.
+function panelShape(x, X, Y, w, h, c) { x.beginPath(); x.moveTo(X + c, Y); x.lineTo(X + w - c, Y); x.lineTo(X + w, Y + c); x.lineTo(X + w, Y + h - c); x.lineTo(X + w - c, Y + h); x.lineTo(X + c, Y + h); x.lineTo(X, Y + h - c); x.lineTo(X, Y + c); x.closePath(); }
+function drawPanel(x, W, H, o, sec) {
+  const cy = '#7fe8ff', gold = '#ffd36a';
+  panelShape(x, 20, 20, W - 40, H - 40, 46); const bg = x.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, 'rgba(18,40,92,.88)'); bg.addColorStop(1, 'rgba(10,22,58,.9)'); x.fillStyle = bg; x.fill();
+  x.save(); panelShape(x, 20, 20, W - 40, H - 40, 46); x.clip(); x.strokeStyle = 'rgba(127,232,255,.08)'; x.lineWidth = 2; for (let i = 0; i < W; i += 36) { x.beginPath(); x.moveTo(i, 0); x.lineTo(i, H); x.stroke(); } for (let j = 0; j < H; j += 36) { x.beginPath(); x.moveTo(0, j); x.lineTo(W, j); x.stroke(); }
