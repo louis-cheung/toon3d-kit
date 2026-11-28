@@ -379,3 +379,37 @@ register('cut-lock', {
   },
 });
 
+register('bike-rack', {
+  tags: ['bike', 'rack', 'street', 'sidewalk', 'stolen', 'rich-system'], aliases: ['bicycle-rack'],
+  desc: 'Sidewalk bike rack: three steel hoops on a base rail, no bike in it. lock "cut" puts the cut cable lock on the ground beside the middle hoop (the stolen-bike read). Runs along x, 1.6 m long, hoops 0.85 m tall, stands on y 0.',
+  opts: { lock: "'cut' (default) | 'none'", hoops: 'number of hoops (3)', color: 'hoop colour' }, inkWidth: .01,
+  build: ({ lock = 'cut', hoops = 3, color = 0x3a6ab0 } = {}) => {
+    const g = g0(), m = toon(color), base = toon(0x5a5f70), span = .7;
+    put(g, G.box(span * (hoops - 1) + .5, .04, .08), base, { y: .02 });
+    for (let i = 0; i < hoops; i++) { const x = (i - (hoops - 1) / 2) * span, h = group(g, { x });
+      for (const s of [-1, 1]) put(h, G.cyl(.028, .028, .62, 12), m, { z: s * .25, y: .31 });
+      put(h, G.torus(.25, .028, 20, Math.PI), m, { y: .62, ry: Math.PI / 2 });
+      put(h, G.box(.012, .05, .3), toon(0xf0b43a), { y: .5, noInk: true });   // a yellow reflector band
+    }
+    if (lock === 'cut') { const l = find('cut-lock').build(); l.position.set(.08, .0, .42); l.rotation.y = .4; g.add(l); }
+    return g;
+  },
+});
+
+register('bus-zone-sign', {
+  tags: ['street', 'sign', 'bus', 'parking', 'rich-system'], aliases: ['no-parking-sign'],
+  desc: 'Street sign on a pole: red NO PARKING header, a bus pictogram, BUS ZONE and TOW AWAY. No agency names. Faces +z, sign centre at y 2.1.',
+  opts: { text: "middle line ('BUS ZONE')" },
+  build: ({ text = 'BUS ZONE' } = {}) => {
+    const g = g0(), k = toon(0x6a7080);
+    put(g, G.cyl(.035, .04, 2.6, 10), k, { y: 1.3 });
+    const t = ctex(400, 640, (x, w, h) => { x.fillStyle = '#ffffff'; x.fillRect(0, 0, w, h); x.strokeStyle = '#d5322c'; x.lineWidth = 18; x.strokeRect(9, 9, w - 18, h - 18);
+      x.fillStyle = '#d5322c'; x.fillRect(9, 9, w - 18, 150); x.fillStyle = '#ffffff'; x.font = '900 64px Helvetica'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('NO', w / 2, 52); x.fillText('PARKING', w / 2, 118, w - 50);
+      x.fillStyle = '#1f3c88'; x.beginPath(); x.roundRect(w / 2 - 95, 190, 190, 130, 22); x.fill(); x.fillStyle = '#ffffff'; x.fillRect(w / 2 - 75, 210, 150, 55); x.fillStyle = '#1f3c88'; x.fillRect(w / 2 - 2, 210, 4, 55);
+      x.fillStyle = '#ffffff'; x.beginPath(); x.arc(w / 2 - 50, 322, 20, 0, 7); x.arc(w / 2 + 50, 322, 20, 0, 7); x.fill();
+      x.fillStyle = '#d5322c'; x.font = '900 78px Helvetica'; x.fillText(text, w / 2, 430, w - 50); x.fillStyle = '#241726'; x.font = 'bold 48px Helvetica'; x.fillText('TOW AWAY', w / 2, 520); x.fillText('ANY TIME', w / 2, 580); }, { key: 'buszone' + text });
+    put(g, G.box(.42, .66, .02), toon(0xffffff, { map: t }), { y: 2.1, z: .045 });
+    return g;
+  },
+});
+
